@@ -11,7 +11,7 @@
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 Version: 2.2.1
-Release: 15
+Release: 16
 License: PSF - see LICENSE
 Group: Development/Languages
 Source: http://www.python.org/ftp/python/%{version}/Python-%{version}.tgz
@@ -38,7 +38,7 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildPrereq: readline-devel, libtermcap-devel, openssl-devel, gmp-devel
 BuildPrereq: ncurses-devel, gdbm-devel, zlib-devel, expat-devel, tetex-latex
 BuildPrereq: Mesa-devel tk tix
-URL: http://www.python.com/
+URL: http://www.python.org/
 
 %description
 Python is an interpreted, interactive, object-oriented programming
@@ -180,6 +180,9 @@ chmod 0755 $RPM_BUILD_ROOT/usr/bin/pydoc
 %if %{aspython2}
 mv $RPM_BUILD_ROOT/usr/bin/python $RPM_BUILD_ROOT/usr/bin/python2
 mv $RPM_BUILD_ROOT/%{_mandir}/man1/python.1 $RPM_BUILD_ROOT/%{_mandir}/man1/python%{pybasever}.1
+%else
+ln -s python $RPM_BUILD_ROOT/usr/bin/python2
+
 %endif
 
 # tools
@@ -248,7 +251,7 @@ rm -fr $RPM_BUILD_ROOT
 %files -f dynfiles
 %defattr(-, root, root)
 %doc LICENSE README
-/usr/bin/*
+/usr/bin/python*
 %{_mandir}/*/*
 
 %dir /usr/lib/python%{pybasever}
@@ -288,6 +291,7 @@ rm -fr $RPM_BUILD_ROOT
 /usr/bin/pynche*
 /usr/bin/pygettext*.py
 /usr/bin/msgfmt*.py
+/usr/bin/pydoc
 %endif
 
 %files docs
@@ -305,9 +309,13 @@ rm -fr $RPM_BUILD_ROOT
 /usr/lib/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Tue Aug 13 2002 Trond Eivind Glomsrød <teg@redhat.com> 2.2.1-16
+- Fix  #71011,#71134, #58157
+
 * Wed Aug  7 2002 Trond Eivind Glomsrød <teg@redhat.com> 2.2.1-15
 - Resurrect tkinter
 - Fix for distutils (#67671)
+- Fix #69962
 
 * Thu Jul 25 2002 Trond Eivind Glomsrød <teg@redhat.com> 2.2.1-14
 - Obsolete tkinter/tkinter2 (#69838)
