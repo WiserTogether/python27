@@ -9,11 +9,12 @@
 
 %define pybasever 2.3
 %define jp_codecs 1.4.9
+%define tools_dir %{_datadir}/python%{pybasever}/Tools
 
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 Version: %{pybasever}.4
-Release: 4
+Release: 6
 License: PSF - see LICENSE
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -35,6 +36,7 @@ Patch8: python-2.3.2-lib64.patch
 Patch9: japanese-codecs-lib64.patch
 Patch12: python-2.3.2-nomkhowto.patch
 Patch13: python-2.3.4-distutils-bdist-rpm.patch
+Patch14: python-2.3.4-pydocnodoc.patch
 
 %if !%{aspython2}
 Obsoletes: python2 
@@ -161,6 +163,7 @@ user interface for Python programming.
 %endif
 %patch12 -p1 -b .nomkhowto
 %patch13 -p1 -b .bdist-rpm
+%patch14 -p1 -b .no-doc
 
 # This shouldn't be necesarry, but is right now (2.2a3)
 find -name "*~" |xargs rm -f
@@ -192,15 +195,15 @@ if pkg-config openssl ; then
 fi
 # Force CC
 export CC=gcc
-%configure --enable-ipv6 --enable-unicode=%{unicode}
+%configure --enable-ipv6 --enable-unicode=%{unicode} --enable-shared
 
 make OPT="$CFLAGS" %{?_smp_mflags}
-$topdir/python Tools/scripts/pathfix.py -i "/usr/bin/env python%{pybasever}" .
+LD_LIBRARY_PATH=$topdir $topdir/python Tools/scripts/pathfix.py -i "/usr/bin/env python%{pybasever}" .
 make OPT="$CFLAGS" %{?_smp_mflags}
 
 %ifarch i386
 pushd Doc
-make PYTHON=$topdir/python
+LD_LIBRARY_PATH=$topdir make PYTHON=$topdir/python
 rm html/index.html.in Makefile* info/Makefile tools/sgmlconv/Makefile
 popd
 %endif
@@ -252,6 +255,10 @@ mv Tools/pynche/README Tools/pynche/README.pynche
 install -m755  Tools/i18n/pygettext.py $RPM_BUILD_ROOT/usr/bin/
 install -m755  Tools/i18n/msgfmt.py $RPM_BUILD_ROOT/usr/bin/
 
+# Useful development tools
+install -m755 -d $RPM_BUILD_ROOT%{tools_dir}
+install Tools/scripts/*py $RPM_BUILD_ROOT%{tools_dir}
+
 # Get rid of crap
 find $RPM_BUILD_ROOT/ -name "*~"|xargs rm -f
 find $RPM_BUILD_ROOT/ -name ".cvsignore"|xargs rm -f
@@ -280,7 +287,8 @@ popd
 
 # Japanese codecs
 pushd JapaneseCodecs-%{jp_codecs}
-PYTHONHOME=$RPM_BUILD_ROOT/usr $RPM_BUILD_ROOT/usr/bin/%{python} setup.py \
+LD_LIBRARY_PATH=$RPM_BUILD_ROOT/%{_libdir} PYTHONHOME=$RPM_BUILD_ROOT/usr \
+    $RPM_BUILD_ROOT/usr/bin/%{python} setup.py \
 install \
 --install-scripts=$RPM_BUILD_ROOT/%{_prefix}/bin \
 --install-purelib=$RPM_BUILD_ROOT/%{_libdir}/python%{pybasever}/site-packages \
@@ -307,7 +315,9 @@ rm -fr $RPM_BUILD_ROOT
 /usr/bin/pynche2
 %endif
 %{_mandir}/*/*
+%{_libdir}/libpython%{pybasever}.so*
 
+%dir %{_datadir}/python%{pybasever}
 %dir %{_libdir}/python%{pybasever}
 %dir %{_libdir}/python%{pybasever}/lib-dynload
 %dir %{_libdir}/python%{pybasever}/lib-dynload/japanese
@@ -351,6 +361,7 @@ rm -fr $RPM_BUILD_ROOT
 /usr/bin/pygettext*.py
 /usr/bin/msgfmt*.py
 /usr/bin/pydoc
+%{tools_dir}
 %endif
 
 %files docs
@@ -368,6 +379,13 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Fri Jul 30 2004 Mihai Ibanescu <misa@redhat.com> 2.3.4-6
+- Fixed #128030 (help() not printing anything)
+- Fixed #125472 (distutils.sysconfig.get_python_lib() not returning the right
+  path on 64-bit systems)
+- Fixed #127357 (building python as a shared library)
+- Fixed  #19347 (including the contents of Tools/scripts/ in python-tools)
+
 * Tue Jun 15 2004 Elliot Lee <sopwith@redhat.com>
 - rebuilt
 
