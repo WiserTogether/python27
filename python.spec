@@ -19,10 +19,11 @@
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 Version: %{pybasever}
-Release: 1
+Release: 2
 License: PSF - see LICENSE
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
+Provides: python(abi) = %{pybasever}
 # optik is part of python 2.3 as optparse
 Provides: python-optik = 1.4.1
 Obsoletes: python-optik
@@ -351,8 +352,8 @@ rm -fr $RPM_BUILD_ROOT
 %{_bindir}/idle*
 %{_bindir}/modulator*
 %{_bindir}/pynche*
-%{_bindir}/pygettext*.py
-%{_bindir}/msgfmt*.py
+%{_bindir}/pygettext*.py*
+%{_bindir}/msgfmt*.py*
 %{_bindir}/pydoc*
 %{tools_dir}
 %{demo_dir}
@@ -368,6 +369,11 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Mon Dec  6 2004 Jeff Johnson <jbj@jbj.org> 2.4-2
+- db-4.3.21 returns DB_BUFFER_SMALL rather than ENOMEM (#141994).
+- add Provide: python(abi) = 2.4
+- include msgfmt/pygettext *.pyc and *.pyo from brp-python-bytecompile.
+
 * Fri Dec  3 2004 Mihai Ibanescu <misa@redhat.com> 2.4-1
 - Python-2.4.tar.bz2 (final)
 
