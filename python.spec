@@ -9,7 +9,7 @@
 Summary: An interpreted, interactive object-oriented programming language.
 Name: python
 Version: 1.5.2
-Release: 35
+Release: 36
 License: distributable
 Group: Development/Languages
 Source0: ftp://ftp.python.org/pub/python/src/py152.tgz
@@ -245,6 +245,9 @@ rm -f modules-list modules-list.full
 %{_prefix}/lib/python1.5/lib-dynload/_tkinter.so
 
 %changelog
+* Mon Mar 25 2002 Nalin Dahyabhai <nalin@redhat.com> 1.5.2-36
+- rebuild
+
 * Fri Jun 29 2001 Florian La Roche <Florian.LaRoche@redhat.de>
 - do not set -fno-merge-constants on s390,s390x
 - truncate changelog due to rpm errors
