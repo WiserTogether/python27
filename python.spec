@@ -12,8 +12,8 @@
 
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
-Version: 2.2.2
-Release: 26
+Version: 2.2.3
+Release: 7
 License: PSF - see LICENSE
 Group: Development/Languages
 Source: http://www.python.org/ftp/python/%{version}/Python-%{version}.tgz
@@ -29,7 +29,6 @@ Patch0: python-2.2.2-config2.patch
 Patch0: python-2.2.2-config.patch
 %endif
 Patch1: python-2.2b1-buildroot.patch
-Patch2: python-2.2-no_ndbm.patch
 Patch3: Python-2.2.1-pydocnogui.patch
 Patch4: Python-2.2.1-nowhatsnew.patch
 Patch5: Python-2.2.1-distutilrpm.patch
@@ -38,6 +37,7 @@ Patch8: python-2.2.2-lib64.patch
 Patch9: japanese-codecs-lib64.patch
 Patch10: python-2.2.2-urllib2-nonanonftp.patch
 Patch11: python-2.2.2-ftpuri.patch
+Patch12: python-2.2.3-gnumo.patch
 
 %if !%{aspython2}
 Obsoletes: python2 
@@ -55,7 +55,7 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildPrereq: readline-devel, libtermcap-devel, openssl-devel, gmp-devel
 BuildPrereq: ncurses-devel, gdbm-devel, zlib-devel, expat-devel, tetex-latex
 BuildPrereq: Mesa-devel tk tix gcc-c++ XFree86-libs glibc-devel
-BuildPrereq: gzip tar /usr/bin/find pkgconfig
+BuildPrereq: gzip tar /usr/bin/find pkgconfig tcl-devel tk-devel
 URL: http://www.python.org/
 
 %description
@@ -155,7 +155,6 @@ user interface for Python programming.
 
 %patch0 -p1 -b .rhconfig
 %patch1 -p1
-%patch2 -p1 -b .no_ndbm
 %patch3 -p1 -b .no_gui
 %patch4 -p1
 %patch5 -p1
@@ -166,6 +165,7 @@ user interface for Python programming.
 %endif
 %patch10 -p1 -b .nonanonftp
 %patch11 -p1 -b .ftpuri
+%patch12 -p1 -b .gnumo
 
 # This shouldn't be necesarry, but is right now (2.2a3)
 find -name "*~" |xargs rm -f
@@ -294,13 +294,19 @@ install \
 --root=/
 popd
 
-find $RPM_BUILD_ROOT%{_libdir}/python%{pybasever}/lib-dynload -type f | grep -v _tkinter.so | sed "s|$RPM_BUILD_ROOT||" > dynfiles
+find $RPM_BUILD_ROOT%{_libdir}/python%{pybasever}/lib-dynload -type f | grep -v _tkinter.so | grep -v japanese.pth | sed "s|$RPM_BUILD_ROOT||" > dynfiles-all
+grep "\.so$" dynfiles-all | awk '{print "%attr(555,root,root)", $1}' > dynfiles
+grep -v "\.so$" dynfiles-all >> dynfiles
+
+# Make the libraries user-writeable, so that we can strip them
+find $RPM_BUILD_ROOT%{_libdir}/python%{pybasever}/lib-dynload -type f \
+    -name "*.so" -exec chmod 755 {} \;
 
 %clean
 rm -fr $RPM_BUILD_ROOT
 
 %files -f dynfiles
-%defattr(-, root, root)
+%defattr(-,root,root)
 %doc LICENSE README
 /usr/bin/python*
 %if %{aspython2}
@@ -365,11 +371,39 @@ rm -fr $RPM_BUILD_ROOT
 %else
 %files -n tkinter2
 %endif
-%defattr(-,root,root,755)
+%defattr(755,root,root)
 %{_libdir}/python%{pybasever}/lib-tk
-%{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
+%attr(555,root,root) %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Wed Oct 15 2003 Jeremy Katz <katzj@redhat.com> 2.2.3-7
+- use the simpler heuristic for finding the GNU .mo metadata 
+  from python 2.3 (#97796)
+
+* Mon Aug 18 2003 Mihai Ibanescu <misa@redhat.com> 2.2.3-6
+- lib-dynload files are not stripped (bug #97264)
+
+* Fri Aug  8 2003 Mihai Ibanescu <misa@redhat.com> 2.2.3-5
+- Added missing BuildRequires (bug #101950)
+
+* Thu Jul  3 2003 Mihai Ibanescu <misa@redhat.com> 2.2.3-4
+- Rebuilt against newer db4 packages (bug #98539)
+
+* Mon Jun 9 2003 Elliot Lee <sopwith@redhat.com> 2.2.3-3
+- rebuilt
+
+* Wed Jun  7 2003 Mihai Ibanescu <misa@redhat.com> 2.2.3-2
+- Rebuilt
+
+* Tue Jun  6 2003 Mihai Ibanescu <misa@redhat.com> 2.2.3-1
+- Upgraded to 2.2.3
+
+* Wed Apr  2 2003 Mihai Ibanescu <misa@redhat.com> 2.2.2-28
+- Rebuilt
+
+* Wed Apr  2 2003 Mihai Ibanescu <misa@redhat.com> 2.2.2-27
+- Modified the ftpuri patch conforming to http://ietf.org/rfc/rfc1738.txt
+
 * Mon Feb 24 2003 Elliot Lee <sopwith@redhat.com>
 - rebuilt
 
