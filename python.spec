@@ -44,6 +44,7 @@ Patch9: japanese-codecs-lib64.patch
 Patch13: python-2.4-distutils-bdist-rpm.patch
 Patch14: python-2.3.4-pydocnodoc.patch
 Patch16: python-2.4-db43.patch
+Patch17: python-2.4-tex-fix.patch
 
 %if %{main_python}
 Obsoletes: Distutils
@@ -167,6 +168,7 @@ user interface for Python programming.
 %patch13 -p1 -b .bdist-rpm
 %patch14 -p1 -b .no-doc
 %patch16 -p1 -b .db43
+%patch17 -p1 -b .tex-fix
 
 # This shouldn't be necesarry, but is right now (2.2a3)
 find -name "*~" |xargs rm -f
