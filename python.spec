@@ -9,8 +9,8 @@
 Summary: An interpreted, interactive object-oriented programming language.
 Name: python
 Version: 1.5.2
-Release: 30
-Copyright: distributable
+Release: 34
+License: distributable
 Group: Development/Languages
 Source0: ftp://ftp.python.org/pub/python/src/py152.tgz
 Source1: Python-Doc.tar.gz
@@ -18,6 +18,9 @@ Source2: idle
 Source3: modulator
 Source4: pynche
 Source5: gettext.py
+Source10: inspect.py
+Source11: pydoc.py
+
 Patch0: python-1.5.2-config.patch
 Patch1: python-1.4-gccbug.patch
 Patch2: Python-1.5.1-nosed.patch
@@ -130,7 +133,11 @@ echo ': ${CCSHARED='-fPIC'}' >> config.cache
 cp Lib/lib-old/rand.py Lib
 cp %{SOURCE5} Lib
 
+# inspect.py and pydoc.py
+cp %{SOURCE10} %{SOURCE11} Lib
+
 %build
+RPM_OPT_FLAGS="$RPM_OPT_FLAGS -fno-merge-constants"
 MACHDEP=linux-$RPM_ARCH ; export MACHDEP
 %configure --with-threads
 
@@ -236,6 +243,19 @@ rm -f modules-list modules-list.full
 %{_prefix}/lib/python1.5/lib-dynload/_tkinter.so
 
 %changelog
+* Wed Jul 27 2001 Elliot Lee <sopwith@redhat.com>
+- -fno-merge-constants
+
+* Tue Jun 12 2001 Nalin Dahyabhai <nalin@redhat.com>
+- rebuild in new environment
+- s/Copyright:/License:/
+
+* Fri May 11 2001 Bernhard Rosenkraenzer <bero@redhat.com> 1.5.2-32
+- rebuild with new readline
+
+* Fri May  4 2001 Preston Brown <pbrown@redhat.com> 1.5.2-31
+- inspect.py and pydoc.py modules added
+
 * Fri Mar  2 2001 Nalin Dahyabhai <nalin@redhat.com>
 - rebuild in new environment
 
