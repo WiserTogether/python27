@@ -13,7 +13,7 @@
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 Version: %{pybasever}.3
-Release: 3
+Release: 6
 License: PSF - see LICENSE
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -26,6 +26,7 @@ Source6: http://gigue.peabody.jhu.edu/~mdboom/omi/source/shm_source/shmmodule.c
 Patch0: python-2.3-config.patch
 Patch3: Python-2.2.1-pydocnogui.patch
 Patch4: python-2.3-nowhatsnew.patch
+Patch7: python-2.3.3-lib64-regex.patch
 Patch8: python-2.3.2-lib64.patch
 Patch9: japanese-codecs-lib64.patch
 Patch10: python-2.2.2-urllib2-nonanonftp.patch
@@ -150,6 +151,7 @@ user interface for Python programming.
 %patch3 -p1 -b .no_gui
 %patch4 -p1
 %if %{_lib} == lib64
+%patch7 -p0 -b .lib64-regex
 %patch8 -p1 -b .lib64
 %patch9 -p0 -b .lib64-j
 %endif
@@ -310,6 +312,8 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/*.py*
 %{_libdir}/python%{pybasever}/*.doc
 %{_libdir}/python%{pybasever}/bsddb
+%dir %{_libdir}/python%{pybasever}/config
+%{_libdir}/python%{pybasever}/config/Makefile
 %{_libdir}/python%{pybasever}/curses
 %{_libdir}/python%{pybasever}/distutils
 %{_libdir}/python%{pybasever}/encodings
@@ -358,6 +362,16 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Fri May  7 2004 Mihai Ibanescu <misa@redhat.com> 2.3.3-6
+- Correct fix for #122304 from upstream:
+  http://sourceforge.net/tracker/?func=detail&atid=105470&aid=931848&group_id=5470
+
+* Thu May  6 2004 Mihai Ibanescu <misa@redhat.com> 2.3.3-4
+- Fix for bug #122304 : splitting the domain name fails on 64-bit arches
+- Fix for bug #120879 : including Makefile into the main package
+
+- Requires XFree86-devel instead of -libs (see bug #118442)
+
 * Tue Mar 16 2004 Mihai Ibanescu <misa@redhat.com> 2.3.3-3
 - Requires XFree86-devel instead of -libs (see bug #118442)
 
