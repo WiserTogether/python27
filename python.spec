@@ -19,7 +19,7 @@
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 Version: %{pybasever}
-Release: 0.b2.2
+Release: 0.b2.3
 License: PSF - see LICENSE
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -370,6 +370,9 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Mon Nov  8 2004 Jeremy Katz <katzj@redhat.com> - 2.4-0.b2.3
+- fix the lib64 patch so that 64bit arches still look in /usr/lib/python...
+
 * Mon Nov  8 2004 Jeremy Katz <katzj@redhat.com> - 2.4-0.b2.2
 - cryptmodule still needs -lcrypt (again)
 
