@@ -19,7 +19,7 @@
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 Version: %{pybasever}
-Release: 2
+Release: 3
 License: PSF - see LICENSE
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -369,6 +369,9 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Wed Jan 12 2005 Tim Waugh <twaugh@redhat.com> 2.4-3
+- Rebuilt for new readline.
+
 * Mon Dec  6 2004 Jeff Johnson <jbj@jbj.org> 2.4-2
 - db-4.3.21 returns DB_BUFFER_SMALL rather than ENOMEM (#141994).
 - add Provide: python(abi) = 2.4
