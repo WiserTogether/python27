@@ -14,7 +14,7 @@
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 Version: %{pybasever}.4
-Release: 6
+Release: 7
 License: PSF - see LICENSE
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -78,9 +78,10 @@ package.
 %package devel
 Summary: The libraries and header files needed for Python development.
 Group: Development/Libraries
+Requires: %{python} = %{version}-%{release}
 %if !%{aspython2}
 Obsoletes: python2-devel
-Provides: python2-devel = %{version}
+Provides: python2-devel = %{version}-%{release}
 %endif
 
 %description devel
@@ -97,8 +98,8 @@ documentation.
 %package tools
 Summary: A collection of development tools included with Python.
 Group: Development/Tools
-Requires: %{name} = %{version}
-Requires: tkinter = %{version}
+Requires: %{name} = %{version}-%{release}
+Requires: tkinter = %{version}-%{release}
 %if !%{aspython2}
 Obsoletes: python2-tools
 Provides: python2-tools = %{version}
@@ -111,6 +112,7 @@ to build python programs.
 %package docs
 Summary: Documentation for the Python programming language.
 Group: Documentation
+Requires: %{name} = %{version}-%{release}
 %if !%{aspython2}
 Obsoletes: python2-docs
 Provides: python2-docs = %{version}
@@ -132,7 +134,7 @@ for the Python language.
 Summary: A graphical user interface for the Python scripting language.
 Group: Development/Languages
 BuildPrereq:  tcl, tk
-Requires: %{name} = %{version}
+Requires: %{name} = %{version}-%{release}
 %if !%{aspython2}
 Obsoletes: tkinter2
 Provides: tkinter2 = %{version}
@@ -201,12 +203,10 @@ make OPT="$CFLAGS" %{?_smp_mflags}
 LD_LIBRARY_PATH=$topdir $topdir/python Tools/scripts/pathfix.py -i "/usr/bin/env python%{pybasever}" .
 make OPT="$CFLAGS" %{?_smp_mflags}
 
-%ifarch i386
 pushd Doc
 LD_LIBRARY_PATH=$topdir make PYTHON=$topdir/python
 rm html/index.html.in Makefile* info/Makefile tools/sgmlconv/Makefile
 popd
-%endif
 
 %install
 [ -d $RPM_BUILD_ROOT ] && rm -fr $RPM_BUILD_ROOT
@@ -379,6 +379,11 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Tue Aug  3 2004 Mihai Ibanescu <misa@redhat.com> 2.3.4-7
+- Including html documentation for non-i386 arches
+- Fixed #125362 (python-doc html files have japanese character encoding)
+- Fixed #128923 (missing dependency between python and python-devel)
+
 * Fri Jul 30 2004 Mihai Ibanescu <misa@redhat.com> 2.3.4-6
 - Fixed #128030 (help() not printing anything)
 - Fixed #125472 (distutils.sysconfig.get_python_lib() not returning the right
