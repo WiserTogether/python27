@@ -11,7 +11,7 @@
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 Version: 2.2.1
-Release: 16
+Release: 17
 License: PSF - see LICENSE
 Group: Development/Languages
 Source: http://www.python.org/ftp/python/%{version}/Python-%{version}.tgz
@@ -25,6 +25,7 @@ Patch2: python-2.2-no_ndbm.patch
 Patch3: Python-2.2.1-pydocnogui.patch
 Patch4: Python-2.2.1-nowhatsnew.patch
 Patch5: Python-2.2.1-distutilrpm.patch
+Patch6: Python-2.2.1-execfix.patch  
 %if !%{aspython2}
 Obsoletes: python2 
 Provides: python2 = %{version}
@@ -141,6 +142,7 @@ user interface for Python programming.
 %patch3 -p1
 %patch4 -p1
 %patch5 -p1
+%patch6 -p1
 
 # This shouldn't be necesarry, but is right now (2.2a3)
 find -name "*~" |xargs rm -f
@@ -309,6 +311,9 @@ rm -fr $RPM_BUILD_ROOT
 /usr/lib/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Fri Aug 30 2002 Trond Eivind Glomsrød <teg@redhat.com> 2.2.1-17
+- security fix for _execvpe
+
 * Tue Aug 13 2002 Trond Eivind Glomsrød <teg@redhat.com> 2.2.1-16
 - Fix  #71011,#71134, #58157
 
