@@ -7,37 +7,30 @@
 %define python python
 %endif
 
-%define pybasever 2.2
+%define pybasever 2.3
 %define jp_codecs 1.4.9
 
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
-Version: 2.2.3
-Release: 7
+Version: %{pybasever}.3
+Release: 1
 License: PSF - see LICENSE
 Group: Development/Languages
-Source: http://www.python.org/ftp/python/%{version}/Python-%{version}.tgz
-Source2: idle
+Provides: python-abi = %{pybasever}
+Source: http://www.python.org/ftp/python/%{version}/Python-%{version}.tar.bz2
 Source3: modulator
 Source4: pynche
 Source5: http://www.python.jp/pub/JapaneseCodecs/JapaneseCodecs-%{jp_codecs}.tar.gz
 Source6: http://gigue.peabody.jhu.edu/~mdboom/omi/source/shm_source/shmmodule.c
 
-%if !%{aspython2}
-Patch0: python-2.2.2-config2.patch
-%else
-Patch0: python-2.2.2-config.patch
-%endif
-Patch1: python-2.2b1-buildroot.patch
+Patch0: python-2.3-config.patch
 Patch3: Python-2.2.1-pydocnogui.patch
-Patch4: Python-2.2.1-nowhatsnew.patch
-Patch5: Python-2.2.1-distutilrpm.patch
-Patch7: Python-2.2.1-buildroot-bytecode.patch 
-Patch8: python-2.2.2-lib64.patch
+Patch4: python-2.3-nowhatsnew.patch
+Patch8: python-2.3.2-lib64.patch
 Patch9: japanese-codecs-lib64.patch
 Patch10: python-2.2.2-urllib2-nonanonftp.patch
 Patch11: python-2.2.2-ftpuri.patch
-Patch12: python-2.2.3-gnumo.patch
+Patch12: python-2.3.2-nomkhowto.patch
 
 %if !%{aspython2}
 Obsoletes: python2 
@@ -154,18 +147,15 @@ user interface for Python programming.
 %setup -q -n Python-%{version} -a 5
 
 %patch0 -p1 -b .rhconfig
-%patch1 -p1
 %patch3 -p1 -b .no_gui
 %patch4 -p1
-%patch5 -p1
-%patch7 -p1 -b .bad-bytecode-path
 %if %{_lib} == lib64
 %patch8 -p1 -b .lib64
 %patch9 -p0 -b .lib64-j
 %endif
 %patch10 -p1 -b .nonanonftp
 %patch11 -p1 -b .ftpuri
-%patch12 -p1 -b .gnumo
+%patch12 -p1 -b .nomkhowto
 
 # This shouldn't be necesarry, but is right now (2.2a3)
 find -name "*~" |xargs rm -f
@@ -192,6 +182,8 @@ if pkg-config openssl ; then
 	export CFLAGS="$CFLAGS `pkg-config --cflags openssl`"
 	export LDFLAGS="$LDFLAGS `pkg-config --libs-only-L openssl`"
 fi
+# Force CC
+export CC=gcc
 %configure --enable-ipv6 --enable-unicode=%{unicode}
 
 make OPT="$CFLAGS" %{?_smp_mflags}
@@ -232,12 +224,7 @@ ln -s python $RPM_BUILD_ROOT/usr/bin/python2
 
 # tools
 
-# idle
 mkdir -p ${RPM_BUILD_ROOT}%{_libdir}/python%{pybasever}/site-packages
-install -m 755 $RPM_SOURCE_DIR/idle ${RPM_BUILD_ROOT}/usr/bin/idle
-mkdir -p $RPM_BUILD_ROOT%{_libdir}/python%{pybasever}/site-packages/idle
-cp -R Tools/idle/* $RPM_BUILD_ROOT%{_libdir}/python%{pybasever}/site-packages/idle
-
 
 #modulator
 install -m 755 $RPM_SOURCE_DIR/modulator ${RPM_BUILD_ROOT}/usr/bin/modulator
@@ -294,19 +281,13 @@ install \
 --root=/
 popd
 
-find $RPM_BUILD_ROOT%{_libdir}/python%{pybasever}/lib-dynload -type f | grep -v _tkinter.so | grep -v japanese.pth | sed "s|$RPM_BUILD_ROOT||" > dynfiles-all
-grep "\.so$" dynfiles-all | awk '{print "%attr(555,root,root)", $1}' > dynfiles
-grep -v "\.so$" dynfiles-all >> dynfiles
-
-# Make the libraries user-writeable, so that we can strip them
-find $RPM_BUILD_ROOT%{_libdir}/python%{pybasever}/lib-dynload -type f \
-    -name "*.so" -exec chmod 755 {} \;
+find $RPM_BUILD_ROOT%{_libdir}/python%{pybasever}/lib-dynload -type f | grep -v _tkinter.so | sed "s|$RPM_BUILD_ROOT||" > dynfiles
 
 %clean
 rm -fr $RPM_BUILD_ROOT
 
 %files -f dynfiles
-%defattr(-,root,root)
+%defattr(-, root, root)
 %doc LICENSE README
 /usr/bin/python*
 %if %{aspython2}
@@ -323,13 +304,18 @@ rm -fr $RPM_BUILD_ROOT
 %dir %{_libdir}/python%{pybasever}/lib-dynload
 %dir %{_libdir}/python%{pybasever}/lib-dynload/japanese
 %{_libdir}/python%{pybasever}/site-packages/japanese.pth
+%dir %{_libdir}/python%{pybasever}/site-packages
+%{_libdir}/python%{pybasever}/site-packages/README
+%{_libdir}/python%{pybasever}/LICENSE.txt
 %{_libdir}/python%{pybasever}/*.py*
 %{_libdir}/python%{pybasever}/*.doc
+%{_libdir}/python%{pybasever}/bsddb
 %{_libdir}/python%{pybasever}/curses
 %{_libdir}/python%{pybasever}/distutils
 %{_libdir}/python%{pybasever}/encodings
+%{_libdir}/python%{pybasever}/idlelib
 %{_libdir}/python%{pybasever}/lib-old
-%{_libdir}/python%{pybasever}/site-packages
+%{_libdir}/python%{pybasever}/logging
 %{_libdir}/python%{pybasever}/xml
 %{_libdir}/python%{pybasever}/email
 %{_libdir}/python%{pybasever}/compiler
@@ -347,12 +333,8 @@ rm -fr $RPM_BUILD_ROOT
 %defattr(-,root,root,755)
 %doc Tools/modulator/README.modulator
 %doc Tools/pynche/README.pynche
-%doc Tools/idle/*.txt
-%dir %{_libdir}/python%{pybasever}/site-packages/idle
-%dir %{_libdir}/python%{pybasever}/site-packages/modulator
-%dir %{_libdir}/python%{pybasever}/site-packages/modulator/Templates
-%dir %{_libdir}/python%{pybasever}/site-packages/pynche
-%dir %{_libdir}/python%{pybasever}/site-packages/pynche/X
+%{_libdir}/python%{pybasever}/site-packages/modulator
+%{_libdir}/python%{pybasever}/site-packages/pynche
 /usr/bin/idle*
 /usr/bin/modulator*
 /usr/bin/pynche*
@@ -371,20 +353,53 @@ rm -fr $RPM_BUILD_ROOT
 %else
 %files -n tkinter2
 %endif
-%defattr(755,root,root)
+%defattr(-,root,root,755)
 %{_libdir}/python%{pybasever}/lib-tk
-%attr(555,root,root) %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
+%{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
-* Wed Oct 15 2003 Jeremy Katz <katzj@redhat.com> 2.2.3-7
-- use the simpler heuristic for finding the GNU .mo metadata 
-  from python 2.3 (#97796)
+* Fri Dec 19 2003 Jeff Johnson <jbj@jbj.org> 2.3.3-1
+- upgrade to 2.3.3.
 
-* Mon Aug 18 2003 Mihai Ibanescu <misa@redhat.com> 2.2.3-6
-- lib-dynload files are not stripped (bug #97264)
+* Sat Dec 13 2003 Jeff Johnson <jbj@jbj.org> 2.3.2-9
+- rebuild against db-4.2.52.
 
-* Fri Aug  8 2003 Mihai Ibanescu <misa@redhat.com> 2.2.3-5
-- Added missing BuildRequires (bug #101950)
+* Fri Dec 12 2003 Jeremy Katz <katzj@redhat.com> 2.3.2-8
+- more rebuilding for new tcl/tk
+
+* Wed Dec  3 2003 Jeff Johnson <jbj@jbj.org> 2.3.2-7.1
+- rebuild against db-4.2.42.
+
+* Fri Nov 28 2003 Mihai Ibanescu <misa@redhat.com> 2.3.2-7
+- rebuilt against newer tcl/tk
+
+* Mon Nov 24 2003 Mihai Ibanescu <misa@redhat.com> 2.3.2-6
+- added a Provides: python-abi
+
+* Wed Nov 12 2003 Mihai Ibanescu <misa@redhat.com> 2.3.2-5
+- force CC (#109268)
+
+* Sun Nov  9 2003 Jeremy Katz <katzj@redhat.com> 2.3.2-4
+- cryptmodule still needs -lcrypt
+
+* Wed Nov  5 2003 Mihai Ibanescu <misa@redhat.com> 2.3.2-2
+- Added patch for missing mkhowto
+
+* Thu Oct 16 2003 Mihai Ibanescu <misa@redhat.com> 2.3.2-1
+- Updated to 2.3.2
+
+* Thu Sep 25 2003 Mihai Ibanescu <misa@redhat.com> 2.3.1-1
+- 2.3.1 final
+
+* Tue Sep 23 2003 Mihai Ibanescu <misa@redhat.com> 2.3.1-0.8.RC1
+- Building the python 2.3.1 release candidate
+- Updated the lib64 patch
+
+* Wed Jul 30 2003 Mihai Ibanescu <misa@redhat.com> 2.3-0.2
+- Building python 2.3
+- Added more BuildRequires
+- Updated the startup files for modulator and pynche; idle installs its own
+  now.
 
 * Thu Jul  3 2003 Mihai Ibanescu <misa@redhat.com> 2.2.3-4
 - Rebuilt against newer db4 packages (bug #98539)
