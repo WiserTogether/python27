@@ -13,7 +13,7 @@
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 Version: %{pybasever}.4
-Release: 1
+Release: 2
 License: PSF - see LICENSE
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -30,6 +30,7 @@ Patch7: python-2.3.4-lib64-regex.patch
 Patch8: python-2.3.2-lib64.patch
 Patch9: japanese-codecs-lib64.patch
 Patch12: python-2.3.2-nomkhowto.patch
+Patch13: python-2.3.4-distutils-bdist-rpm.patch
 
 %if !%{aspython2}
 Obsoletes: python2 
@@ -155,6 +156,7 @@ user interface for Python programming.
 %patch9 -p0 -b .lib64-j
 %endif
 %patch12 -p1 -b .nomkhowto
+%patch13 -p1 -b .bdist-rpm
 
 # This shouldn't be necesarry, but is right now (2.2a3)
 find -name "*~" |xargs rm -f
@@ -359,6 +361,9 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Mon Jun  7 2004 Mihai Ibanescu <misa@redhat.com> 2.3.4-2
+- Patched bdist_rpm to allow for builds of multiple binary rpms (bug #123598)
+
 * Fri Jun  4 2004 Mihai Ibanescu <misa@redhat.com> 2.3.4-1
 - Updated to 2.3.4-1 with Robert Scheck's help (bug #124764)
 - Added BuildRequires: tix-devel (bug #124918)
