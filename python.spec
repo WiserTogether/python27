@@ -4,7 +4,7 @@
 Summary: An interpreted, interactive object-oriented programming language.
 Name: python
 Version: 1.5.2
-Release: 25
+Release: 27
 Copyright: distributable
 Group: Development/Languages
 Source0: ftp://ftp.python.org/pub/python/src/py152.tgz
@@ -21,6 +21,7 @@ Patch5: python-1.5.2-wdb.patch
 Patch6: python-1.5.2-wuftpd.patch
 Patch7: python-1.5.2-_locale.patch
 Patch8: python-1.5.2-tcl831.patch
+Patch9: python-1.5.2-https.patch
 BuildRequires: readline readline-devel zlib zlib-devel gmp gmp-devel gdbm gdbm-devel
 Conflicts: tkinter < %{PACKAGE_VERSION}
 BuildRoot: %{_tmppath}/%{name}/python-root
@@ -112,6 +113,7 @@ user interface for Python programming.
 %patch6 -p1
 %patch7 -p1 -b ._locale
 %patch8 -p1 -b .tcl823
+%patch9 -p1 -b .https
 
 find . -name "*.nosed" -exec rm -f {} \;
 
@@ -227,8 +229,18 @@ rm -f modules-list modules-list.full
 %{_prefix}/lib/python1.5/lib-dynload/_tkinter.so
 
 %changelog
+* Fri Aug 25 2000 Preston Brown <pbrown@redhat.com>
+- Cristian had to supply a newer version of https handling for working
+  with certificates
+
+* Thu Aug 24 2000 Nalin Dahyabhai <nalin@redhat.com>
+- re-merge Preston's patch
+
 * Wed Aug 23 2000 Nalin Dahyabhai <nalin@redhat.com>
 - byte-compile modules with the correct directory paths
+
+* Sun Aug 20 2000 Preston Brown <pbrown@redhat.com>
+- https patch
 
 * Mon Jul 31 2000 Matt Wilson <msw@redhat.com>
 - fixed directory perms from 775 to 755 to make rpmlint shut up
