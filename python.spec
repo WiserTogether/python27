@@ -13,7 +13,7 @@
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 Version: %{pybasever}.3
-Release: 1
+Release: 3
 License: PSF - see LICENSE
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -47,7 +47,7 @@ Provides: Distutils
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildPrereq: readline-devel, libtermcap-devel, openssl-devel, gmp-devel
 BuildPrereq: ncurses-devel, gdbm-devel, zlib-devel, expat-devel, tetex-latex
-BuildPrereq: Mesa-devel tk tix gcc-c++ XFree86-libs glibc-devel
+BuildPrereq: Mesa-devel tk tix gcc-c++ XFree86-devel glibc-devel
 BuildPrereq: gzip tar /usr/bin/find pkgconfig tcl-devel tk-devel
 URL: http://www.python.org/
 
@@ -358,6 +358,15 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Tue Mar 16 2004 Mihai Ibanescu <misa@redhat.com> 2.3.3-3
+- Requires XFree86-devel instead of -libs (see bug #118442)
+
+* Tue Mar 02 2004 Elliot Lee <sopwith@redhat.com>
+- rebuilt
+
+* Fri Feb 13 2004 Elliot Lee <sopwith@redhat.com>
+- rebuilt
+
 * Fri Dec 19 2003 Jeff Johnson <jbj@jbj.org> 2.3.3-1
 - upgrade to 2.3.3.
 
