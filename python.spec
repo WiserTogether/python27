@@ -19,7 +19,7 @@
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 Version: %{pybasever}
-Release: 0.b2.4
+Release: 0.c1.1
 License: PSF - see LICENSE
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -27,7 +27,7 @@ Provides: python-abi = %{pybasever}
 Provides: python-optik = 1.4.1
 Obsoletes: python-optik
 #Source: http://www.python.org/ftp/python/%{version}/Python-%{version}.tar.bz2
-Source: http://www.python.org/ftp/python/%{version}/Python-%{pybasever}b2.tar.bz2
+Source: http://www.python.org/ftp/python/%{version}/Python-%{pybasever}c1.tar.bz2
 Source3: modulator
 Source4: pynche
 Source5: http://www.python.jp/pub/JapaneseCodecs/JapaneseCodecs-%{jp_codecs}.tar.gz
@@ -42,7 +42,6 @@ Patch8: python-2.4-lib64.patch
 Patch9: japanese-codecs-lib64.patch
 Patch13: python-2.4-distutils-bdist-rpm.patch
 Patch14: python-2.3.4-pydocnodoc.patch
-Patch15: python-2.3.4-buffer-overflow.patch
 Patch16: python-2.4-db43.patch
 
 %if %{main_python}
@@ -154,7 +153,7 @@ user interface for Python programming.
 
 %prep
 #%setup -q -n Python-%{version} -a 5
-%setup -q -n Python-%{pybasever}b2 -a 5
+%setup -q -n Python-%{pybasever}c1 -a 5
 
 %patch0 -p1 -b .rhconfig
 %patch3 -p1 -b .no_gui
@@ -166,7 +165,6 @@ user interface for Python programming.
 %endif
 %patch13 -p1 -b .bdist-rpm
 %patch14 -p1 -b .no-doc
-%patch15 -p1 -b .buffer-overflow
 %patch16 -p1 -b .db43
 
 # This shouldn't be necesarry, but is right now (2.2a3)
@@ -372,6 +370,9 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Fri Nov 19 2004 Mihai Ibanescu <misa@redhat.com> 2.4-0.c1.1
+- Python-2.4c1.tar.bz2 (release candidate 1)
+
 * Thu Nov 11 2004 Jeff Johnson <jbj@jbj.org> 2.4-0.b2.4
 - rebuild against db-4.3.21.
 
