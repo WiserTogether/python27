@@ -19,15 +19,14 @@
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 Version: %{pybasever}
-Release: 0.c1.1
+Release: 1
 License: PSF - see LICENSE
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
 # optik is part of python 2.3 as optparse
 Provides: python-optik = 1.4.1
 Obsoletes: python-optik
-#Source: http://www.python.org/ftp/python/%{version}/Python-%{version}.tar.bz2
-Source: http://www.python.org/ftp/python/%{version}/Python-%{pybasever}c1.tar.bz2
+Source: http://www.python.org/ftp/python/%{version}/Python-%{version}.tar.bz2
 Source3: modulator
 Source4: pynche
 Source5: http://www.python.jp/pub/JapaneseCodecs/JapaneseCodecs-%{jp_codecs}.tar.gz
@@ -152,8 +151,7 @@ You should install the tkinter package if you'd like to use a graphical
 user interface for Python programming.
 
 %prep
-#%setup -q -n Python-%{version} -a 5
-%setup -q -n Python-%{pybasever}c1 -a 5
+%setup -q -n Python-%{version} -a 5
 
 %patch0 -p1 -b .rhconfig
 %patch3 -p1 -b .no_gui
@@ -370,6 +368,9 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Fri Dec  3 2004 Mihai Ibanescu <misa@redhat.com> 2.4-1
+- Python-2.4.tar.bz2 (final)
+
 * Fri Nov 19 2004 Mihai Ibanescu <misa@redhat.com> 2.4-0.c1.1
 - Python-2.4c1.tar.bz2 (release candidate 1)
 
