@@ -12,14 +12,14 @@
 %endif
 
 %define pybasever 2.4
-%define jp_codecs 1.4.10
+%define jp_codecs 1.4.11
 %define tools_dir %{_libdir}/python%{pybasever}/Tools
 %define demo_dir %{_libdir}/python%{pybasever}/Demo
 
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
-Version: %{pybasever}
-Release: 6
+Version: %{pybasever}.1
+Release: 1
 License: PSF - see LICENSE
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -34,15 +34,13 @@ Source5: http://www.python.jp/pub/JapaneseCodecs/JapaneseCodecs-%{jp_codecs}.tar
 Source6: http://gigue.peabody.jhu.edu/~mdboom/omi/source/shm_source/shmmodule.c
 Source7: python-2.3.4-optik.py
 
-Patch0: python-2.4-config.patch
-Patch1: python-2.4-xmlfix.patch
+Patch0: python-2.4.1-config.patch
 Patch3: Python-2.2.1-pydocnogui.patch
 Patch7: python-2.3.4-lib64-regex.patch
-Patch8: python-2.4-lib64.patch
+Patch8: python-2.4.1-lib64.patch
 Patch9: japanese-codecs-lib64.patch
 Patch13: python-2.4-distutils-bdist-rpm.patch
 Patch14: python-2.3.4-pydocnodoc.patch
-Patch16: python-2.4-db43.patch
 
 %if %{main_python}
 Obsoletes: Distutils
@@ -138,7 +136,6 @@ user interface for Python programming.
 %setup -q -n Python-%{version} -a 5
 
 %patch0 -p1 -b .rhconfig
-%patch1 -p0 -b .xmlfix
 %patch3 -p1 -b .no_gui
 %if %{_lib} == lib64
 %patch7 -p1 -b .lib64-regex
@@ -147,7 +144,6 @@ user interface for Python programming.
 %endif
 %patch13 -p1 -b .bdist-rpm
 %patch14 -p1 -b .no-doc
-%patch16 -p1 -b .db43
 
 # This shouldn't be necesarry, but is right now (2.2a3)
 find -name "*~" |xargs rm -f
@@ -342,6 +338,9 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Wed Apr  6 2005 Mihai Ibanescu <misa@redhat.com> 2.4.1-1
+- updated to 2.4.1
+
 * Mon Mar 14 2005 Mihai Ibanescu <misa@redhat.com> 2.4-6
 - building the docs from a different source rpm, to decouple bootstrapping
   python from having tetex installed
