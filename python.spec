@@ -13,15 +13,19 @@
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 Version: %{pybasever}.4
-Release: 2
+Release: 3
 License: PSF - see LICENSE
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
+# optik is part of python 2.3 as optparse
+Provides: python-optik = 1.4.1
+Obsoletes: python-optik
 Source: http://www.python.org/ftp/python/%{version}/Python-%{version}.tar.bz2
 Source3: modulator
 Source4: pynche
 Source5: http://www.python.jp/pub/JapaneseCodecs/JapaneseCodecs-%{jp_codecs}.tar.gz
 Source6: http://gigue.peabody.jhu.edu/~mdboom/omi/source/shm_source/shmmodule.c
+Source7: python-2.3.4-optik.py
 
 Patch0: python-2.3-config.patch
 Patch3: Python-2.2.1-pydocnogui.patch
@@ -172,6 +176,9 @@ cat >> Modules/Setup.dist << EOF
 # Shared memory module
 shm shmmodule.c
 EOF
+
+# Backwards compatible optik
+install -m 0644 %{SOURCE7} Lib/optik.py
 
 %build
 topdir=`pwd`
@@ -361,6 +368,10 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Tue Jun  8 2004 Mihai Ibanescu <misa@redhat.com> 2.3.4-3
+- Added an optik.py that provides the same interface from optparse for
+  backward compatibility; obsoleting python-optik
+
 * Mon Jun  7 2004 Mihai Ibanescu <misa@redhat.com> 2.3.4-2
 - Patched bdist_rpm to allow for builds of multiple binary rpms (bug #123598)
 
