@@ -19,7 +19,7 @@
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 Version: %{pybasever}
-Release: 4
+Release: 5
 License: PSF - see LICENSE
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
