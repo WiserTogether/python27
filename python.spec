@@ -1,7 +1,15 @@
+%define	tcltk_major	8.3
+%ifarch ia64
+%define depsuffix ()(64bit)
+%else
+%define depsuffix %{nil}
+%endif
+%define	tkinter_tcldeps %{expand:libtcl%%{tcltk_major}.so%%{depsuffix} libtk%%{tcltk_major}.so%%{depsuffix} libtix4.1.%%{tcltk_major}.so%%{depsuffix}}
+
 Summary: An interpreted, interactive object-oriented programming language.
 Name: python
 Version: 1.5.2
-Release: 28
+Release: 30
 Copyright: distributable
 Group: Development/Languages
 Source0: ftp://ftp.python.org/pub/python/src/py152.tgz
@@ -9,6 +17,7 @@ Source1: Python-Doc.tar.gz
 Source2: idle
 Source3: modulator
 Source4: pynche
+Source5: gettext.py
 Patch0: python-1.5.2-config.patch
 Patch1: python-1.4-gccbug.patch
 Patch2: Python-1.5.1-nosed.patch
@@ -86,7 +95,7 @@ for the Python language.
 %package -n tkinter
 Summary: A graphical user interface for the Python scripting language.
 Group: Development/Languages
-BuildPrereq: tcl tk
+BuildPrereq: %{tkinter_tcldeps}
 Requires: python = %{PACKAGE_VERSION}
 
 %description -n tkinter
@@ -119,12 +128,13 @@ echo ': ${LINKFORSHARED='-rdynamic'}' >> config.cache
 echo ': ${CCSHARED='-fPIC'}' >> config.cache
 
 cp Lib/lib-old/rand.py Lib
+cp %{SOURCE5} Lib
 
 %build
-export MACHDEP=linux-$RPM_ARCH
+MACHDEP=linux-$RPM_ARCH ; export MACHDEP
 %configure --with-threads
 
-LDFLAGS=-s make 
+make OPT="$RPM_OPT_FLAGS -fPIC" LDFLAGS=-s
 
 %install
 rm -rf ${RPM_BUILD_ROOT}
@@ -226,8 +236,16 @@ rm -f modules-list modules-list.full
 %{_prefix}/lib/python1.5/lib-dynload/_tkinter.so
 
 %changelog
-* Tue Sep 26 2000 Bill Nottingham <notting@redhat.com>
-- remove library specific buildprereqs:; it won't work on sparc64/ia64
+* Fri Mar  2 2001 Nalin Dahyabhai <nalin@redhat.com>
+- rebuild in new environment
+
+* Fri Jan 19 2001 Nalin Dahyabhai <nalin@redhat.com>
+- build even the static libs with -fPIC
+- obey RPM_OPT_FLAGS
+
+* Fri Jan 19 2001 Matt Wilson <msw@redhat.com>
+- added gettext.py from gnome-python, closes #23212
+- did some evail buildprereq stuff to make it go on ia64
 
 * Fri Aug 25 2000 Preston Brown <pbrown@redhat.com>
 - Cristian had to supply a newer version of https handling for working
