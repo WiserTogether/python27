@@ -1,4 +1,5 @@
 %define aspython2 0
+%define unicode ucs4
 
 %if %{aspython2}
 %define python python2
@@ -7,18 +8,21 @@
 %endif
 
 %define pybasever 2.2
+%define jp_codecs 1.4.9
 
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 Version: 2.2.2
-Release: 5
+Release: 26
 License: PSF - see LICENSE
 Group: Development/Languages
 Source: http://www.python.org/ftp/python/%{version}/Python-%{version}.tgz
 Source2: idle
 Source3: modulator
 Source4: pynche
-Source5: http://www.python.jp/pub/JapaneseCodecs/JapaneseCodecs-1.4.6.tar.gz
+Source5: http://www.python.jp/pub/JapaneseCodecs/JapaneseCodecs-%{jp_codecs}.tar.gz
+Source6: http://gigue.peabody.jhu.edu/~mdboom/omi/source/shm_source/shmmodule.c
+
 %if !%{aspython2}
 Patch0: python-2.2.2-config2.patch
 %else
@@ -31,7 +35,10 @@ Patch4: Python-2.2.1-nowhatsnew.patch
 Patch5: Python-2.2.1-distutilrpm.patch
 Patch7: Python-2.2.1-buildroot-bytecode.patch 
 Patch8: python-2.2.2-lib64.patch
-Patch9: japanese-codecs-1.4.6-lib64.patch
+Patch9: japanese-codecs-lib64.patch
+Patch10: python-2.2.2-urllib2-nonanonftp.patch
+Patch11: python-2.2.2-ftpuri.patch
+
 %if !%{aspython2}
 Obsoletes: python2 
 Provides: python2 = %{version}
@@ -43,10 +50,12 @@ BuildPrereq: db3-devel
 Obsoletes: Distutils
 Provides: Distutils
 %endif
+
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildPrereq: readline-devel, libtermcap-devel, openssl-devel, gmp-devel
 BuildPrereq: ncurses-devel, gdbm-devel, zlib-devel, expat-devel, tetex-latex
 BuildPrereq: Mesa-devel tk tix gcc-c++ XFree86-libs glibc-devel
+BuildPrereq: gzip tar /usr/bin/find pkgconfig
 URL: http://www.python.org/
 
 %description
@@ -147,39 +156,49 @@ user interface for Python programming.
 %patch0 -p1 -b .rhconfig
 %patch1 -p1
 %patch2 -p1 -b .no_ndbm
-%patch3 -p1
+%patch3 -p1 -b .no_gui
 %patch4 -p1
 %patch5 -p1
 %patch7 -p1 -b .bad-bytecode-path
+%if %{_lib} == lib64
 %patch8 -p1 -b .lib64
 %patch9 -p0 -b .lib64-j
+%endif
+%patch10 -p1 -b .nonanonftp
+%patch11 -p1 -b .ftpuri
 
 # This shouldn't be necesarry, but is right now (2.2a3)
 find -name "*~" |xargs rm -f
 
-# Fix for lib/lib64
-for f in Lib/distutils/command/install.py Lib/distutils/sysconfig.py \
-    Lib/site.py Modules/getpath.c Modules/Setup.dist setup.py \
-    JapaneseCodecs-1.4.6/setup.py; do
-    sed 's/@LIB@/%{_lib}/g' $f > $f- && cat $f- > $f
-done
+# Temporary workaround to avoid confusing find-requires: don't ship the tests
+# as executable files
+chmod 0644 Lib/test/test_*.py
 
-# This command drops the HTML files in the top-level build directory.
-# That's not perfect, but it will do for now.
+# shm module
+cp %{SOURCE6} Modules
+cat >> Modules/Setup.dist << EOF
+
+# Shared memory module
+shm shmmodule.c
+EOF
 
 %build
+topdir=`pwd`
 export CFLAGS="$RPM_OPT_FLAGS -D_GNU_SOURCE -fPIC"
 export CXXFLAGS="$RPM_OPT_FLAGS -D_GNU_SOURCE -fPIC"
 export OPT="$RPM_OPT_FLAGS -D_GNU_SOURCE -fPIC"
 export LINKCC="gcc"
-%configure --enable-ipv6 --enable-unicode=ucs2
+if pkg-config openssl ; then
+	export CFLAGS="$CFLAGS `pkg-config --cflags openssl`"
+	export LDFLAGS="$LDFLAGS `pkg-config --libs-only-L openssl`"
+fi
+%configure --enable-ipv6 --enable-unicode=%{unicode}
 
-make OPT="$RPM_OPT_FLAGS -D_GNU_SOURCE -fPIC" %{?_smp_mflags}
-Tools/scripts/pathfix.py -i "/usr/bin/env python%{pybasever}" .
-make OPT="$RPM_OPT_FLAGS -D_GNU_SOURCE -fPIC" %{?_smp_mflags}
+make OPT="$CFLAGS" %{?_smp_mflags}
+$topdir/python Tools/scripts/pathfix.py -i "/usr/bin/env python%{pybasever}" .
+make OPT="$CFLAGS" %{?_smp_mflags}
 
 %ifarch i386
-topdir=`pwd`
 pushd Doc
 make PYTHON=$topdir/python
 rm html/index.html.in Makefile* info/Makefile tools/sgmlconv/Makefile
@@ -190,7 +209,12 @@ popd
 [ -d $RPM_BUILD_ROOT ] && rm -fr $RPM_BUILD_ROOT
 mkdir -p $RPM_BUILD_ROOT/usr $RPM_BUILD_ROOT%{_mandir}
 
-%makeinstall DESTDIR=/ MANDIR=$RPM_BUILD_ROOT/%{_mandir} INCLUDEDIR=$RPM_BUILD_ROOT/%{_includedir} LIBDIR=$RPM_BUILD_ROOT/%{_libdir} SCRIPTDIR=$RPM_BUILD_ROOT/%{_libdir} build_root=$RPM_BUILD_ROOT
+# Clean up patched .py files that are saved as .lib64
+for f in distutils/command/install distutils/sysconfig; do
+    rm -f Lib/$f.py.lib64
+done
+
+%makeinstall DESTDIR=/ MANDIR=$RPM_BUILD_ROOT%{_mandir} INCLUDEDIR=$RPM_BUILD_ROOT%{_includedir} LIBDIR=$RPM_BUILD_ROOT%{_libdir} SCRIPTDIR=$RPM_BUILD_ROOT%{_libdir} build_root=$RPM_BUILD_ROOT
 # Fix the interpreter path in binaries installed by distutils 
 # (which changes them by itself)
 # Make sure we preserve the file permissions
@@ -260,11 +284,12 @@ popd
 %endif
 
 # Japanese codecs
-pushd JapaneseCodecs-1.4.6
-$RPM_BUILD_ROOT/usr/bin/%{python} setup.py install \
+pushd JapaneseCodecs-%{jp_codecs}
+PYTHONHOME=$RPM_BUILD_ROOT/usr $RPM_BUILD_ROOT/usr/bin/%{python} setup.py \
+install \
 --install-scripts=$RPM_BUILD_ROOT/%{_prefix}/bin \
---install-purelib=$RPM_BUILD_ROOT/%{_libdir}/%{name}%{pybasever}/site-packages \
---install-platlib=$RPM_BUILD_ROOT/%{_libdir}/%{name}%{pybasever}/lib-dynload \
+--install-purelib=$RPM_BUILD_ROOT/%{_libdir}/python%{pybasever}/site-packages \
+--install-platlib=$RPM_BUILD_ROOT/%{_libdir}/python%{pybasever}/lib-dynload \
 --install-data=$RPM_BUILD_ROOT/%{_exec_prefix} \
 --root=/
 popd
@@ -278,6 +303,14 @@ rm -fr $RPM_BUILD_ROOT
 %defattr(-, root, root)
 %doc LICENSE README
 /usr/bin/python*
+%if %{aspython2}
+/usr/bin/idle2
+/usr/bin/modulator2
+/usr/bin/msgfmt2.py
+/usr/bin/pydoc2
+/usr/bin/pygettext2.py
+/usr/bin/pynche2
+%endif
 %{_mandir}/*/*
 
 %dir %{_libdir}/python%{pybasever}
@@ -337,6 +370,74 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Mon Feb 24 2003 Elliot Lee <sopwith@redhat.com>
+- rebuilt
+
+* Mon Feb 24 2003 Mihai Ibanescu <misa@redhat.com> 2.2.2-25
+- Fixed bug #84886: pydoc dies when run w/o arguments
+- Fixed bug #84205: add python shm module back (used to be shipped with 1.5.2)
+- Fixed bug #84966: path in byte-compiled code still wrong
+
+* Thu Feb 20 2003 Jeremy Katz <katzj@redhat.com> 2.2.2-23
+- ftp uri's should be able to specify being rooted at the root instead of 
+  where you login via ftp (#84692)
+
+* Mon Feb 10 2003 Mihai Ibanescu <misa@redhat.com> 2.2.2-22
+- Using newer Japanese codecs (1.4.9). Thanks to 
+  Peter Bowen <pzb@datastacks.com> for pointing this out.
+
+* Thu Feb  6 2003 Mihai Ibanescu <misa@redhat.com> 2.2.2-21
+- Rebuild
+
+* Wed Feb  5 2003 Mihai Ibanescu <misa@redhat.com> 2.2.2-20
+- Release number bumped really high: turning on UCS4 (ABI compatibility
+  breakage)
+
+* Fri Jan 31 2003 Mihai Ibanescu <misa@redhat.com> 2.2.2-13
+- Attempt to look both in /usr/lib64 and /usr/lib/python2.2/site-packages/:
+  some work on python-2.2.2-lib64.patch
+
+* Thu Jan 30 2003 Mihai Ibanescu <misa@redhat.com> 2.2.2-12
+- Rebuild to incorporate the removal of .lib64 and - files.
+
+* Thu Jan 30 2003 Mihai Ibanescu <misa@redhat.com> 2.2.2-11.7.3
+- Fixed bug #82544: Errata removes most tools
+- Fixed bug #82435: Python 2.2.2 errata breaks redhat-config-users
+- Removed .lib64 and - files that get installed after we fix the multilib
+  .py files.
+
+* Wed Jan 22 2003 Tim Powers <timp@redhat.com>
+- rebuilt
+
+* Wed Jan 15 2003 Jens Petersen <petersen@redhat.com> 2.2.2-10
+- rebuild to update tkinter's tcltk deps
+- convert changelog to utf-8
+
+* Tue Jan  7 2003 Nalin Dahyabhai <nalin@redhat.com> 2.2.2-9
+- rebuild
+
+* Fri Jan  3 2003 Nalin Dahyabhai <nalin@redhat.com>
+- pick up OpenSSL cflags and ldflags from pkgconfig if available
+
+* Thu Jan  2 2003 Jeremy Katz <katzj@redhat.com> 2.2.2-8
+- urllib2 didn't support non-anonymous ftp.  add support based on how 
+  urllib did it (#80676, #78168)
+
+* Mon Dec 16 2002 Mihai Ibanescu <misa@redhat.com> 2.2.2-7
+- Fix bug #79647 (Rebuild of SRPM fails if python isn't installed)
+- Added a bunch of missing BuildRequires found while fixing the
+  above-mentioned bug
+
+* Tue Dec 10 2002 Tim Powers <timp@redhat.com> 2.2.2-6
+- rebuild to fix broken tcltk deps for tkinter
+
+* Fri Nov 22 2002 Mihai Ibanescu <misa@redhat.com>
+2.2.2-3.7.3
+- Recompiled for 7.3 (to fix the -lcrypt bug)
+- Fix for the spurious error message at the end of the build (build-requires
+  gets confused by executable files starting with """"): make the tests
+  non-executable.
+
 * Wed Nov 20 2002 Mihai Ibanescu <misa@redhat.com>
 2.2.2-5
 - Fixed configuration patch to add -lcrypt when compiling cryptmodule.c
@@ -372,86 +473,86 @@ rm -fr $RPM_BUILD_ROOT
 - Fix #53930 (Python-2.2.1-buildroot-bytecode.patch)
 - Added BuildPrereq dependency on gcc-c++
 
-* Fri Aug 30 2002 Trond Eivind Glomsrød <teg@redhat.com> 2.2.1-17
+* Fri Aug 30 2002 Trond Eivind GlomsrÃ¸d <teg@redhat.com> 2.2.1-17
 - security fix for _execvpe
 
-* Tue Aug 13 2002 Trond Eivind Glomsrød <teg@redhat.com> 2.2.1-16
+* Tue Aug 13 2002 Trond Eivind GlomsrÃ¸d <teg@redhat.com> 2.2.1-16
 - Fix  #71011,#71134, #58157
 
-* Wed Aug  7 2002 Trond Eivind Glomsrød <teg@redhat.com> 2.2.1-15
+* Wed Aug  7 2002 Trond Eivind GlomsrÃ¸d <teg@redhat.com> 2.2.1-15
 - Resurrect tkinter
 - Fix for distutils (#67671)
 - Fix #69962
 
-* Thu Jul 25 2002 Trond Eivind Glomsrød <teg@redhat.com> 2.2.1-14
+* Thu Jul 25 2002 Trond Eivind GlomsrÃ¸d <teg@redhat.com> 2.2.1-14
 - Obsolete tkinter/tkinter2 (#69838)
 
-* Tue Jul 23 2002 Trond Eivind Glomsrød <teg@redhat.com> 2.2.1-13
+* Tue Jul 23 2002 Trond Eivind GlomsrÃ¸d <teg@redhat.com> 2.2.1-13
 - Doc fixes (#53951) - not on alpha at the momemt
 
-* Mon Jul  8 2002 Trond Eivind Glomsrød <teg@redhat.com> 2.2.1-12
+* Mon Jul  8 2002 Trond Eivind GlomsrÃ¸d <teg@redhat.com> 2.2.1-12
 - fix pydoc (#68082)
 
-* Mon Jul  8 2002 Trond Eivind Glomsrød <teg@redhat.com> 2.2.1-11
+* Mon Jul  8 2002 Trond Eivind GlomsrÃ¸d <teg@redhat.com> 2.2.1-11
 - Add db4-devel as a BuildPrereq
 
 * Fri Jun 21 2002 Tim Powers <timp@redhat.com> 2.2.1-10
 - automated rebuild
 
-* Mon Jun 17 2002 Trond Eivind Glomsrød <teg@redhat.com> 2.2.1-9
+* Mon Jun 17 2002 Trond Eivind GlomsrÃ¸d <teg@redhat.com> 2.2.1-9
 - Add Japanese codecs (#66352)
 
-* Tue Jun 11 2002 Trond Eivind Glomsrød <teg@redhat.com> 2.2.1-8
+* Tue Jun 11 2002 Trond Eivind GlomsrÃ¸d <teg@redhat.com> 2.2.1-8
 - No more tkinter...
 
-* Wed May 29 2002 Trond Eivind Glomsrød <teg@redhat.com> 2.2.1-7
+* Wed May 29 2002 Trond Eivind GlomsrÃ¸d <teg@redhat.com> 2.2.1-7
 - Rebuild
 
-* Tue May 21 2002 Trond Eivind Glomsrød <teg@redhat.com> 2.2.1-6
+* Tue May 21 2002 Trond Eivind GlomsrÃ¸d <teg@redhat.com> 2.2.1-6
 - Add the email subcomponent (#65301)
 
-* Fri May 10 2002 Trond Eivind Glomsrød <teg@redhat.com> 2.2.1-5
+* Fri May 10 2002 Trond Eivind GlomsrÃ¸d <teg@redhat.com> 2.2.1-5
 - Rebuild
 
 * Thu May 02 2002 Than Ngo <than@redhat.com> 2.2.1-4
 - rebuild i new enviroment
 
-* Tue Apr 23 2002 Trond Eivind Glomsrød <teg@redhat.com>
+* Tue Apr 23 2002 Trond Eivind GlomsrÃ¸d <teg@redhat.com>
 - Use ucs2, not ucs4, to avoid breaking tkinter (#63965)
 
-* Mon Apr 22 2002 Trond Eivind Glomsrød <teg@redhat.com> 2.2.1-2
+* Mon Apr 22 2002 Trond Eivind GlomsrÃ¸d <teg@redhat.com> 2.2.1-2
 - Make it use db4
 
-* Fri Apr 12 2002 Trond Eivind Glomsrød <teg@redhat.com> 2.2.1-1
+* Fri Apr 12 2002 Trond Eivind GlomsrÃ¸d <teg@redhat.com> 2.2.1-1
 - 2.2.1 - a bugfix-only release
 
-* Fri Apr 12 2002 Trond Eivind Glomsrød <teg@redhat.com> 2.2-16
+* Fri Apr 12 2002 Trond Eivind GlomsrÃ¸d <teg@redhat.com> 2.2-16
 - the same, but in builddirs - this will remove them from the 
   docs package, which doesn't look in the buildroot for files.
 
-* Fri Apr 12 2002 Trond Eivind Glomsrød <teg@redhat.com> 2.2-15
+* Fri Apr 12 2002 Trond Eivind GlomsrÃ¸d <teg@redhat.com> 2.2-15
 - Get rid of temporary files and .cvsignores included 
   in the tarball and make install
 
-* Fri Apr  5 2002 Trond Eivind Glomsrød <teg@redhat.com> 2.2-14
+* Fri Apr  5 2002 Trond Eivind GlomsrÃ¸d <teg@redhat.com> 2.2-14
 - Don't own lib-tk in main package, only in tkinter (#62753)
 
-* Mon Mar 25 2002 Trond Eivind Glomsrød <teg@redhat.com> 2.2-13
+* Mon Mar 25 2002 Trond Eivind GlomsrÃ¸d <teg@redhat.com> 2.2-13
 - rebuild
 
-* Mon Mar 25 2002 Trond Eivind Glomsrød <teg@redhat.com> 2.2-12
+* Mon Mar 25 2002 Trond Eivind GlomsrÃ¸d <teg@redhat.com> 2.2-12
 - rebuild
 
-* Fri Mar  1 2002 Trond Eivind Glomsrød <teg@redhat.com> 2.2-11
+* Fri Mar  1 2002 Trond Eivind GlomsrÃ¸d <teg@redhat.com> 2.2-11
 - Add a not to the Distutils obsoletes test (doh!)
 
-* Fri Mar  1 2002 Trond Eivind Glomsrød <teg@redhat.com> 2.2-10
+* Fri Mar  1 2002 Trond Eivind GlomsrÃ¸d <teg@redhat.com> 2.2-10
 - Rebuild
 
-* Mon Feb 25 2002 Trond Eivind Glomsrød <teg@redhat.com> 2.2-9
+* Mon Feb 25 2002 Trond Eivind GlomsrÃ¸d <teg@redhat.com> 2.2-9
 - Only obsolete Distutils when built as python
 
-* Thu Feb 21 2002 Trond Eivind Glomsrød <teg@redhat.com> 2.2-8
+* Thu Feb 21 2002 Trond Eivind GlomsrÃ¸d <teg@redhat.com> 2.2-8
 - Make files in /usr/bin install side by side with python 1.5 when
 - Drop explicit requirement of db4
   built as python2
@@ -460,32 +561,32 @@ rm -fr $RPM_BUILD_ROOT
 - Use version and pybasever macros to make updating easy
 - Use _smp_mflags macro
 
-* Tue Jan 29 2002 Trond Eivind Glomsrød <teg@redhat.com> 2.2-6
+* Tue Jan 29 2002 Trond Eivind GlomsrÃ¸d <teg@redhat.com> 2.2-6
 - Add db4-devel to BuildPrereq
 
 * Fri Jan 25 2002 Nalin Dahyabhai <nalin@redhat.com> 2.2-5
 - disable ndbm support, which is db2 in disguise (really interesting things
   can happen when you mix db2 and db4 in a single application)
 
-* Thu Jan 24 2002 Trond Eivind Glomsrød <teg@redhat.com> 2.2-4
+* Thu Jan 24 2002 Trond Eivind GlomsrÃ¸d <teg@redhat.com> 2.2-4
 - Obsolete subpackages if necesarry 
 - provide versioned python2
 - build with db4
 
-* Wed Jan 16 2002 Trond Eivind Glomsrød <teg@redhat.com> 2.2-3
+* Wed Jan 16 2002 Trond Eivind GlomsrÃ¸d <teg@redhat.com> 2.2-3
 - Alpha toolchain broken. Disable build on alpha.
 - New openssl
 
-* Wed Dec 26 2001 Trond Eivind Glomsrød <teg@redhat.com> 2.2-1
+* Wed Dec 26 2001 Trond Eivind GlomsrÃ¸d <teg@redhat.com> 2.2-1
 - 2.2 final
 
-* Fri Dec 14 2001 Trond Eivind Glomsrød <teg@redhat.com> 2.2-0.11c1
+* Fri Dec 14 2001 Trond Eivind GlomsrÃ¸d <teg@redhat.com> 2.2-0.11c1
 - 2.2 RC 1
 - Don't include the _tkinter module in the main package - it's 
   already in the tkiter packace
 - Turn off the mpzmodule, something broke in the buildroot
 
-* Wed Nov 28 2001 Trond Eivind Glomsrød <teg@redhat.com> 2.2-0.10b2
+* Wed Nov 28 2001 Trond Eivind GlomsrÃ¸d <teg@redhat.com> 2.2-0.10b2
 - Use -fPIC for OPT as well, in lack of a proper libpython.so
 
 * Mon Nov 26 2001 Matt Wilson <msw@redhat.com> 2.2-0.9b2
@@ -498,44 +599,44 @@ rm -fr $RPM_BUILD_ROOT
 * Fri Oct 26 2001 Matt Wilson <msw@redhat.com> 2.2-0.7b1
 - python2ify
 
-* Fri Oct 19 2001 Trond Eivind Glomsrød <teg@redhat.com> 2.2-0.5b1
+* Fri Oct 19 2001 Trond Eivind GlomsrÃ¸d <teg@redhat.com> 2.2-0.5b1
 - 2.2b1
 
-* Sun Sep 30 2001 Trond Eivind Glomsrød <teg@redhat.com> 2.2-0.4a4
+* Sun Sep 30 2001 Trond Eivind GlomsrÃ¸d <teg@redhat.com> 2.2-0.4a4
 - 2.2a4
 - Enable UCS4 support
 - Enable IPv6
 - Provide distutils
 - Include msgfmt.py and pygettext.py
 
-* Fri Sep 14 2001 Trond Eivind Glomsrød <teg@redhat.com> 2.2-0.3a3
+* Fri Sep 14 2001 Trond Eivind GlomsrÃ¸d <teg@redhat.com> 2.2-0.3a3
 - Obsolete Distutils, which is now part of the main package
 - Obsolete python2
 
-* Thu Sep 13 2001 Trond Eivind Glomsrød <teg@redhat.com> 2.2-0.2a3
+* Thu Sep 13 2001 Trond Eivind GlomsrÃ¸d <teg@redhat.com> 2.2-0.2a3
 - Add docs, tools and tkinter subpackages, to match the 1.5 layout
 
-* Wed Sep 12 2001 Trond Eivind Glomsrød <teg@redhat.com> 2.2-0.1a3
+* Wed Sep 12 2001 Trond Eivind GlomsrÃ¸d <teg@redhat.com> 2.2-0.1a3
 - 2.2a3
 - don't build tix and blt extensions
 
-* Mon Aug 13 2001 Trond Eivind Glomsrød <teg@redhat.com>
+* Mon Aug 13 2001 Trond Eivind GlomsrÃ¸d <teg@redhat.com>
 - Add tk and tix to build dependencies
 
-* Sat Jul 21 2001 Trond Eivind Glomsrød <teg@redhat.com>
+* Sat Jul 21 2001 Trond Eivind GlomsrÃ¸d <teg@redhat.com>
 - 2.1.1 bugfix release - with a GPL compatible license
 
-* Fri Jul 20 2001 Trond Eivind Glomsrød <teg@redhat.com>
+* Fri Jul 20 2001 Trond Eivind GlomsrÃ¸d <teg@redhat.com>
 - Add new build dependencies (#49753)
 
 * Tue Jun 26 2001 Nalin Dahyabhai <nalin@redhat.com>
 - build with -fPIC
 
-* Fri Jun  1 2001 Trond Eivind Glomsrød <teg@redhat.com>
+* Fri Jun  1 2001 Trond Eivind GlomsrÃ¸d <teg@redhat.com>
 - 2.1
 - reorganization of file includes
 
-* Wed Dec 20 2000 Trond Eivind Glomsrød <teg@redhat.com>
+* Wed Dec 20 2000 Trond Eivind GlomsrÃ¸d <teg@redhat.com>
 - fix the "requires" clause, it lacked a space causing problems
 - use %%{_tmppath}
 - don't define name, version etc
@@ -559,7 +660,7 @@ rm -fr $RPM_BUILD_ROOT
 - add test.xml.out to files list
 
 * Thu Oct  5 2000 Jeremy Hylton <jeremy@beopen.com>
-- added bin/python2.0 to files list (suggested by Martin v. Löwis)
+- added bin/python2.0 to files list (suggested by Martin v. L?)
 
 * Tue Sep 26 2000 Jeremy Hylton <jeremy@beopen.com>
 - updated for release 1 of 2.0b2
