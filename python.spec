@@ -9,7 +9,7 @@
 Summary: An interpreted, interactive object-oriented programming language.
 Name: python
 Version: 1.5.2
-Release: 34
+Release: 35
 License: distributable
 Group: Development/Languages
 Source0: ftp://ftp.python.org/pub/python/src/py152.tgz
@@ -137,7 +137,9 @@ cp %{SOURCE5} Lib
 cp %{SOURCE10} %{SOURCE11} Lib
 
 %build
+%ifnarch s390 s390x
 RPM_OPT_FLAGS="$RPM_OPT_FLAGS -fno-merge-constants"
+%endif
 MACHDEP=linux-$RPM_ARCH ; export MACHDEP
 %configure --with-threads
 
@@ -243,7 +245,11 @@ rm -f modules-list modules-list.full
 %{_prefix}/lib/python1.5/lib-dynload/_tkinter.so
 
 %changelog
-* Wed Jul 27 2001 Elliot Lee <sopwith@redhat.com>
+* Fri Jun 29 2001 Florian La Roche <Florian.LaRoche@redhat.de>
+- do not set -fno-merge-constants on s390,s390x
+- truncate changelog due to rpm errors
+
+* Wed Jun 27 2001 Elliot Lee <sopwith@redhat.com>
 - -fno-merge-constants
 
 * Tue Jun 12 2001 Nalin Dahyabhai <nalin@redhat.com>
