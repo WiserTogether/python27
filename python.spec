@@ -19,7 +19,7 @@
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 Version: %{pybasever}
-Release: 3
+Release: 4
 License: PSF - see LICENSE
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -35,6 +35,7 @@ Source6: http://gigue.peabody.jhu.edu/~mdboom/omi/source/shm_source/shmmodule.c
 Source7: python-2.3.4-optik.py
 
 Patch0: python-2.4-config.patch
+Patch1: python-2.4-xmlfix.patch
 Patch3: Python-2.2.1-pydocnogui.patch
 Patch4: python-2.3-nowhatsnew.patch
 Patch7: python-2.3.4-lib64-regex.patch
@@ -155,6 +156,7 @@ user interface for Python programming.
 %setup -q -n Python-%{version} -a 5
 
 %patch0 -p1 -b .rhconfig
+%patch1 -p0 -b .xmlfix
 %patch3 -p1 -b .no_gui
 %patch4 -p1
 %if %{_lib} == lib64
@@ -369,6 +371,9 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Wed Feb  2 2005 Mihai Ibanescu <misa@redhat.com> 2.4-4
+- Fixed security issue in SimpleXMLRPCServer.py (#146647)
+
 * Wed Jan 12 2005 Tim Waugh <twaugh@redhat.com> 2.4-3
 - Rebuilt for new readline.
 
