@@ -11,7 +11,7 @@
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 Version: 2.2.1
-Release: 17
+Release: 17a
 License: PSF - see LICENSE
 Group: Development/Languages
 Source: http://www.python.org/ftp/python/%{version}/Python-%{version}.tgz
@@ -155,6 +155,9 @@ find -name "*~" |xargs rm -f
 CFLAGS="$RPM_OPT_FLAGS -D_GNU_SOURCE -fPIC"
 CXXFLAGS="$RPM_OPT_FLAGS -D_GNU_SOURCE -fPIC"
 OPT="$RPM_OPT_FLAGS -D_GNU_SOURCE -fPIC"
+%ifarch s390 s390x
+export LDSHARED="gcc -shared -fPIC "
+%endif
 %configure --enable-ipv6 --enable-unicode=ucs2
 
 make OPT="$RPM_OPT_FLAGS -D_GNU_SOURCE -fPIC" %{?_smp_mflags}
