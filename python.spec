@@ -1,10 +1,14 @@
-%define aspython2 0
+%{!?__python_ver:%define __python_ver EMPTY}
 %define unicode ucs4
 
-%if %{aspython2}
-%define python python2
+%if "%{__python_ver}" != "EMPTY"
+%define main_python 0
+%define python python%{__python_ver}
+%define tkinter tkinter%{__python_ver}
 %else
+%define main_python 1
 %define python python
+%define tkinter tkinter
 %endif
 
 %define pybasever 2.3
@@ -14,7 +18,7 @@
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 Version: %{pybasever}.4
-Release: 7
+Release: 8
 License: PSF - see LICENSE
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -38,16 +42,14 @@ Patch12: python-2.3.2-nomkhowto.patch
 Patch13: python-2.3.4-distutils-bdist-rpm.patch
 Patch14: python-2.3.4-pydocnodoc.patch
 
-%if !%{aspython2}
+%if %{main_python}
+Obsoletes: Distutils
+Provides: Distutils
 Obsoletes: python2 
 Provides: python2 = %{version}
 BuildPrereq: db4-devel
 %else
-BuildPrereq: db3-devel
-%endif
-%if !%{aspython2}
-Obsoletes: Distutils
-Provides: Distutils
+#BuildPrereq: db3-devel
 %endif
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
@@ -79,7 +81,10 @@ package.
 Summary: The libraries and header files needed for Python development.
 Group: Development/Libraries
 Requires: %{python} = %{version}-%{release}
-%if !%{aspython2}
+# Needed here because of the migration of Makefile from -devel to the main
+# package
+Conflicts: %{python} < %{version}-%{release}
+%if %{main_python}
 Obsoletes: python2-devel
 Provides: python2-devel = %{version}-%{release}
 %endif
@@ -100,7 +105,7 @@ Summary: A collection of development tools included with Python.
 Group: Development/Tools
 Requires: %{name} = %{version}-%{release}
 Requires: tkinter = %{version}-%{release}
-%if !%{aspython2}
+%if %{main_python}
 Obsoletes: python2-tools
 Provides: python2-tools = %{version}
 %endif
@@ -113,7 +118,7 @@ to build python programs.
 Summary: Documentation for the Python programming language.
 Group: Documentation
 Requires: %{name} = %{version}-%{release}
-%if !%{aspython2}
+%if %{main_python}
 Obsoletes: python2-docs
 Provides: python2-docs = %{version}
 %endif
@@ -126,25 +131,17 @@ in ASCII text files and in LaTeX source files.
 Install the python-docs package if you'd like to use the documentation
 for the Python language.
 
-%if !%{aspython2}
-%package -n tkinter
-%else
-%package -n tkinter2
-%endif
+%package -n %{tkinter}
 Summary: A graphical user interface for the Python scripting language.
 Group: Development/Languages
 BuildPrereq:  tcl, tk
 Requires: %{name} = %{version}-%{release}
-%if !%{aspython2}
+%if %{main_python}
 Obsoletes: tkinter2
 Provides: tkinter2 = %{version}
 %endif
 
-%if !%{aspython2}
-%description -n tkinter
-%else
-%description -n tkinter2
-%endif
+%description -n %{tkinter}
 
 The Tkinter (Tk interface) program is an graphical user interface for
 the Python scripting language.
@@ -226,11 +223,11 @@ for fixed in $RPM_BUILD_ROOT/usr/bin/pydoc; do
         && cat $fixed- > $fixed && rm -f $fixed-
 done
 
-%if %{aspython2}
-mv $RPM_BUILD_ROOT/usr/bin/python $RPM_BUILD_ROOT/usr/bin/python2
-mv $RPM_BUILD_ROOT/%{_mandir}/man1/python.1 $RPM_BUILD_ROOT/%{_mandir}/man1/python%{pybasever}.1
-%else
+%if %{main_python}
 ln -s python $RPM_BUILD_ROOT/usr/bin/python2
+%else
+mv $RPM_BUILD_ROOT/usr/bin/python $RPM_BUILD_ROOT/usr/bin/%{python}
+mv $RPM_BUILD_ROOT/%{_mandir}/man1/python.1 $RPM_BUILD_ROOT/%{_mandir}/man1/python%{pybasever}.1
 %endif
 
 # tools
@@ -273,15 +270,15 @@ find $RPM_BUILD_ROOT%{_libdir}/python%{pybasever}/test \
 rm -f $RPM_BUILD_ROOT%{_libdir}/python2.2/LICENSE.txt
 
 
-#make the binaries install side by side with python 1
-%if %{aspython2}
+#make the binaries install side by side with the main python
+%if !%{main_python}
 pushd $RPM_BUILD_ROOT/usr/bin
-mv idle idle2
-mv modulator modulator2
-mv pynche pynche2
-mv pygettext.py pygettext2.py
-mv msgfmt.py msgfmt2.py
-mv pydoc pydoc2
+mv idle idle%{__python_ver}
+mv modulator modulator%{__python_ver}
+mv pynche pynche%{__python_ver}
+mv pygettext.py pygettext%{__python_ver}.py
+mv msgfmt.py msgfmt%{__python_ver}.py
+mv pydoc pydoc%{__python_ver}
 popd
 %endif
 
@@ -306,14 +303,6 @@ rm -fr $RPM_BUILD_ROOT
 %defattr(-, root, root)
 %doc LICENSE README
 /usr/bin/python*
-%if %{aspython2}
-/usr/bin/idle2
-/usr/bin/modulator2
-/usr/bin/msgfmt2.py
-/usr/bin/pydoc2
-/usr/bin/pygettext2.py
-/usr/bin/pynche2
-%endif
 %{_mandir}/*/*
 %{_libdir}/libpython%{pybasever}.so*
 
@@ -348,7 +337,6 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/config
 %{_libdir}/python%{pybasever}/test
 
-%if !%{aspython2}
 %files tools
 %defattr(-,root,root,755)
 %doc Tools/modulator/README.modulator
@@ -360,25 +348,26 @@ rm -fr $RPM_BUILD_ROOT
 /usr/bin/pynche*
 /usr/bin/pygettext*.py
 /usr/bin/msgfmt*.py
-/usr/bin/pydoc
+/usr/bin/pydoc*
 %{tools_dir}
-%endif
 
 %files docs
 %defattr(-,root,root,755)
 %doc Misc/NEWS  Misc/README Misc/cheatsheet 
 %doc Misc/HISTORY Doc/html
 
-%if !%{aspython2}
-%files -n tkinter
-%else
-%files -n tkinter2
-%endif
+%files -n %{tkinter}
 %defattr(-,root,root,755)
 %{_libdir}/python%{pybasever}/lib-tk
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Fri Aug 13 2004 Mihai Ibanescu <misa@redhat.com> 2.3.4-8
+- Fixed bug #129769: Makefile in new python conflicts with older version found
+  in old python-devel
+- Reorganized the spec file to get rid of the aspython2 define; __python_ver
+  is more powerful.
+
 * Tue Aug  3 2004 Mihai Ibanescu <misa@redhat.com> 2.3.4-7
 - Including html documentation for non-i386 arches
 - Fixed #125362 (python-doc html files have japanese character encoding)
