@@ -9,7 +9,7 @@
 Summary: An interpreted, interactive object-oriented programming language.
 Name: python
 Version: 1.5.2
-Release: 38
+Release: 43.73
 License: distributable
 Group: Development/Languages
 Source0: ftp://ftp.python.org/pub/python/src/py152.tgz
@@ -33,7 +33,11 @@ Patch7: python-1.5.2-_locale.patch
 Patch8: python-1.5.2-tcl831.patch
 Patch9: python-1.5.2-https.patch
 Patch10: python-1.5.2-gmp4.patch
-BuildRequires: readline readline-devel zlib zlib-devel gmp gmp-devel gdbm gdbm-devel
+Patch11: python-1.5.2-sec.patch
+Patch12: python-1.1.2-test-popen2.patch
+Patch13: python-1.5.2-strptime.patch
+BuildRequires: readline readline-devel zlib zlib-devel 
+BuildRequires: gmp gmp-devel gdbm gdbm-devel openssl-devel tix
 Conflicts: tkinter < %{version}-%{release}
 BuildRoot: %{_tmppath}/%{name}/python-root
 
@@ -127,6 +131,9 @@ user interface for Python programming.
 %patch8 -p1 -b .tcl823
 %patch9 -p1 -b .https
 %patch10 -p1 -b .gmp4
+%patch11 -p1 -b .sec
+%patch12 -p1 -b .testcase
+%patch13 -p1 -b .strptime
 
 find . -name "*.nosed" -exec rm -f {} \;
 
@@ -148,7 +155,7 @@ echo "shm shmmodule.c" >> Modules/Setup.in
 %ifnarch s390 s390x
 RPM_OPT_FLAGS="$RPM_OPT_FLAGS -fno-merge-constants"
 %endif
-MACHDEP=linux-$RPM_ARCH ; export MACHDEP
+MACHDEP=linux-%{_target_cpu} ; export MACHDEP
 %configure --with-threads
 
 make OPT="$RPM_OPT_FLAGS -fPIC" LDFLAGS=-s
@@ -210,6 +217,9 @@ find $DIR3 -type f | sed -e "s#^${RPM_BUILD_ROOT}##g" >> python-tools.files
 find $RPM_BUILD_ROOT%{_prefix}/lib/python1.5 -type f -name "*.pyc" | xargs rm -v
 PYTHONPATH=$RPM_BUILD_ROOT%{_prefix}/lib/python1.5 $RPM_BUILD_ROOT%{_bindir}/python -c "import compileall; compileall.compile_dir('"$RPM_BUILD_ROOT"/usr/lib/python1.5', 4, '/usr/lib/python1.5/site-packages')"
 
+# Remove unneeded files
+rm -f Doc/.cvsignore Doc/ref/.cvsignore Doc/.latex2html-init
+
 %clean
 rm -rf ${RPM_BUILD_ROOT}
 rm -f modules-list modules-list.full
@@ -253,6 +263,27 @@ rm -f modules-list modules-list.full
 %{_prefix}/lib/python1.5/lib-dynload/_tkinter.so
 
 %changelog
+* Thu Jan 30 2003 Mihai Ibanescu <misa@redhat.com> 1.5.2-43
+- Rebuild
+
+* Tue Jan 14 2003 Mihai Ibanescu <misa@redhat.com> 1.5.2-42
+- Fixed bug #81796: python time.strptime() causes segfault on ia64
+
+* Fri Jan 10 2003 Mihai Ibanescu <misa@redhat.com> 1.5.2-41
+- Fixed the https patch: writing binary data through an SSL port would bork if
+  the data has nulls in it.
+- Fixed MACHDEP
+
+* Tue Nov  5 2002 Mihai Ibanescu <misa@redhat.com> 1.5.2-41
+- Removed Doc/.cvsignore
+
+* Tue Nov  5 2002 Mihai Ibanescu <misa@redhat.com> 1.5.2-40.73
+- Fixed the security patch
+- Fixed a race condition in popen2:_test()
+
+* Wed Sep 11 2002 Trond Eivind Glomsrød <teg@redhat.com> 1.5.2-38.73
+- Add security patch
+
 * Wed Apr  3 2002 Matt Wilson <msw@redhat.com> 1.5.2-38
 - include a new version of the https patch from gafton
 - added shm module at the request of gafton.
