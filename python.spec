@@ -10,8 +10,8 @@
 
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
-Version: 2.2.1
-Release: 17a
+Version: 2.2.2
+Release: 5
 License: PSF - see LICENSE
 Group: Development/Languages
 Source: http://www.python.org/ftp/python/%{version}/Python-%{version}.tgz
@@ -19,17 +19,25 @@ Source2: idle
 Source3: modulator
 Source4: pynche
 Source5: http://www.python.jp/pub/JapaneseCodecs/JapaneseCodecs-1.4.6.tar.gz
-Patch0: python-2.2.1-config2.patch
+%if !%{aspython2}
+Patch0: python-2.2.2-config2.patch
+%else
+Patch0: python-2.2.2-config.patch
+%endif
 Patch1: python-2.2b1-buildroot.patch
 Patch2: python-2.2-no_ndbm.patch
 Patch3: Python-2.2.1-pydocnogui.patch
 Patch4: Python-2.2.1-nowhatsnew.patch
 Patch5: Python-2.2.1-distutilrpm.patch
-Patch6: Python-2.2.1-execfix.patch  
+Patch7: Python-2.2.1-buildroot-bytecode.patch 
+Patch8: python-2.2.2-lib64.patch
+Patch9: japanese-codecs-1.4.6-lib64.patch
 %if !%{aspython2}
 Obsoletes: python2 
 Provides: python2 = %{version}
 BuildPrereq: db4-devel
+%else
+BuildPrereq: db3-devel
 %endif
 %if !%{aspython2}
 Obsoletes: Distutils
@@ -38,7 +46,7 @@ Provides: Distutils
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildPrereq: readline-devel, libtermcap-devel, openssl-devel, gmp-devel
 BuildPrereq: ncurses-devel, gdbm-devel, zlib-devel, expat-devel, tetex-latex
-BuildPrereq: Mesa-devel tk tix
+BuildPrereq: Mesa-devel tk tix gcc-c++ XFree86-libs glibc-devel
 URL: http://www.python.org/
 
 %description
@@ -81,6 +89,7 @@ documentation.
 Summary: A collection of development tools included with Python.
 Group: Development/Tools
 Requires: %{name} = %{version}
+Requires: tkinter = %{version}
 %if !%{aspython2}
 Obsoletes: python2-tools
 Provides: python2-tools = %{version}
@@ -110,7 +119,6 @@ for the Python language.
 %package -n tkinter
 %else
 %package -n tkinter2
-
 %endif
 Summary: A graphical user interface for the Python scripting language.
 Group: Development/Languages
@@ -134,7 +142,7 @@ You should install the tkinter package if you'd like to use a graphical
 user interface for Python programming.
 
 %prep
-%setup -q -n Python-%{version}
+%setup -q -n Python-%{version} -a 5
 
 %patch0 -p1 -b .rhconfig
 %patch1 -p1
@@ -142,22 +150,28 @@ user interface for Python programming.
 %patch3 -p1
 %patch4 -p1
 %patch5 -p1
-%patch6 -p1
+%patch7 -p1 -b .bad-bytecode-path
+%patch8 -p1 -b .lib64
+%patch9 -p0 -b .lib64-j
 
 # This shouldn't be necesarry, but is right now (2.2a3)
 find -name "*~" |xargs rm -f
 
-#setup -q -D -T -a 1 -n Python-%{version} -q
+# Fix for lib/lib64
+for f in Lib/distutils/command/install.py Lib/distutils/sysconfig.py \
+    Lib/site.py Modules/getpath.c Modules/Setup.dist setup.py \
+    JapaneseCodecs-1.4.6/setup.py; do
+    sed 's/@LIB@/%{_lib}/g' $f > $f- && cat $f- > $f
+done
+
 # This command drops the HTML files in the top-level build directory.
 # That's not perfect, but it will do for now.
 
 %build
-CFLAGS="$RPM_OPT_FLAGS -D_GNU_SOURCE -fPIC"
-CXXFLAGS="$RPM_OPT_FLAGS -D_GNU_SOURCE -fPIC"
-OPT="$RPM_OPT_FLAGS -D_GNU_SOURCE -fPIC"
-%ifarch s390 s390x
-export LDSHARED="gcc -shared -fPIC "
-%endif
+export CFLAGS="$RPM_OPT_FLAGS -D_GNU_SOURCE -fPIC"
+export CXXFLAGS="$RPM_OPT_FLAGS -D_GNU_SOURCE -fPIC"
+export OPT="$RPM_OPT_FLAGS -D_GNU_SOURCE -fPIC"
+export LINKCC="gcc"
 %configure --enable-ipv6 --enable-unicode=ucs2
 
 make OPT="$RPM_OPT_FLAGS -D_GNU_SOURCE -fPIC" %{?_smp_mflags}
@@ -165,8 +179,9 @@ Tools/scripts/pathfix.py -i "/usr/bin/env python%{pybasever}" .
 make OPT="$RPM_OPT_FLAGS -D_GNU_SOURCE -fPIC" %{?_smp_mflags}
 
 %ifarch i386
+topdir=`pwd`
 pushd Doc
-make
+make PYTHON=$topdir/python
 rm html/index.html.in Makefile* info/Makefile tools/sgmlconv/Makefile
 popd
 %endif
@@ -175,40 +190,41 @@ popd
 [ -d $RPM_BUILD_ROOT ] && rm -fr $RPM_BUILD_ROOT
 mkdir -p $RPM_BUILD_ROOT/usr $RPM_BUILD_ROOT%{_mandir}
 
-%makeinstall DESTDIR=/ MANDIR=$RPM_BUILD_ROOT/%{_mandir} INCLUDEDIR=$RPM_BUILD_ROOT/%{_includedir}
-# distutils sucks.  It writes the path of the interpreter in the BUILDDIR into
-# any scripts that it installs.
-sed 's,#!.*/python$,#!/usr/bin/env python%{pybasever},' $RPM_BUILD_ROOT/usr/bin/pydoc > $RPM_BUILD_ROOT/usr/bin/pydoc-
-mv $RPM_BUILD_ROOT/usr/bin/pydoc- $RPM_BUILD_ROOT/usr/bin/pydoc
-chmod 0755 $RPM_BUILD_ROOT/usr/bin/pydoc
+%makeinstall DESTDIR=/ MANDIR=$RPM_BUILD_ROOT/%{_mandir} INCLUDEDIR=$RPM_BUILD_ROOT/%{_includedir} LIBDIR=$RPM_BUILD_ROOT/%{_libdir} SCRIPTDIR=$RPM_BUILD_ROOT/%{_libdir} build_root=$RPM_BUILD_ROOT
+# Fix the interpreter path in binaries installed by distutils 
+# (which changes them by itself)
+# Make sure we preserve the file permissions
+for fixed in $RPM_BUILD_ROOT/usr/bin/pydoc; do
+    sed 's,#!.*/python$,#!/usr/bin/env python%{pybasever},' $fixed > $fixed- \
+        && cat $fixed- > $fixed && rm -f $fixed-
+done
 
 %if %{aspython2}
 mv $RPM_BUILD_ROOT/usr/bin/python $RPM_BUILD_ROOT/usr/bin/python2
 mv $RPM_BUILD_ROOT/%{_mandir}/man1/python.1 $RPM_BUILD_ROOT/%{_mandir}/man1/python%{pybasever}.1
 %else
 ln -s python $RPM_BUILD_ROOT/usr/bin/python2
-
 %endif
 
 # tools
 
 # idle
-mkdir -p ${RPM_BUILD_ROOT}/usr/lib/python%{pybasever}/site-packages
+mkdir -p ${RPM_BUILD_ROOT}%{_libdir}/python%{pybasever}/site-packages
 install -m 755 $RPM_SOURCE_DIR/idle ${RPM_BUILD_ROOT}/usr/bin/idle
-mkdir -p $RPM_BUILD_ROOT/usr/lib/python%{pybasever}/site-packages/idle
-cp -R Tools/idle/* $RPM_BUILD_ROOT/usr/lib/python%{pybasever}/site-packages/idle
+mkdir -p $RPM_BUILD_ROOT%{_libdir}/python%{pybasever}/site-packages/idle
+cp -R Tools/idle/* $RPM_BUILD_ROOT%{_libdir}/python%{pybasever}/site-packages/idle
 
 
 #modulator
 install -m 755 $RPM_SOURCE_DIR/modulator ${RPM_BUILD_ROOT}/usr/bin/modulator
 cp -r Tools/modulator \
-  ${RPM_BUILD_ROOT}/usr/lib/python%{pybasever}/site-packages/
+  ${RPM_BUILD_ROOT}%{_libdir}/python%{pybasever}/site-packages/
 
 #pynche
 install -m 755 $RPM_SOURCE_DIR/pynche ${RPM_BUILD_ROOT}/usr/bin/pynche
-rm Tools/pynche/*.pyw
+rm -f Tools/pynche/*.pyw
 cp -r Tools/pynche \
-  ${RPM_BUILD_ROOT}/usr/lib/python%{pybasever}/site-packages/
+  ${RPM_BUILD_ROOT}%{_libdir}/python%{pybasever}/site-packages/
 
 mv Tools/modulator/README Tools/modulator/README.modulator
 mv Tools/pynche/README Tools/pynche/README.pynche
@@ -217,19 +233,18 @@ mv Tools/pynche/README Tools/pynche/README.pynche
 install -m755  Tools/i18n/pygettext.py $RPM_BUILD_ROOT/usr/bin/
 install -m755  Tools/i18n/msgfmt.py $RPM_BUILD_ROOT/usr/bin/
 
-find $RPM_BUILD_ROOT/usr/lib/python%{pybasever}/lib-dynload -type f |grep -v _tkinter.so|sed "s|$RPM_BUILD_ROOT||" > dynfiles
-
 # Get rid of crap
 find $RPM_BUILD_ROOT/ -name "*~"|xargs rm -f
 find $RPM_BUILD_ROOT/ -name ".cvsignore"|xargs rm -f
 find . -name "*~"|xargs rm -f
 find . -name ".cvsignore"|xargs rm -f
 #zero length
-rm -f $RPM_BUILD_ROOT/usr/lib/python2.2/site-packages/modulator/Templates/copyright
+rm -f $RPM_BUILD_ROOT%{_libdir}/python%{pybasever}/site-packages/modulator/Templates/copyright
 
-# not distributing the testsuire
-rm -fr $RPM_BUILD_ROOT/usr/lib/python2.2/test
-rm -f $RPM_BUILD_ROOT/usr/lib/python2.2/LICENSE.txt
+# Clean up the testsuite - we don't need compiled files for it
+find $RPM_BUILD_ROOT%{_libdir}/python%{pybasever}/test \
+    -name "*.pyc" -o -name "*.pyo" | xargs rm -f
+rm -f $RPM_BUILD_ROOT%{_libdir}/python2.2/LICENSE.txt
 
 
 #make the binaries install side by side with python 1
@@ -245,10 +260,16 @@ popd
 %endif
 
 # Japanese codecs
-tar xvzf %{SOURCE5}
 pushd JapaneseCodecs-1.4.6
-$RPM_BUILD_ROOT/usr/bin/python setup.py install --record=INSTALLED_FILES
+$RPM_BUILD_ROOT/usr/bin/%{python} setup.py install \
+--install-scripts=$RPM_BUILD_ROOT/%{_prefix}/bin \
+--install-purelib=$RPM_BUILD_ROOT/%{_libdir}/%{name}%{pybasever}/site-packages \
+--install-platlib=$RPM_BUILD_ROOT/%{_libdir}/%{name}%{pybasever}/lib-dynload \
+--install-data=$RPM_BUILD_ROOT/%{_exec_prefix} \
+--root=/
 popd
+
+find $RPM_BUILD_ROOT%{_libdir}/python%{pybasever}/lib-dynload -type f | grep -v _tkinter.so | sed "s|$RPM_BUILD_ROOT||" > dynfiles
 
 %clean
 rm -fr $RPM_BUILD_ROOT
@@ -259,26 +280,28 @@ rm -fr $RPM_BUILD_ROOT
 /usr/bin/python*
 %{_mandir}/*/*
 
-%dir /usr/lib/python%{pybasever}
-%dir /usr/lib/python%{pybasever}/lib-dynload
-/usr/lib/python%{pybasever}/*.py*
-/usr/lib/python%{pybasever}/*.doc
-/usr/lib/python%{pybasever}/curses
-/usr/lib/python%{pybasever}/distutils
-/usr/lib/python%{pybasever}/encodings
-/usr/lib/python%{pybasever}/lib-old
-/usr/lib/python%{pybasever}/plat-linux2 
-/usr/lib/python%{pybasever}/site-packages
-/usr/lib/python%{pybasever}/xml
-/usr/lib/python%{pybasever}/email
-/usr/lib/python%{pybasever}/compiler
-/usr/lib/python%{pybasever}/plat-linux2
-/usr/lib/python%{pybasever}/hotshot
+%dir %{_libdir}/python%{pybasever}
+%dir %{_libdir}/python%{pybasever}/lib-dynload
+%dir %{_libdir}/python%{pybasever}/lib-dynload/japanese
+%{_libdir}/python%{pybasever}/site-packages/japanese.pth
+%{_libdir}/python%{pybasever}/*.py*
+%{_libdir}/python%{pybasever}/*.doc
+%{_libdir}/python%{pybasever}/curses
+%{_libdir}/python%{pybasever}/distutils
+%{_libdir}/python%{pybasever}/encodings
+%{_libdir}/python%{pybasever}/lib-old
+%{_libdir}/python%{pybasever}/site-packages
+%{_libdir}/python%{pybasever}/xml
+%{_libdir}/python%{pybasever}/email
+%{_libdir}/python%{pybasever}/compiler
+%{_libdir}/python%{pybasever}/plat-linux2
+%{_libdir}/python%{pybasever}/hotshot
 
 %files devel
 %defattr(-,root,root)
 /usr/include/*
-/usr/lib/python%{pybasever}/config
+%{_libdir}/python%{pybasever}/config
+%{_libdir}/python%{pybasever}/test
 
 %if !%{aspython2}
 %files tools
@@ -286,11 +309,11 @@ rm -fr $RPM_BUILD_ROOT
 %doc Tools/modulator/README.modulator
 %doc Tools/pynche/README.pynche
 %doc Tools/idle/*.txt
-%dir /usr/lib/python%{pybasever}/site-packages/idle
-%dir /usr/lib/python%{pybasever}/site-packages/modulator
-%dir /usr/lib/python%{pybasever}/site-packages/modulator/Templates
-%dir /usr/lib/python%{pybasever}/site-packages/pynche
-%dir /usr/lib/python%{pybasever}/site-packages/pynche/X
+%dir %{_libdir}/python%{pybasever}/site-packages/idle
+%dir %{_libdir}/python%{pybasever}/site-packages/modulator
+%dir %{_libdir}/python%{pybasever}/site-packages/modulator/Templates
+%dir %{_libdir}/python%{pybasever}/site-packages/pynche
+%dir %{_libdir}/python%{pybasever}/site-packages/pynche/X
 /usr/bin/idle*
 /usr/bin/modulator*
 /usr/bin/pynche*
@@ -310,10 +333,45 @@ rm -fr $RPM_BUILD_ROOT
 %files -n tkinter2
 %endif
 %defattr(-,root,root,755)
-/usr/lib/python%{pybasever}/lib-tk
-/usr/lib/python%{pybasever}/lib-dynload/_tkinter.so
+%{_libdir}/python%{pybasever}/lib-tk
+%{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Wed Nov 20 2002 Mihai Ibanescu <misa@redhat.com>
+2.2.2-5
+- Fixed configuration patch to add -lcrypt when compiling cryptmodule.c
+
+2.2.2-4
+- Spec file change from Matt Wilson <msw@redhat.com> to disable linking 
+  with the C++ compiler.
+
+* Mon Nov 11 2002 Mihai Ibanescu <misa@redhat.com>
+2.2.2-3.*
+- Merged patch from Karsten Hopp <karsten@redhat.de> from 2.2.1-17hammer to
+  use %%{_libdir}
+- Added XFree86-libs as BuildRequires (because of tkinter)
+- Fixed duplicate listing of plat-linux2
+- Fixed exclusion of lib-dynload/japanese
+- Added lib64 patch for the japanese codecs
+- Use setup magic instead of using tar directly on JapaneseCodecs
+
+* Tue Nov  5 2002 Mihai Ibanescu <misa@redhat.com>
+2.2.2-2
+- Fix #76912 (python-tools contains idle, which uses tkinter, but there is no
+  requirement of tkinter from python-tools).
+- Fix #74013 (rpm is missing the /usr/lib/python2.2/test directory)
+
+* Mon Nov  4 2002 Mihai Ibanescu <misa@redhat.com>
+- builds as python2 require a different libdb
+- changed the buildroot name of python to match python2 builds
+
+* Fri Nov  1 2002 Mihai Ibanescu <misa@redhat.com>
+- updated python to 2.2.2 and adjusted the patches accordingly
+
+* Mon Oct 21 2002 Mihai Ibanescu <misa@redhat.com>
+- Fix #53930 (Python-2.2.1-buildroot-bytecode.patch)
+- Added BuildPrereq dependency on gcc-c++
+
 * Fri Aug 30 2002 Trond Eivind Glomsrød <teg@redhat.com> 2.2.1-17
 - security fix for _execvpe
 
