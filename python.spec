@@ -1,15 +1,15 @@
-%define	tcltk_major	8.3
-%ifarch ia64
-%define depsuffix ()(64bit)
-%else
-%define depsuffix %{nil}
-%endif
-%define	tkinter_tcldeps %{expand:libtcl%%{tcltk_major}.so%%{depsuffix} libtk%%{tcltk_major}.so%%{depsuffix} libtix4.1.%%{tcltk_major}.so%%{depsuffix}}
+#%define	tcltk_major	8.3
+#%ifarch ia64
+#%define depsuffix ()(64bit)
+#%else
+#%define depsuffix %{nil}
+#%endif
+#%define	tkinter_tcldeps %{expand:libtcl%%{tcltk_major}.so%%{depsuffix} libtk%%{tcltk_major}.so%%{depsuffix} libtix4.1.%%{tcltk_major}.so%%{depsuffix}}
 
 Summary: An interpreted, interactive object-oriented programming language.
 Name: python
 Version: 1.5.2
-Release: 36
+Release: 38
 License: distributable
 Group: Development/Languages
 Source0: ftp://ftp.python.org/pub/python/src/py152.tgz
@@ -18,6 +18,7 @@ Source2: idle
 Source3: modulator
 Source4: pynche
 Source5: gettext.py
+Source6: http://gigue.peabody.jhu.edu/~mdboom/omi/source/shm_source/shmmodule.c
 Source10: inspect.py
 Source11: pydoc.py
 
@@ -31,8 +32,9 @@ Patch6: python-1.5.2-wuftpd.patch
 Patch7: python-1.5.2-_locale.patch
 Patch8: python-1.5.2-tcl831.patch
 Patch9: python-1.5.2-https.patch
+Patch10: python-1.5.2-gmp4.patch
 BuildRequires: readline readline-devel zlib zlib-devel gmp gmp-devel gdbm gdbm-devel
-Conflicts: tkinter < %{PACKAGE_VERSION}
+Conflicts: tkinter < %{version}-%{release}
 BuildRoot: %{_tmppath}/%{name}/python-root
 
 %description
@@ -55,7 +57,7 @@ package.
 %package devel
 Summary: The libraries and header files needed for Python development.
 Group: Development/Libraries
-Requires: python = %{PACKAGE_VERSION}
+Requires: python = %{version}-%{release}
 
 %description devel
 The Python programming language's interpreter can be extended with
@@ -71,7 +73,7 @@ documentation.
 %package tools
 Summary: A collection of development tools included with Python.
 Group: Development/Tools
-Requires: python = %{PACKAGE_VERSION}
+Requires: python = %{version}-%{release}
 
 %description tools
 The Python package includes several development tools that are used
@@ -85,7 +87,7 @@ tkinter packages.
 %package docs
 Summary: Documentation for the Python programming language.
 Group: Documentation
-Conflicts: python < %{PACKAGE_VERSION}
+Conflicts: python < %{version}-%{release}
 
 %description docs
 The python-docs package contains documentation on the Python
@@ -98,8 +100,9 @@ for the Python language.
 %package -n tkinter
 Summary: A graphical user interface for the Python scripting language.
 Group: Development/Languages
-BuildPrereq: %{tkinter_tcldeps}
-Requires: python = %{PACKAGE_VERSION}
+#BuildPrereq: %{tkinter_tcldeps}
+BuildPrereq: tcl >= 8.3
+Requires: python = %{version}-%{release}
 
 %description -n tkinter
 The Tkinter (Tk interface) program is an graphical user interface for
@@ -123,6 +126,7 @@ user interface for Python programming.
 %patch7 -p1 -b ._locale
 %patch8 -p1 -b .tcl823
 %patch9 -p1 -b .https
+%patch10 -p1 -b .gmp4
 
 find . -name "*.nosed" -exec rm -f {} \;
 
@@ -135,6 +139,10 @@ cp %{SOURCE5} Lib
 
 # inspect.py and pydoc.py
 cp %{SOURCE10} %{SOURCE11} Lib
+
+# shm module
+cp %{SOURCE6} Modules
+echo "shm shmmodule.c" >> Modules/Setup.in
 
 %build
 %ifnarch s390 s390x
@@ -245,6 +253,13 @@ rm -f modules-list modules-list.full
 %{_prefix}/lib/python1.5/lib-dynload/_tkinter.so
 
 %changelog
+* Wed Apr  3 2002 Matt Wilson <msw@redhat.com> 1.5.2-38
+- include a new version of the https patch from gafton
+- added shm module at the request of gafton.
+
+* Tue Mar 26 2002 Nalin Dahyabhai <nalin@redhat.com> 1.5.2-37
+- backport patch to make mpzmodule happy with gmp4
+
 * Mon Mar 25 2002 Nalin Dahyabhai <nalin@redhat.com> 1.5.2-36
 - rebuild
 
