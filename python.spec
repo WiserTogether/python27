@@ -13,12 +13,13 @@
 
 %define pybasever 2.3
 %define jp_codecs 1.4.9
-%define tools_dir %{_datadir}/python%{pybasever}/Tools
+%define tools_dir %{_libdir}/python%{pybasever}/Tools
+%define demo_dir %{_libdir}/python%{pybasever}/Demo
 
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 Version: %{pybasever}.4
-Release: 8
+Release: 10
 License: PSF - see LICENSE
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -253,8 +254,13 @@ install -m755  Tools/i18n/pygettext.py $RPM_BUILD_ROOT/usr/bin/
 install -m755  Tools/i18n/msgfmt.py $RPM_BUILD_ROOT/usr/bin/
 
 # Useful development tools
-install -m755 -d $RPM_BUILD_ROOT%{tools_dir}
-install Tools/scripts/*py $RPM_BUILD_ROOT%{tools_dir}
+install -m755 -d $RPM_BUILD_ROOT%{tools_dir}/scripts
+install Tools/README $RPM_BUILD_ROOT%{tools_dir}/
+install Tools/scripts/*py $RPM_BUILD_ROOT%{tools_dir}/scripts/
+
+# Useful demo scripts
+install -m755 -d $RPM_BUILD_ROOT%{demo_dir}
+cp -ar Demo/* $RPM_BUILD_ROOT%{demo_dir}
 
 # Get rid of crap
 find $RPM_BUILD_ROOT/ -name "*~"|xargs rm -f
@@ -306,7 +312,6 @@ rm -fr $RPM_BUILD_ROOT
 %{_mandir}/*/*
 %{_libdir}/libpython%{pybasever}.so*
 
-%dir %{_datadir}/python%{pybasever}
 %dir %{_libdir}/python%{pybasever}
 %dir %{_libdir}/python%{pybasever}/lib-dynload
 %dir %{_libdir}/python%{pybasever}/lib-dynload/japanese
@@ -350,6 +355,7 @@ rm -fr $RPM_BUILD_ROOT
 /usr/bin/msgfmt*.py
 /usr/bin/pydoc*
 %{tools_dir}
+%{demo_dir}
 
 %files docs
 %defattr(-,root,root,755)
@@ -362,6 +368,10 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Tue Aug 31 2004 Mihai Ibanescu <misa@redhat.com> 2.3.4-10
+- Fixed bug #77418 (Demo dir not packaged)
+- More tweaking on #19347 (Moved Tools/ under /usr/lib/python2.3/Tools)
+
 * Fri Aug 13 2004 Mihai Ibanescu <misa@redhat.com> 2.3.4-8
 - Fixed bug #129769: Makefile in new python conflicts with older version found
   in old python-devel
