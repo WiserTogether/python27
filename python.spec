@@ -19,7 +19,7 @@
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 Version: %{pybasever}
-Release: 5
+Release: 6
 License: PSF - see LICENSE
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -37,14 +37,12 @@ Source7: python-2.3.4-optik.py
 Patch0: python-2.4-config.patch
 Patch1: python-2.4-xmlfix.patch
 Patch3: Python-2.2.1-pydocnogui.patch
-Patch4: python-2.3-nowhatsnew.patch
 Patch7: python-2.3.4-lib64-regex.patch
 Patch8: python-2.4-lib64.patch
 Patch9: japanese-codecs-lib64.patch
 Patch13: python-2.4-distutils-bdist-rpm.patch
 Patch14: python-2.3.4-pydocnodoc.patch
 Patch16: python-2.4-db43.patch
-Patch17: python-2.4-tex-fix.patch
 
 %if %{main_python}
 Obsoletes: Distutils
@@ -58,7 +56,7 @@ BuildPrereq: db4-devel
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildPrereq: readline-devel, libtermcap-devel, openssl-devel, gmp-devel
-BuildPrereq: ncurses-devel, gdbm-devel, zlib-devel, expat-devel, tetex-latex
+BuildPrereq: ncurses-devel, gdbm-devel, zlib-devel, expat-devel
 BuildPrereq: Mesa-devel tk tix gcc-c++ XFree86-devel glibc-devel
 BuildPrereq: bzip2 tar /usr/bin/find pkgconfig tcl-devel tk-devel
 BuildPrereq: tix-devel bzip2-devel
@@ -118,23 +116,6 @@ Provides: python2-tools = %{version}
 The Python package includes several development tools that are used
 to build python programs.
 
-%package docs
-Summary: Documentation for the Python programming language.
-Group: Documentation
-Requires: %{name} = %{version}-%{release}
-%if %{main_python}
-Obsoletes: python2-docs
-Provides: python2-docs = %{version}
-%endif
-
-%description docs
-The python-docs package contains documentation on the Python
-programming language and interpreter.  The documentation is provided
-in ASCII text files and in LaTeX source files.
-
-Install the python-docs package if you'd like to use the documentation
-for the Python language.
-
 %package -n %{tkinter}
 Summary: A graphical user interface for the Python scripting language.
 Group: Development/Languages
@@ -159,7 +140,6 @@ user interface for Python programming.
 %patch0 -p1 -b .rhconfig
 %patch1 -p0 -b .xmlfix
 %patch3 -p1 -b .no_gui
-%patch4 -p1
 %if %{_lib} == lib64
 %patch7 -p1 -b .lib64-regex
 %patch8 -p1 -b .lib64
@@ -168,7 +148,6 @@ user interface for Python programming.
 %patch13 -p1 -b .bdist-rpm
 %patch14 -p1 -b .no-doc
 %patch16 -p1 -b .db43
-%patch17 -p1 -b .tex-fix
 
 # This shouldn't be necesarry, but is right now (2.2a3)
 find -name "*~" |xargs rm -f
@@ -205,11 +184,6 @@ export CC=gcc
 make OPT="$CFLAGS" %{?_smp_mflags}
 LD_LIBRARY_PATH=$topdir $topdir/python Tools/scripts/pathfix.py -i "%{_bindir}/env python%{pybasever}" .
 make OPT="$CFLAGS" %{?_smp_mflags}
-
-pushd Doc
-LD_LIBRARY_PATH=$topdir make PYTHON=$topdir/python
-rm html/index.html.in Makefile* info/Makefile tools/sgmlconv/Makefile
-popd
 
 %install
 [ -d $RPM_BUILD_ROOT ] && rm -fr $RPM_BUILD_ROOT
@@ -362,17 +336,16 @@ rm -fr $RPM_BUILD_ROOT
 %{tools_dir}
 %{demo_dir}
 
-%files docs
-%defattr(-,root,root,755)
-%doc Misc/NEWS  Misc/README Misc/cheatsheet 
-%doc Misc/HISTORY Doc/html
-
 %files -n %{tkinter}
 %defattr(-,root,root,755)
 %{_libdir}/python%{pybasever}/lib-tk
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Mon Mar 14 2005 Mihai Ibanescu <misa@redhat.com> 2.4-6
+- building the docs from a different source rpm, to decouple bootstrapping
+  python from having tetex installed
+
 * Fri Mar 11 2005 Dan Williams <dcbw@redhat.com> 2.4-5
 - Rebuild to pick up new libssl.so.5
 
