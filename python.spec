@@ -12,8 +12,8 @@
 
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
-Version: %{pybasever}.3
-Release: 6
+Version: %{pybasever}.4
+Release: 1
 License: PSF - see LICENSE
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -26,11 +26,9 @@ Source6: http://gigue.peabody.jhu.edu/~mdboom/omi/source/shm_source/shmmodule.c
 Patch0: python-2.3-config.patch
 Patch3: Python-2.2.1-pydocnogui.patch
 Patch4: python-2.3-nowhatsnew.patch
-Patch7: python-2.3.3-lib64-regex.patch
+Patch7: python-2.3.4-lib64-regex.patch
 Patch8: python-2.3.2-lib64.patch
 Patch9: japanese-codecs-lib64.patch
-Patch10: python-2.2.2-urllib2-nonanonftp.patch
-Patch11: python-2.2.2-ftpuri.patch
 Patch12: python-2.3.2-nomkhowto.patch
 
 %if !%{aspython2}
@@ -50,6 +48,7 @@ BuildPrereq: readline-devel, libtermcap-devel, openssl-devel, gmp-devel
 BuildPrereq: ncurses-devel, gdbm-devel, zlib-devel, expat-devel, tetex-latex
 BuildPrereq: Mesa-devel tk tix gcc-c++ XFree86-devel glibc-devel
 BuildPrereq: gzip tar /usr/bin/find pkgconfig tcl-devel tk-devel
+BuildPrereq: tix-devel
 URL: http://www.python.org/
 
 %description
@@ -151,12 +150,10 @@ user interface for Python programming.
 %patch3 -p1 -b .no_gui
 %patch4 -p1
 %if %{_lib} == lib64
-%patch7 -p0 -b .lib64-regex
+%patch7 -p1 -b .lib64-regex
 %patch8 -p1 -b .lib64
 %patch9 -p0 -b .lib64-j
 %endif
-%patch10 -p1 -b .nonanonftp
-%patch11 -p1 -b .ftpuri
 %patch12 -p1 -b .nomkhowto
 
 # This shouldn't be necesarry, but is right now (2.2a3)
@@ -362,6 +359,10 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Fri Jun  4 2004 Mihai Ibanescu <misa@redhat.com> 2.3.4-1
+- Updated to 2.3.4-1 with Robert Scheck's help (bug #124764)
+- Added BuildRequires: tix-devel (bug #124918)
+
 * Fri May  7 2004 Mihai Ibanescu <misa@redhat.com> 2.3.3-6
 - Correct fix for #122304 from upstream:
   http://sourceforge.net/tracker/?func=detail&atid=105470&aid=931848&group_id=5470
