@@ -1,10 +1,7 @@
-%define	tcltk_major	8.3
-%define	tkinter_tcldeps	libtcl%{tcltk_major}.so libtk%{tcltk_major}.so libtix4.1.%{tcltk_major}.so
-
 Summary: An interpreted, interactive object-oriented programming language.
 Name: python
 Version: 1.5.2
-Release: 27
+Release: 28
 Copyright: distributable
 Group: Development/Languages
 Source0: ftp://ftp.python.org/pub/python/src/py152.tgz
@@ -89,7 +86,7 @@ for the Python language.
 %package -n tkinter
 Summary: A graphical user interface for the Python scripting language.
 Group: Development/Languages
-BuildPrereq: %{tkinter_tcldeps}
+BuildPrereq: tcl tk
 Requires: python = %{PACKAGE_VERSION}
 
 %description -n tkinter
@@ -229,6 +226,9 @@ rm -f modules-list modules-list.full
 %{_prefix}/lib/python1.5/lib-dynload/_tkinter.so
 
 %changelog
+* Tue Sep 26 2000 Bill Nottingham <notting@redhat.com>
+- remove library specific buildprereqs:; it won't work on sparc64/ia64
+
 * Fri Aug 25 2000 Preston Brown <pbrown@redhat.com>
 - Cristian had to supply a newer version of https handling for working
   with certificates
