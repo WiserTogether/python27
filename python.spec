@@ -13,7 +13,7 @@
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 Version: %{pybasever}.4
-Release: 3
+Release: 4
 License: PSF - see LICENSE
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -368,6 +368,9 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Tue Jun 15 2004 Elliot Lee <sopwith@redhat.com>
+- rebuilt
+
 * Tue Jun  8 2004 Mihai Ibanescu <misa@redhat.com> 2.3.4-3
 - Added an optik.py that provides the same interface from optparse for
   backward compatibility; obsoleting python-optik
