@@ -19,7 +19,7 @@
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 Version: %{pybasever}
-Release: 0.b2.3
+Release: 0.b2.4
 License: PSF - see LICENSE
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -43,6 +43,7 @@ Patch9: japanese-codecs-lib64.patch
 Patch13: python-2.4-distutils-bdist-rpm.patch
 Patch14: python-2.3.4-pydocnodoc.patch
 Patch15: python-2.3.4-buffer-overflow.patch
+Patch16: python-2.4-db43.patch
 
 %if %{main_python}
 Obsoletes: Distutils
@@ -166,6 +167,7 @@ user interface for Python programming.
 %patch13 -p1 -b .bdist-rpm
 %patch14 -p1 -b .no-doc
 %patch15 -p1 -b .buffer-overflow
+%patch16 -p1 -b .db43
 
 # This shouldn't be necesarry, but is right now (2.2a3)
 find -name "*~" |xargs rm -f
@@ -370,6 +372,9 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Thu Nov 11 2004 Jeff Johnson <jbj@jbj.org> 2.4-0.b2.4
+- rebuild against db-4.3.21.
+
 * Mon Nov  8 2004 Jeremy Katz <katzj@redhat.com> - 2.4-0.b2.3
 - fix the lib64 patch so that 64bit arches still look in /usr/lib/python...
 
