@@ -1,45 +1,44 @@
-#%define	tcltk_major	8.3
-#%ifarch ia64
-#%define depsuffix ()(64bit)
-#%else
-#%define depsuffix %{nil}
-#%endif
-#%define	tkinter_tcldeps %{expand:libtcl%%{tcltk_major}.so%%{depsuffix} libtk%%{tcltk_major}.so%%{depsuffix} libtix4.1.%%{tcltk_major}.so%%{depsuffix}}
+%define aspython2 0
 
-Summary: An interpreted, interactive object-oriented programming language.
-Name: python
-Version: 1.5.2
-Release: 43.73
-License: distributable
+%if %{aspython2}
+%define python python2
+%else
+%define python python
+%endif
+
+%define pybasever 2.2
+
+Summary: An interpreted, interactive, object-oriented programming language.
+Name: %{python}
+Version: 2.2.1
+Release: 15
+License: PSF - see LICENSE
 Group: Development/Languages
-Source0: ftp://ftp.python.org/pub/python/src/py152.tgz
-Source1: Python-Doc.tar.gz
+Source: http://www.python.org/ftp/python/%{version}/Python-%{version}.tgz
 Source2: idle
 Source3: modulator
 Source4: pynche
-Source5: gettext.py
-Source6: http://gigue.peabody.jhu.edu/~mdboom/omi/source/shm_source/shmmodule.c
-Source10: inspect.py
-Source11: pydoc.py
-
-Patch0: python-1.5.2-config.patch
-Patch1: python-1.4-gccbug.patch
-Patch2: Python-1.5.1-nosed.patch
-Patch3: python-1.5.2-dl-global.patch
-Patch4: python-1.5.2-pythonpath.patch
-Patch5: python-1.5.2-wdb.patch
-Patch6: python-1.5.2-wuftpd.patch
-Patch7: python-1.5.2-_locale.patch
-Patch8: python-1.5.2-tcl831.patch
-Patch9: python-1.5.2-https.patch
-Patch10: python-1.5.2-gmp4.patch
-Patch11: python-1.5.2-sec.patch
-Patch12: python-1.1.2-test-popen2.patch
-Patch13: python-1.5.2-strptime.patch
-BuildRequires: readline readline-devel zlib zlib-devel 
-BuildRequires: gmp gmp-devel gdbm gdbm-devel openssl-devel tix
-Conflicts: tkinter < %{version}-%{release}
-BuildRoot: %{_tmppath}/%{name}/python-root
+Source5: http://www.python.jp/pub/JapaneseCodecs/JapaneseCodecs-1.4.6.tar.gz
+Patch0: python-2.2.1-config2.patch
+Patch1: python-2.2b1-buildroot.patch
+Patch2: python-2.2-no_ndbm.patch
+Patch3: Python-2.2.1-pydocnogui.patch
+Patch4: Python-2.2.1-nowhatsnew.patch
+Patch5: Python-2.2.1-distutilrpm.patch
+%if !%{aspython2}
+Obsoletes: python2 
+Provides: python2 = %{version}
+BuildPrereq: db4-devel
+%endif
+%if !%{aspython2}
+Obsoletes: Distutils
+Provides: Distutils
+%endif
+BuildRoot: %{_tmppath}/%{name}-%{version}-root
+BuildPrereq: readline-devel, libtermcap-devel, openssl-devel, gmp-devel
+BuildPrereq: ncurses-devel, gdbm-devel, zlib-devel, expat-devel, tetex-latex
+BuildPrereq: Mesa-devel tk tix
+URL: http://www.python.com/
 
 %description
 Python is an interpreted, interactive, object-oriented programming
@@ -61,7 +60,10 @@ package.
 %package devel
 Summary: The libraries and header files needed for Python development.
 Group: Development/Libraries
-Requires: python = %{version}-%{release}
+%if !%{aspython2}
+Obsoletes: python2-devel
+Provides: python2-devel = %{version}
+%endif
 
 %description devel
 The Python programming language's interpreter can be extended with
@@ -77,21 +79,23 @@ documentation.
 %package tools
 Summary: A collection of development tools included with Python.
 Group: Development/Tools
-Requires: python = %{version}-%{release}
+Requires: %{name} = %{version}
+%if !%{aspython2}
+Obsoletes: python2-tools
+Provides: python2-tools = %{version}
+%endif
 
 %description tools
 The Python package includes several development tools that are used
-to build python programs.  This package contains a selection of those
-tools, including the IDLE Python IDE.
-
-Install python-tools if you want to use these tools to develop
-Python programs.  You will also need to install the python and
-tkinter packages.
+to build python programs.
 
 %package docs
 Summary: Documentation for the Python programming language.
 Group: Documentation
-Conflicts: python < %{version}-%{release}
+%if !%{aspython2}
+Obsoletes: python2-docs
+Provides: python2-docs = %{version}
+%endif
 
 %description docs
 The python-docs package contains documentation on the Python
@@ -101,14 +105,27 @@ in ASCII text files and in LaTeX source files.
 Install the python-docs package if you'd like to use the documentation
 for the Python language.
 
+%if !%{aspython2}
 %package -n tkinter
+%else
+%package -n tkinter2
+
+%endif
 Summary: A graphical user interface for the Python scripting language.
 Group: Development/Languages
-#BuildPrereq: %{tkinter_tcldeps}
-BuildPrereq: tcl >= 8.3
-Requires: python = %{version}-%{release}
+BuildPrereq:  tcl, tk
+Requires: %{name} = %{version}
+%if !%{aspython2}
+Obsoletes: tkinter2
+Provides: tkinter2 = %{version}
+%endif
 
+%if !%{aspython2}
 %description -n tkinter
+%else
+%description -n tkinter2
+%endif
+
 The Tkinter (Tk interface) program is an graphical user interface for
 the Python scripting language.
 
@@ -116,348 +133,366 @@ You should install the tkinter package if you'd like to use a graphical
 user interface for Python programming.
 
 %prep
-%setup -q -n Python-1.5.2 -a 1
-%patch0 -p1 -b .config
+%setup -q -n Python-%{version}
 
-#%ifarch alpha
-#%patch1 -p1
-#%endif
-%patch2 -p1
+%patch0 -p1 -b .rhconfig
+%patch1 -p1
+%patch2 -p1 -b .no_ndbm
 %patch3 -p1
 %patch4 -p1
 %patch5 -p1
-%patch6 -p1
-%patch7 -p1 -b ._locale
-%patch8 -p1 -b .tcl823
-%patch9 -p1 -b .https
-%patch10 -p1 -b .gmp4
-%patch11 -p1 -b .sec
-%patch12 -p1 -b .testcase
-%patch13 -p1 -b .strptime
 
-find . -name "*.nosed" -exec rm -f {} \;
+# This shouldn't be necesarry, but is right now (2.2a3)
+find -name "*~" |xargs rm -f
 
-echo ': ${LDSHARED='gcc -shared'}' > config.cache
-echo ': ${LINKFORSHARED='-rdynamic'}' >> config.cache
-echo ': ${CCSHARED='-fPIC'}' >> config.cache
-
-cp Lib/lib-old/rand.py Lib
-cp %{SOURCE5} Lib
-
-# inspect.py and pydoc.py
-cp %{SOURCE10} %{SOURCE11} Lib
-
-# shm module
-cp %{SOURCE6} Modules
-echo "shm shmmodule.c" >> Modules/Setup.in
+#setup -q -D -T -a 1 -n Python-%{version} -q
+# This command drops the HTML files in the top-level build directory.
+# That's not perfect, but it will do for now.
 
 %build
-%ifnarch s390 s390x
-RPM_OPT_FLAGS="$RPM_OPT_FLAGS -fno-merge-constants"
-%endif
-MACHDEP=linux-%{_target_cpu} ; export MACHDEP
-%configure --with-threads
+CFLAGS="$RPM_OPT_FLAGS -D_GNU_SOURCE -fPIC"
+CXXFLAGS="$RPM_OPT_FLAGS -D_GNU_SOURCE -fPIC"
+OPT="$RPM_OPT_FLAGS -D_GNU_SOURCE -fPIC"
+%configure --enable-ipv6 --enable-unicode=ucs2
 
-make OPT="$RPM_OPT_FLAGS -fPIC" LDFLAGS=-s
+make OPT="$RPM_OPT_FLAGS -D_GNU_SOURCE -fPIC" %{?_smp_mflags}
+Tools/scripts/pathfix.py -i "/usr/bin/env python%{pybasever}" .
+make OPT="$RPM_OPT_FLAGS -D_GNU_SOURCE -fPIC" %{?_smp_mflags}
+
+%ifarch i386
+pushd Doc
+make
+rm html/index.html.in Makefile* info/Makefile tools/sgmlconv/Makefile
+popd
+%endif
 
 %install
-rm -rf ${RPM_BUILD_ROOT}
-mkdir -p ${RPM_BUILD_ROOT}%{_prefix}/{bin,lib}
+[ -d $RPM_BUILD_ROOT ] && rm -fr $RPM_BUILD_ROOT
+mkdir -p $RPM_BUILD_ROOT/usr $RPM_BUILD_ROOT%{_mandir}
 
-#make install prefix=${RPM_BUILD_ROOT}%{_prefix}
-%makeinstall
-strip ${RPM_BUILD_ROOT}%{_bindir}/python
+%makeinstall DESTDIR=/ MANDIR=$RPM_BUILD_ROOT/%{_mandir} INCLUDEDIR=$RPM_BUILD_ROOT/%{_includedir}
+# distutils sucks.  It writes the path of the interpreter in the BUILDDIR into
+# any scripts that it installs.
+sed 's,#!.*/python$,#!/usr/bin/env python%{pybasever},' $RPM_BUILD_ROOT/usr/bin/pydoc > $RPM_BUILD_ROOT/usr/bin/pydoc-
+mv $RPM_BUILD_ROOT/usr/bin/pydoc- $RPM_BUILD_ROOT/usr/bin/pydoc
+chmod 0755 $RPM_BUILD_ROOT/usr/bin/pydoc
+
+%if %{aspython2}
+mv $RPM_BUILD_ROOT/usr/bin/python $RPM_BUILD_ROOT/usr/bin/python2
+mv $RPM_BUILD_ROOT/%{_mandir}/man1/python.1 $RPM_BUILD_ROOT/%{_mandir}/man1/python%{pybasever}.1
+%endif
 
 # tools
+
 # idle
-mkdir -p ${RPM_BUILD_ROOT}%{_prefix}/lib/python1.5/site-packages
-install -m 755 $RPM_SOURCE_DIR/idle ${RPM_BUILD_ROOT}%{_bindir}/idle
-mkdir -p ${RPM_BUILD_ROOT}%{_prefix}/lib/python1.5/site-packages/idle
-cp Tools/idle/*.py \
-  ${RPM_BUILD_ROOT}%{_prefix}/lib/python1.5/site-packages/idle/
-mv Tools/idle/help.txt \
-  ${RPM_BUILD_ROOT}%{_prefix}/lib/python1.5/site-packages/idle/
-mv Tools/idle/extend.txt \
-  ${RPM_BUILD_ROOT}%{_prefix}/lib/python1.5/site-packages/idle/
+mkdir -p ${RPM_BUILD_ROOT}/usr/lib/python%{pybasever}/site-packages
+install -m 755 $RPM_SOURCE_DIR/idle ${RPM_BUILD_ROOT}/usr/bin/idle
+mkdir -p $RPM_BUILD_ROOT/usr/lib/python%{pybasever}/site-packages/idle
+cp -R Tools/idle/* $RPM_BUILD_ROOT/usr/lib/python%{pybasever}/site-packages/idle
+
 
 #modulator
-install -m 755 $RPM_SOURCE_DIR/modulator ${RPM_BUILD_ROOT}%{_bindir}/modulator
+install -m 755 $RPM_SOURCE_DIR/modulator ${RPM_BUILD_ROOT}/usr/bin/modulator
 cp -r Tools/modulator \
-  ${RPM_BUILD_ROOT}%{_prefix}/lib/python1.5/site-packages/
+  ${RPM_BUILD_ROOT}/usr/lib/python%{pybasever}/site-packages/
 
 #pynche
-install -m 755 $RPM_SOURCE_DIR/pynche ${RPM_BUILD_ROOT}%{_bindir}/pynche
+install -m 755 $RPM_SOURCE_DIR/pynche ${RPM_BUILD_ROOT}/usr/bin/pynche
 rm Tools/pynche/*.pyw
 cp -r Tools/pynche \
-  ${RPM_BUILD_ROOT}%{_prefix}/lib/python1.5/site-packages/
+  ${RPM_BUILD_ROOT}/usr/lib/python%{pybasever}/site-packages/
 
 mv Tools/modulator/README Tools/modulator/README.modulator
 mv Tools/pynche/README Tools/pynche/README.pynche
 
-rm -f modules-list.full
-for n in ${RPM_BUILD_ROOT}%{_prefix}/lib/python1.5/*; do
-  [ -d $n ] || echo $n
-done >> modules-list.full
+#gettext
+install -m755  Tools/i18n/pygettext.py $RPM_BUILD_ROOT/usr/bin/
+install -m755  Tools/i18n/msgfmt.py $RPM_BUILD_ROOT/usr/bin/
 
-for mod in ${RPM_BUILD_ROOT}%{_prefix}/lib/python1.5/lib-dynload/* ; do
-  [ `basename $mod` = _tkinter.so ] || echo $mod
-done >> modules-list.full
-sed -e "s|${RPM_BUILD_ROOT}||g" < modules-list.full > modules-list
+find $RPM_BUILD_ROOT/usr/lib/python%{pybasever}/lib-dynload -type f |grep -v _tkinter.so|sed "s|$RPM_BUILD_ROOT||" > dynfiles
 
-#get files list for python-tools
-DIR1=${RPM_BUILD_ROOT}%{_prefix}/lib/python1.5/site-packages/pynche
-DIR2=${RPM_BUILD_ROOT}%{_prefix}/lib/python1.5/site-packages/idle
-DIR3=${RPM_BUILD_ROOT}%{_prefix}/lib/python1.5/site-packages/modulator
+# Get rid of crap
+find $RPM_BUILD_ROOT/ -name "*~"|xargs rm -f
+find $RPM_BUILD_ROOT/ -name ".cvsignore"|xargs rm -f
+find . -name "*~"|xargs rm -f
+find . -name ".cvsignore"|xargs rm -f
+#zero length
+rm -f $RPM_BUILD_ROOT/usr/lib/python2.2/site-packages/modulator/Templates/copyright
 
-find $DIR1 -type f | sed -e "s#^${RPM_BUILD_ROOT}##g" > python-tools.files
-find $DIR2 -type f | sed -e "s#^${RPM_BUILD_ROOT}##g" >> python-tools.files
-find $DIR3 -type f | sed -e "s#^${RPM_BUILD_ROOT}##g" >> python-tools.files
+# not distributing the testsuire
+rm -fr $RPM_BUILD_ROOT/usr/lib/python2.2/test
+rm -f $RPM_BUILD_ROOT/usr/lib/python2.2/LICENSE.txt
 
-#rebytecompile modules with the right directory names
-find $RPM_BUILD_ROOT%{_prefix}/lib/python1.5 -type f -name "*.pyc" | xargs rm -v
-PYTHONPATH=$RPM_BUILD_ROOT%{_prefix}/lib/python1.5 $RPM_BUILD_ROOT%{_bindir}/python -c "import compileall; compileall.compile_dir('"$RPM_BUILD_ROOT"/usr/lib/python1.5', 4, '/usr/lib/python1.5/site-packages')"
 
-# Remove unneeded files
-rm -f Doc/.cvsignore Doc/ref/.cvsignore Doc/.latex2html-init
+#make the binaries install side by side with python 1
+%if %{aspython2}
+pushd $RPM_BUILD_ROOT/usr/bin
+mv idle idle2
+mv modulator modulator2
+mv pynche pynche2
+mv pygettext.py pygettext2.py
+mv msgfmt.py msgfmt2.py
+mv pydoc pydoc2
+popd
+%endif
+
+# Japanese codecs
+tar xvzf %{SOURCE5}
+pushd JapaneseCodecs-1.4.6
+$RPM_BUILD_ROOT/usr/bin/python setup.py install --record=INSTALLED_FILES
+popd
 
 %clean
-rm -rf ${RPM_BUILD_ROOT}
-rm -f modules-list modules-list.full
+rm -fr $RPM_BUILD_ROOT
 
-%files -f modules-list
-%defattr(-,root,root,755)
-%{_bindir}/python*
-%dir %{_prefix}/lib/python1.5
-%{_prefix}/lib/python1.5/plat-linux-%{_target_cpu}
-%{_prefix}/lib/python1.5/lib-stdwin
-%dir %{_prefix}/lib/python1.5/lib-dynload
+%files -f dynfiles
+%defattr(-, root, root)
+%doc LICENSE README
+/usr/bin/*
+%{_mandir}/*/*
+
+%dir /usr/lib/python%{pybasever}
+%dir /usr/lib/python%{pybasever}/lib-dynload
+/usr/lib/python%{pybasever}/*.py*
+/usr/lib/python%{pybasever}/*.doc
+/usr/lib/python%{pybasever}/curses
+/usr/lib/python%{pybasever}/distutils
+/usr/lib/python%{pybasever}/encodings
+/usr/lib/python%{pybasever}/lib-old
+/usr/lib/python%{pybasever}/plat-linux2 
+/usr/lib/python%{pybasever}/site-packages
+/usr/lib/python%{pybasever}/xml
+/usr/lib/python%{pybasever}/email
+/usr/lib/python%{pybasever}/compiler
+/usr/lib/python%{pybasever}/plat-linux2
+/usr/lib/python%{pybasever}/hotshot
 
 %files devel
-%defattr(-,root,root,755)
-%{_prefix}/lib/python*/test
-%{_prefix}/lib/python*/config
-%{_prefix}/include/python1.5
+%defattr(-,root,root)
+/usr/include/*
+/usr/lib/python%{pybasever}/config
 
-%files -f python-tools.files tools
+%if !%{aspython2}
+%files tools
 %defattr(-,root,root,755)
-%doc Tools/idle/*.txt
 %doc Tools/modulator/README.modulator
 %doc Tools/pynche/README.pynche
-%dir %{_prefix}/lib/python1.5/site-packages/idle
-%dir %{_prefix}/lib/python1.5/site-packages/modulator
-%dir %{_prefix}/lib/python1.5/site-packages/modulator/Templates
-%dir %{_prefix}/lib/python1.5/site-packages/pynche
-%dir %{_prefix}/lib/python1.5/site-packages/pynche/X
-%{_bindir}/idle
-%{_bindir}/modulator
-%{_bindir}/pynche
+%doc Tools/idle/*.txt
+%dir /usr/lib/python%{pybasever}/site-packages/idle
+%dir /usr/lib/python%{pybasever}/site-packages/modulator
+%dir /usr/lib/python%{pybasever}/site-packages/modulator/Templates
+%dir /usr/lib/python%{pybasever}/site-packages/pynche
+%dir /usr/lib/python%{pybasever}/site-packages/pynche/X
+/usr/bin/idle*
+/usr/bin/modulator*
+/usr/bin/pynche*
+/usr/bin/pygettext*.py
+/usr/bin/msgfmt*.py
+%endif
 
 %files docs
 %defattr(-,root,root,755)
-%doc Misc/COPYRIGHT Misc/NEWS Misc/HYPE Misc/README Misc/cheatsheet Misc/BLURB* 
-%doc Misc/HISTORY Doc
+%doc Misc/NEWS  Misc/README Misc/cheatsheet 
+%doc Misc/HISTORY Doc/html
 
+%if !%{aspython2}
 %files -n tkinter
+%else
+%files -n tkinter2
+%endif
 %defattr(-,root,root,755)
-%{_prefix}/lib/python1.5/lib-tk
-%{_prefix}/lib/python1.5/lib-dynload/_tkinter.so
+/usr/lib/python%{pybasever}/lib-tk
+/usr/lib/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
-* Thu Jan 30 2003 Mihai Ibanescu <misa@redhat.com> 1.5.2-43
+* Wed Aug  7 2002 Trond Eivind Glomsrød <teg@redhat.com> 2.2.1-15
+- Resurrect tkinter
+- Fix for distutils (#67671)
+
+* Thu Jul 25 2002 Trond Eivind Glomsrød <teg@redhat.com> 2.2.1-14
+- Obsolete tkinter/tkinter2 (#69838)
+
+* Tue Jul 23 2002 Trond Eivind Glomsrød <teg@redhat.com> 2.2.1-13
+- Doc fixes (#53951) - not on alpha at the momemt
+
+* Mon Jul  8 2002 Trond Eivind Glomsrød <teg@redhat.com> 2.2.1-12
+- fix pydoc (#68082)
+
+* Mon Jul  8 2002 Trond Eivind Glomsrød <teg@redhat.com> 2.2.1-11
+- Add db4-devel as a BuildPrereq
+
+* Fri Jun 21 2002 Tim Powers <timp@redhat.com> 2.2.1-10
+- automated rebuild
+
+* Mon Jun 17 2002 Trond Eivind Glomsrød <teg@redhat.com> 2.2.1-9
+- Add Japanese codecs (#66352)
+
+* Tue Jun 11 2002 Trond Eivind Glomsrød <teg@redhat.com> 2.2.1-8
+- No more tkinter...
+
+* Wed May 29 2002 Trond Eivind Glomsrød <teg@redhat.com> 2.2.1-7
 - Rebuild
 
-* Tue Jan 14 2003 Mihai Ibanescu <misa@redhat.com> 1.5.2-42
-- Fixed bug #81796: python time.strptime() causes segfault on ia64
+* Tue May 21 2002 Trond Eivind Glomsrød <teg@redhat.com> 2.2.1-6
+- Add the email subcomponent (#65301)
 
-* Fri Jan 10 2003 Mihai Ibanescu <misa@redhat.com> 1.5.2-41
-- Fixed the https patch: writing binary data through an SSL port would bork if
-  the data has nulls in it.
-- Fixed MACHDEP
+* Fri May 10 2002 Trond Eivind Glomsrød <teg@redhat.com> 2.2.1-5
+- Rebuild
 
-* Tue Nov  5 2002 Mihai Ibanescu <misa@redhat.com> 1.5.2-41
-- Removed Doc/.cvsignore
+* Thu May 02 2002 Than Ngo <than@redhat.com> 2.2.1-4
+- rebuild i new enviroment
 
-* Tue Nov  5 2002 Mihai Ibanescu <misa@redhat.com> 1.5.2-40.73
-- Fixed the security patch
-- Fixed a race condition in popen2:_test()
+* Tue Apr 23 2002 Trond Eivind Glomsrød <teg@redhat.com>
+- Use ucs2, not ucs4, to avoid breaking tkinter (#63965)
 
-* Wed Sep 11 2002 Trond Eivind Glomsrød <teg@redhat.com> 1.5.2-38.73
-- Add security patch
+* Mon Apr 22 2002 Trond Eivind Glomsrød <teg@redhat.com> 2.2.1-2
+- Make it use db4
 
-* Wed Apr  3 2002 Matt Wilson <msw@redhat.com> 1.5.2-38
-- include a new version of the https patch from gafton
-- added shm module at the request of gafton.
+* Fri Apr 12 2002 Trond Eivind Glomsrød <teg@redhat.com> 2.2.1-1
+- 2.2.1 - a bugfix-only release
 
-* Tue Mar 26 2002 Nalin Dahyabhai <nalin@redhat.com> 1.5.2-37
-- backport patch to make mpzmodule happy with gmp4
+* Fri Apr 12 2002 Trond Eivind Glomsrød <teg@redhat.com> 2.2-16
+- the same, but in builddirs - this will remove them from the 
+  docs package, which doesn't look in the buildroot for files.
 
-* Mon Mar 25 2002 Nalin Dahyabhai <nalin@redhat.com> 1.5.2-36
+* Fri Apr 12 2002 Trond Eivind Glomsrød <teg@redhat.com> 2.2-15
+- Get rid of temporary files and .cvsignores included 
+  in the tarball and make install
+
+* Fri Apr  5 2002 Trond Eivind Glomsrød <teg@redhat.com> 2.2-14
+- Don't own lib-tk in main package, only in tkinter (#62753)
+
+* Mon Mar 25 2002 Trond Eivind Glomsrød <teg@redhat.com> 2.2-13
 - rebuild
 
-* Fri Jun 29 2001 Florian La Roche <Florian.LaRoche@redhat.de>
-- do not set -fno-merge-constants on s390,s390x
-- truncate changelog due to rpm errors
+* Mon Mar 25 2002 Trond Eivind Glomsrød <teg@redhat.com> 2.2-12
+- rebuild
 
-* Wed Jun 27 2001 Elliot Lee <sopwith@redhat.com>
-- -fno-merge-constants
+* Fri Mar  1 2002 Trond Eivind Glomsrød <teg@redhat.com> 2.2-11
+- Add a not to the Distutils obsoletes test (doh!)
 
-* Tue Jun 12 2001 Nalin Dahyabhai <nalin@redhat.com>
-- rebuild in new environment
-- s/Copyright:/License:/
+* Fri Mar  1 2002 Trond Eivind Glomsrød <teg@redhat.com> 2.2-10
+- Rebuild
 
-* Fri May 11 2001 Bernhard Rosenkraenzer <bero@redhat.com> 1.5.2-32
-- rebuild with new readline
+* Mon Feb 25 2002 Trond Eivind Glomsrød <teg@redhat.com> 2.2-9
+- Only obsolete Distutils when built as python
 
-* Fri May  4 2001 Preston Brown <pbrown@redhat.com> 1.5.2-31
-- inspect.py and pydoc.py modules added
+* Thu Feb 21 2002 Trond Eivind Glomsrød <teg@redhat.com> 2.2-8
+- Make files in /usr/bin install side by side with python 1.5 when
+- Drop explicit requirement of db4
+  built as python2
 
-* Fri Mar  2 2001 Nalin Dahyabhai <nalin@redhat.com>
-- rebuild in new environment
+* Thu Jan 31 2002 Elliot Lee <sopwith@redhat.com> 2.2-7
+- Use version and pybasever macros to make updating easy
+- Use _smp_mflags macro
 
-* Fri Jan 19 2001 Nalin Dahyabhai <nalin@redhat.com>
-- build even the static libs with -fPIC
-- obey RPM_OPT_FLAGS
+* Tue Jan 29 2002 Trond Eivind Glomsrød <teg@redhat.com> 2.2-6
+- Add db4-devel to BuildPrereq
 
-* Fri Jan 19 2001 Matt Wilson <msw@redhat.com>
-- added gettext.py from gnome-python, closes #23212
-- did some evail buildprereq stuff to make it go on ia64
+* Fri Jan 25 2002 Nalin Dahyabhai <nalin@redhat.com> 2.2-5
+- disable ndbm support, which is db2 in disguise (really interesting things
+  can happen when you mix db2 and db4 in a single application)
 
-* Fri Aug 25 2000 Preston Brown <pbrown@redhat.com>
-- Cristian had to supply a newer version of https handling for working
-  with certificates
+* Thu Jan 24 2002 Trond Eivind Glomsrød <teg@redhat.com> 2.2-4
+- Obsolete subpackages if necesarry 
+- provide versioned python2
+- build with db4
 
-* Thu Aug 24 2000 Nalin Dahyabhai <nalin@redhat.com>
-- re-merge Preston's patch
+* Wed Jan 16 2002 Trond Eivind Glomsrød <teg@redhat.com> 2.2-3
+- Alpha toolchain broken. Disable build on alpha.
+- New openssl
 
-* Wed Aug 23 2000 Nalin Dahyabhai <nalin@redhat.com>
-- byte-compile modules with the correct directory paths
+* Wed Dec 26 2001 Trond Eivind Glomsrød <teg@redhat.com> 2.2-1
+- 2.2 final
 
-* Sun Aug 20 2000 Preston Brown <pbrown@redhat.com>
-- https patch
+* Fri Dec 14 2001 Trond Eivind Glomsrød <teg@redhat.com> 2.2-0.11c1
+- 2.2 RC 1
+- Don't include the _tkinter module in the main package - it's 
+  already in the tkiter packace
+- Turn off the mpzmodule, something broke in the buildroot
 
-* Mon Jul 31 2000 Matt Wilson <msw@redhat.com>
-- fixed directory perms from 775 to 755 to make rpmlint shut up
+* Wed Nov 28 2001 Trond Eivind Glomsrød <teg@redhat.com> 2.2-0.10b2
+- Use -fPIC for OPT as well, in lack of a proper libpython.so
 
-* Wed Jul 12 2000 Prospector <bugzilla@redhat.com>
-- automatic rebuild
+* Mon Nov 26 2001 Matt Wilson <msw@redhat.com> 2.2-0.9b2
+- changed DESTDIR to point to / so that distutils will install dynload
+  modules properly in the installroot
 
-* Mon Jun 18 2000 Bill Nottingham <notting@redhat.com>
-- rebuild, fix dependencies
+* Fri Nov 16 2001 Matt Wilson <msw@redhat.com> 2.2-0.8b2
+- 2.2b2
 
-* Thu Jun 15 2000 Matt Wilson <msw@redhat.com>
-- rebuilt against new tcltk
+* Fri Oct 26 2001 Matt Wilson <msw@redhat.com> 2.2-0.7b1
+- python2ify
 
-* Sat Jun  3 2000 Jeff Johnson <jbj@redhat.com>
-- rebuild against tcltk 8.3.1.
+* Fri Oct 19 2001 Trond Eivind Glomsrød <teg@redhat.com> 2.2-0.5b1
+- 2.2b1
 
-* Fri Apr 28 2000 Matt Wilson <msw@redhat.com>
-- rebuild against gmp 3.0.1
+* Sun Sep 30 2001 Trond Eivind Glomsrød <teg@redhat.com> 2.2-0.4a4
+- 2.2a4
+- Enable UCS4 support
+- Enable IPv6
+- Provide distutils
+- Include msgfmt.py and pygettext.py
 
-* Wed Apr  5 2000 Bill Nottingham <notting@redhat.com>
-- what he said
+* Fri Sep 14 2001 Trond Eivind Glomsrød <teg@redhat.com> 2.2-0.3a3
+- Obsolete Distutils, which is now part of the main package
+- Obsolete python2
 
-* Tue Mar 21 2000 Bernhard Rosenkraenzer <bero@redhat.com>
-- rebuild with readline 4.1
+* Thu Sep 13 2001 Trond Eivind Glomsrød <teg@redhat.com> 2.2-0.2a3
+- Add docs, tools and tkinter subpackages, to match the 1.5 layout
 
-* Sat Mar 18 2000 Jeff Johnson <jbj@redhat.com>
-- rebuild tkinter against tcl-8.2.3.
+* Wed Sep 12 2001 Trond Eivind Glomsrød <teg@redhat.com> 2.2-0.1a3
+- 2.2a3
+- don't build tix and blt extensions
 
-* Thu Mar 09 2000 Nalin Dahyabhai <nalin@redhat.com>
-- build _localemodule.so to fix bug #9385 (release 14)
+* Mon Aug 13 2001 Trond Eivind Glomsrød <teg@redhat.com>
+- Add tk and tix to build dependencies
 
-* Tue Feb 01 2000 Cristian Gafton <gafton@redhat.com>
-- add patch tp fix problems talioking to wuftpd from hjl
-- rebuild to fix dependencies
+* Sat Jul 21 2001 Trond Eivind Glomsrød <teg@redhat.com>
+- 2.1.1 bugfix release - with a GPL compatible license
 
-* Mon Jan 31 2000 Nalin Dahyabhai <nalin@redhat.com>
-- add buildrequires lines (#8925)
+* Fri Jul 20 2001 Trond Eivind Glomsrød <teg@redhat.com>
+- Add new build dependencies (#49753)
 
-* Mon Jan 17 2000 Nalin Dahyabhai <nalin@redhat.com>
-- put idle, modulator, and pynche only in python-tools
+* Tue Jun 26 2001 Nalin Dahyabhai <nalin@redhat.com>
+- build with -fPIC
 
-* Thu Dec 02 1999 Michael K. Johnson <johnsonm@redhat.com>
-- fixed whichdb patch to actually do something (#7458)
+* Fri Jun  1 2001 Trond Eivind Glomsrød <teg@redhat.com>
+- 2.1
+- reorganization of file includes
 
-* Mon Nov 22 1999 Michael K. Johnson <johnsonm@redhat.com>
-- link nismodule against -lnss
-- whichdb patch by Guido (Python.org bug 97)
+* Wed Dec 20 2000 Trond Eivind Glomsrød <teg@redhat.com>
+- fix the "requires" clause, it lacked a space causing problems
+- use %%{_tmppath}
+- don't define name, version etc
+- add the available patches from the Python home page
 
-* Fri Sep 17 1999 Tim Powers <timp@redhat.com>
-- added modulator and pynche to the python-tools package
-- using a files list in the %files section for python-tools
+* Fri Dec 15 2000 Matt Wilson <msw@redhat.com>
+- added devel subpackage
 
-* Fri Sep 17 1999 Michael K. Johnson <johnsonm@redhat.com>
-- added conflicts/requires between subpackages so that you cannot
-  have an older tkinter installed with a new python.
-- added more tools
+* Fri Dec 15 2000 Matt Wilson <msw@redhat.com>
+- modify all files to use "python2.0" as the intrepter
+- don't build the Expat bindings
+- build against db1
 
-* Wed Sep 15 1999 Michael K. Johnson <johnsonm@redhat.com>
-- changed defattr so that executable scripts in docs stay executable
+* Mon Oct 16 2000 Jeremy Hylton <jeremy@beopen.com>
+- updated for 2.0 final
 
-* Tue Aug 24 1999 Bill Nottingham <notting@redhat.com>
-- rebuild to fix broken tkinter.
+* Mon Oct  9 2000 Jeremy Hylton <jeremy@beopen.com>
+- updated for 2.0c1
+- build audioop, imageop, and rgbimg extension modules
+- include xml.parsers subpackage
+- add test.xml.out to files list
 
-* Mon Aug  9 1999 Matt Wilson <msw@redhat.com>
-- fixed bogus /usr/local/bin/python requirements
+* Thu Oct  5 2000 Jeremy Hylton <jeremy@beopen.com>
+- added bin/python2.0 to files list (suggested by Martin v. Löwis)
 
-* Sat Jul 17 1999 Matt Wilson <msw@redhat.com>
-- added patch to import global symbols until we get libtool patched
+* Tue Sep 26 2000 Jeremy Hylton <jeremy@beopen.com>
+- updated for release 1 of 2.0b2
+- use .bz2 version of Python source
 
-* Sun Jul 11 1999 Matt Wilson <msw@redhat.com>
-- updated to 1.5.2
-
-* Sun Mar 21 1999 Cristian Gafton <gafton@redhat.com> 
-- auto rebuild in the new build environment (release 10)
-
-* Thu Mar 18 1999 Bill Nottingham <notting@redhat.com>
-- fix permissions in python-docs
-
-* Thu Feb 11 1999 Michael Johnson <johnsonm@redhat.com>
-- added mpzmodule at user request (uses gmp)
-- added bsddbmodule at user request (uses db 1.85 interface)
-
-* Mon Feb 08 1999 Michael Johnson <johnsonm@redhat.com>
-- add --with-threads at user request
-- clean up spec file
-
-* Fri Jan 08 1999 Michael K. Johnson <johnsonm@redhat.com>
-- New libc changes ndbm.h to db1/ndbm.h and -ldb to -ldb1
-
-* Thu Sep  3 1998 Jeff Johnson <jbj@redhat.com>
-- recompile for RH 5.2.
-
-* Wed May 06 1998 Cristian Gafton <gafton@redhat.com>
-- python-docs used to require /usr/bin/sed. Changed to /bin/sed instead
-
-* Wed Apr 29 1998 Cristian Gafton <gafton@redhat.com>
-- fixed the spec file for version 1.5.1
-- buildroot (!)
-
-* Mon Apr 20 1998 Michael K. Johnson <johnsonm@redhat.com>
-- updated to python 1.5.1
-- created our own Python-Doc tar file from 1.5 to substitute for the
-  not-yet-released Doc package.
-- build _tkinter properly
-- use readline again
-- build crypt module again
-- install rand replacement module
-- added a few modules
-
-* Thu Apr 09 1998 Erik Troan <ewt@redhat.com>
-- updated to python 1.5
-- made /usr/lib/python1.5 file list automatically generated
-
-* Tue Nov 04 1997 Michael K. Johnson <johnsonm@redhat.com>
-- Fixed dependencies for python and tkinter
-
-* Mon Nov 03 1997 Michael K. Johnson <johnsonm@redhat.com>
-- pulled out tk-related stuff into tkinter package
-
-* Fri Oct 10 1997 Erik Troan <ewt@redhat.com>
-- bunches of scripts used /usr/local/bin/python instead of /usr/bin/python
-
-* Tue Sep 30 1997 Erik Troan <ewt@redhat.com>
-- updated for tcl/tk 8.0
-
-* Thu Jul 10 1997 Erik Troan <ewt@redhat.com>
-- built against glibc
+* Tue Sep 12 2000 Jeremy Hylton <jeremy@beopen.com>
+- Version 2 of 2.0b1
+- Make the package relocatable.  Thanks to Suchandra Thapa.
+- Exclude Tkinter from main RPM.  If it is in a separate RPM, it is
+  easier to track Tk releases.
