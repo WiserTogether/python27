@@ -371,6 +371,9 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Fri Mar 11 2005 Dan Williams <dcbw@redhat.com> 2.4-5
+- Rebuild to pick up new libssl.so.5
+
 * Wed Feb  2 2005 Mihai Ibanescu <misa@redhat.com> 2.4-4
 - Fixed security issue in SimpleXMLRPCServer.py (#146647)
 
