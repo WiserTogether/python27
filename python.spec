@@ -19,7 +19,7 @@
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 Version: %{pybasever}.1
-Release: 1
+Release: 2
 License: PSF - see LICENSE
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -47,7 +47,7 @@ Obsoletes: Distutils
 Provides: Distutils
 Obsoletes: python2 
 Provides: python2 = %{version}
-BuildPrereq: db4-devel
+BuildPrereq: db4-devel >= 4.3
 %else
 #BuildPrereq: db3-devel
 %endif
@@ -277,6 +277,11 @@ find $RPM_BUILD_ROOT%{_libdir}/python%{pybasever}/lib-dynload -type f | grep -v 
 # Fix for bug #136654
 rm -f $RPM_BUILD_ROOT%{_libdir}/python%{pybasever}/email/test/data/audiotest.au
 
+# Fix bug #143667: python should own /usr/lib/python2.x on 64-bit machines
+%if %{_lib} == lib64
+install -d $RPM_BUILD_ROOT/usr/lib/python%{pybasever}/site-packages
+%endif
+
 %clean
 rm -fr $RPM_BUILD_ROOT
 
@@ -309,6 +314,10 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/compiler
 %{_libdir}/python%{pybasever}/plat-linux2
 %{_libdir}/python%{pybasever}/hotshot
+%if %{_lib} == lib64
+%attr(0755,root,root) %dir /usr/lib/python%{pybasever}
+%attr(0755,root,root) %dir /usr/lib/python%{pybasever}/site-packages
+%endif
 
 %files devel
 %defattr(-,root,root)
@@ -338,6 +347,11 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Wed Apr 20 2005 Mihai Ibanescu <misa@redhat.com> 2.4.1-2
+- Fixed bug #143667 (python should own /usr/lib/python* on 64-bit systems, for
+  noarch packages)
+- Fixed bug #143419 (BuildRequires db4 is not versioned)
+
 * Wed Apr  6 2005 Mihai Ibanescu <misa@redhat.com> 2.4.1-1
 - updated to 2.4.1
 
