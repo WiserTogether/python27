@@ -19,7 +19,7 @@
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 Version: %{pybasever}.1
-Release: 2
+Release: 3
 License: PSF - see LICENSE
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -28,8 +28,6 @@ Provides: python(abi) = %{pybasever}
 Provides: python-optik = 1.4.1
 Obsoletes: python-optik
 Source: http://www.python.org/ftp/python/%{version}/Python-%{version}.tar.bz2
-Source3: modulator
-Source4: pynche
 Source5: http://www.python.jp/pub/JapaneseCodecs/JapaneseCodecs-%{jp_codecs}.tar.gz
 Source6: http://gigue.peabody.jhu.edu/~mdboom/omi/source/shm_source/shmmodule.c
 Source7: python-2.3.4-optik.py
@@ -211,12 +209,20 @@ mv $RPM_BUILD_ROOT/%{_mandir}/man1/python.1 $RPM_BUILD_ROOT/%{_mandir}/man1/pyth
 mkdir -p ${RPM_BUILD_ROOT}%{_libdir}/python%{pybasever}/site-packages
 
 #modulator
-install -m 755 $RPM_SOURCE_DIR/modulator ${RPM_BUILD_ROOT}%{_bindir}/modulator
+cat > ${RPM_BUILD_ROOT}%{_bindir}/modulator << EOF
+#!/bin/bash
+exec %{_libdir}/python%{pybasever}/site-packages/modulator/modulator.py
+EOF
+chmod 755 ${RPM_BUILD_ROOT}%{_bindir}/modulator
 cp -r Tools/modulator \
   ${RPM_BUILD_ROOT}%{_libdir}/python%{pybasever}/site-packages/
 
 #pynche
-install -m 755 $RPM_SOURCE_DIR/pynche ${RPM_BUILD_ROOT}%{_bindir}/pynche
+cat > ${RPM_BUILD_ROOT}%{_bindir}/pynche << EOF
+#!/bin/bash
+exec %{_libdir}/python%{pybasever}/site-packages/pynche/pynche
+EOF
+chmod 755 ${RPM_BUILD_ROOT}%{_bindir}/pynche
 rm -f Tools/pynche/*.pyw
 cp -r Tools/pynche \
   ${RPM_BUILD_ROOT}%{_libdir}/python%{pybasever}/site-packages/
@@ -347,6 +353,9 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Tue Jul 26 2005 Mihai Ibanescu <misa@redhat.com> 2.4.1-3
+- Fixed bug #163435 (pynche doesn't start))
+
 * Wed Apr 20 2005 Mihai Ibanescu <misa@redhat.com> 2.4.1-2
 - Fixed bug #143667 (python should own /usr/lib/python* on 64-bit systems, for
   noarch packages)
