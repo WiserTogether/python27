@@ -19,7 +19,7 @@
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 Version: %{pybasever}.1
-Release: 3
+Release: 4
 License: PSF - see LICENSE
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -102,7 +102,7 @@ documentation.
 Summary: A collection of development tools included with Python.
 Group: Development/Tools
 Requires: %{name} = %{version}-%{release}
-Requires: tkinter = %{version}-%{release}
+Requires: %{tkinter} = %{version}-%{release}
 %if %{main_python}
 Obsoletes: python2-tools
 Provides: python2-tools = %{version}
@@ -265,6 +265,7 @@ mv modulator modulator%{__python_ver}
 mv pynche pynche%{__python_ver}
 mv pygettext.py pygettext%{__python_ver}.py
 mv msgfmt.py msgfmt%{__python_ver}.py
+mv smtpd.py smtpd%{__python_ver}.py
 mv pydoc pydoc%{__python_ver}
 popd
 %endif
@@ -337,7 +338,7 @@ rm -fr $RPM_BUILD_ROOT
 %doc Tools/pynche/README.pynche
 %{_libdir}/python%{pybasever}/site-packages/modulator
 %{_libdir}/python%{pybasever}/site-packages/pynche
-%{_bindir}/smtpd.py*
+%{_bindir}/smtpd*.py*
 %{_bindir}/idle*
 %{_bindir}/modulator*
 %{_bindir}/pynche*
@@ -353,6 +354,9 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Tue Sep 20 2005 Mihai Ibanescu <misa@redhat.com> 2.4.1-4
+- Fixed bug #168655 (fixes for building as python24)
+
 * Tue Jul 26 2005 Mihai Ibanescu <misa@redhat.com> 2.4.1-3
 - Fixed bug #163435 (pynche doesn't start))
 
