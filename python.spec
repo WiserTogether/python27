@@ -19,7 +19,7 @@
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 Version: %{pybasever}.1
-Release: 7
+Release: 8
 License: PSF - see LICENSE
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -358,6 +358,9 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Thu Sep 22 2005 Peter Jones <pjones@redhat.com> 2.4.1-8
+- Fix bug #169046 more correctly.
+
 * Thu Sep 22 2005 Mihai Ibanescu <misa@redhat.com> 2.4.1-7
 - Fixed bug #169046 (realpath is unsafe); thanks to 
   Peter Jones <pjones@redhat.com> and Arjan van de Ven <arjanv@redhat.com> for
