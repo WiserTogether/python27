@@ -19,7 +19,7 @@
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 Version: %{pybasever}.1
-Release: 6
+Release: 7
 License: PSF - see LICENSE
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -175,6 +175,8 @@ if pkg-config openssl ; then
 fi
 # Force CC
 export CC=gcc
+# For patch 15, need to get a newer configure generated out of configure.in
+autoconf
 %configure --enable-ipv6 --enable-unicode=%{unicode} --enable-shared
 
 make OPT="$CFLAGS" %{?_smp_mflags}
@@ -356,7 +358,7 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
-* Thu Sep 22 2005 Mihai Ibanescu <misa@redhat.com> 2.4.1-6
+* Thu Sep 22 2005 Mihai Ibanescu <misa@redhat.com> 2.4.1-7
 - Fixed bug #169046 (realpath is unsafe); thanks to 
   Peter Jones <pjones@redhat.com> and Arjan van de Ven <arjanv@redhat.com> for
   diagnosing and the patch.
