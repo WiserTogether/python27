@@ -11,20 +11,48 @@
  #undef HAVE_CHOWN
  
 --- Python-2.4.1/Python/sysmodule.c.canonicalize	2005-09-14 11:53:30.000000000 -0400
-+++ Python-2.4.1/Python/sysmodule.c	2005-09-14 11:52:04.000000000 -0400
-@@ -1184,6 +1184,11 @@
++++ Python-2.4.1/Python/sysmodule.c	2005-09-14 11:53:30.000000000 -0400
+@@ -1168,11 +1168,13 @@
+ void
+ PySys_SetArgv(int argc, char **argv)
+ {
++#ifndef HAVE_CANONICALIZE_FILE_NAME
+ #if defined(HAVE_REALPATH)
+ 	char fullpath[MAXPATHLEN];
+ #elif defined(MS_WINDOWS)
+ 	char fullpath[MAX_PATH];
+ #endif
++#endif
+ 	PyObject *av = makeargvobject(argc, argv);
+ 	PyObject *path = PySys_GetObject("path");
+ 	if (av == NULL)
+@@ -1180,6 +1182,25 @@
+ 	if (PySys_SetObject("argv", av) != 0)
+ 		Py_FatalError("can't assign sys.argv");
+ 	if (path != NULL) {
++#ifdef HAVE_CANONICALIZE_FILE_NAME
++		char *argv0;
++		int n = 0;
++		int errnum;
++		PyObject *a;
++
++		argv0 = canonicalize_file_name(argv[0]);
++		errnum = errno;
++		if (argv0 == NULL) {
++			if (errno == ENOENT)
++				/* strdup because we're going to free() it
++				   later no matter what */
++				argv0 = strdup(argv[0]);
++			else
++				Py_FatalError(strerror(errnum));
++			if (!argv0)
++				Py_FatalError("no mem for sys.argv");
++		}
++#else /* ! HAVE_CANONICALIZE_FILE_NAME */
+ 		char *argv0 = argv[0];
  		char *p = NULL;
  		int n = 0;
- 		PyObject *a;
-+#ifdef HAVE_CANONICALIZE_FILE_NAME
-+		argv0 = canonicalize_file_name(argv0);
-+		if (argv0 == NULL)
-+			Py_FatalError("no mem for sys.argv");
-+#else /* ! HAVE_CANONICALIZE_FILE_NAME */
- #ifdef HAVE_READLINK
- 		char link[MAXPATHLEN+1];
- 		char argv0copy[2*MAXPATHLEN+1];
-@@ -1256,9 +1261,13 @@
+@@ -1256,9 +1277,13 @@
  #endif /* Unix */
  		}
  #endif /* All others */
