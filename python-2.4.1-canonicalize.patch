@@ -1,0 +1,53 @@
+--- Python-2.4.1/pyconfig.h.in.canonicalize	2005-09-14 11:47:04.000000000 -0400
++++ Python-2.4.1/pyconfig.h.in	2005-09-14 11:47:02.000000000 -0400
+@@ -58,6 +58,9 @@
+ /* Define if pthread_sigmask() does not work on your system. */
+ #undef HAVE_BROKEN_PTHREAD_SIGMASK
+ 
++/* Define to 1 if you have the `canonicalize_file_name' function. */
++#undef HAVE_CANONICALIZE_FILE_NAME
++
+ /* Define to 1 if you have the `chown' function. */
+ #undef HAVE_CHOWN
+ 
+--- Python-2.4.1/Python/sysmodule.c.canonicalize	2005-09-14 11:53:30.000000000 -0400
++++ Python-2.4.1/Python/sysmodule.c	2005-09-14 11:52:04.000000000 -0400
+@@ -1184,6 +1184,11 @@
+ 		char *p = NULL;
+ 		int n = 0;
+ 		PyObject *a;
++#ifdef HAVE_CANONICALIZE_FILE_NAME
++		argv0 = canonicalize_file_name(argv0);
++		if (argv0 == NULL)
++			Py_FatalError("no mem for sys.argv");
++#else /* ! HAVE_CANONICALIZE_FILE_NAME */
+ #ifdef HAVE_READLINK
+ 		char link[MAXPATHLEN+1];
+ 		char argv0copy[2*MAXPATHLEN+1];
+@@ -1256,9 +1261,13 @@
+ #endif /* Unix */
+ 		}
+ #endif /* All others */
++#endif /* ! HAVE_CANONICALIZE_FILE_NAME */
+ 		a = PyString_FromStringAndSize(argv0, n);
+ 		if (a == NULL)
+ 			Py_FatalError("no mem for sys.path insertion");
++#ifdef HAVE_CANONICALIZE_FILE_NAME
++		free(argv0);
++#endif /* HAVE_CANONICALIZE_FILE_NAME */
+ 		if (PyList_Insert(path, 0, a) < 0)
+ 			Py_FatalError("sys.path.insert(0) failed");
+ 		Py_DECREF(a);
+--- Python-2.4.1/configure.in.canonicalize	2005-09-14 11:46:00.000000000 -0400
++++ Python-2.4.1/configure.in	2005-09-14 11:47:22.000000000 -0400
+@@ -2096,8 +2096,8 @@
+ AC_MSG_RESULT(MACHDEP_OBJS)
+ 
+ # checks for library functions
+-AC_CHECK_FUNCS(alarm bind_textdomain_codeset chown clock confstr ctermid \
+- execv fork fpathconf ftime ftruncate \
++AC_CHECK_FUNCS(alarm bind_textdomain_codeset canonicalize_file_name chown \
++ clock confstr ctermid execv fork fpathconf ftime ftruncate \
+  gai_strerror getgroups getlogin getloadavg getpeername getpgid getpid \
+  getpriority getpwent getsid getwd \
+  kill killpg lchown lstat mkfifo mknod mktime \

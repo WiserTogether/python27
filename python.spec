@@ -19,7 +19,7 @@
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 Version: %{pybasever}.1
-Release: 4
+Release: 5
 License: PSF - see LICENSE
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -39,6 +39,7 @@ Patch8: python-2.4.1-lib64.patch
 Patch9: japanese-codecs-lib64.patch
 Patch13: python-2.4-distutils-bdist-rpm.patch
 Patch14: python-2.3.4-pydocnodoc.patch
+Patch15: pyhton-2.4.1-canonicalize.patch
 
 %if %{main_python}
 Obsoletes: Distutils
@@ -142,6 +143,7 @@ user interface for Python programming.
 %endif
 %patch13 -p1 -b .bdist-rpm
 %patch14 -p1 -b .no-doc
+%patch14 -p1 -b .canonicalize
 
 # This shouldn't be necesarry, but is right now (2.2a3)
 find -name "*~" |xargs rm -f
@@ -354,6 +356,11 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Thu Sep 22 2005 Mihai Ibanescu <misa@redhat.com> 2.4.1-5
+- Fixed bug #169046 (realpath is unsafe); thanks to 
+  Peter Jones <pjones@redhat.com> and Arjan van de Ven <arjanv@redhat.com> for
+  diagnosing and the patch.
+
 * Tue Sep 20 2005 Mihai Ibanescu <misa@redhat.com> 2.4.1-4
 - Fixed bug #168655 (fixes for building as python24)
 
