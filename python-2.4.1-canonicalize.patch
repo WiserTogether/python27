@@ -1,5 +1,5 @@
 --- Python-2.4.1/Python/sysmodule.c.canonicalize	2005-01-27 13:58:30.000000000 -0500
-+++ Python-2.4.1/Python/sysmodule.c	2005-09-23 10:48:14.000000000 -0400
++++ Python-2.4.1/Python/sysmodule.c	2005-09-23 17:18:33.000000000 -0400
 @@ -1168,11 +1168,13 @@
  void
  PySys_SetArgv(int argc, char **argv)
@@ -14,33 +14,39 @@
  	PyObject *av = makeargvobject(argc, argv);
  	PyObject *path = PySys_GetObject("path");
  	if (av == NULL)
-@@ -1184,6 +1186,25 @@
+@@ -1184,6 +1186,31 @@
  		char *p = NULL;
  		int n = 0;
  		PyObject *a;
 +#ifdef HAVE_CANONICALIZE_FILE_NAME
 +		int errnum;
 +                
-+		argv0 = canonicalize_file_name(argv[0]);
-+		errnum = errno;
-+		if (argv0 == NULL) {
-+			if (errnum != ENOENT)
-+				Py_FatalError(strerror(errnum));
++                if (argv[0][0] == '\0') 
++                    /* python started with no arguments 
++                       copy the empty string and move on */
++                    argv0 = strdup(argv[0]);
++                else {
++                    argv0 = canonicalize_file_name(argv[0]);
++                    errnum = errno;
++                    if (argv0 == NULL) {
++                            if (errnum != ENOENT)
++                                    Py_FatalError(strerror(errnum));
 +
-+                        /* errnum == ENOENT; the input file name is empty, or
-+                         * at least one of the path components does not exist
-+                         * */
-+                        /* strdup because we're going to free() it
-+                           later no matter what */
-+                        argv0 = strdup(argv[0]);
-+			if (argv0 == NULL)
-+				Py_FatalError("no mem for sys.argv");
-+		}
++                            /* errnum == ENOENT; the input file name is empty, or
++                             * at least one of the path components does not exist
++                             * */
++                            /* strdup because we're going to free() it
++                               later no matter what */
++                            argv0 = strdup(argv[0]);
++                            if (argv0 == NULL)
++                                    Py_FatalError("no mem for sys.argv");
++                    }
++                }
 +#else /* ! HAVE_CANONICALIZE_FILE_NAME */
  #ifdef HAVE_READLINK
  		char link[MAXPATHLEN+1];
  		char argv0copy[2*MAXPATHLEN+1];
-@@ -1256,9 +1277,13 @@
+@@ -1256,9 +1283,13 @@
  #endif /* Unix */
  		}
  #endif /* All others */
@@ -55,7 +61,7 @@
  			Py_FatalError("sys.path.insert(0) failed");
  		Py_DECREF(a);
 --- Python-2.4.1/configure.in.canonicalize	2005-03-28 18:23:34.000000000 -0500
-+++ Python-2.4.1/configure.in	2005-09-23 10:37:30.000000000 -0400
++++ Python-2.4.1/configure.in	2005-09-23 17:19:14.000000000 -0400
 @@ -2096,8 +2096,8 @@
  AC_MSG_RESULT(MACHDEP_OBJS)
  
@@ -68,7 +74,7 @@
   getpriority getpwent getsid getwd \
   kill killpg lchown lstat mkfifo mknod mktime \
 --- Python-2.4.1/pyconfig.h.in.canonicalize	2004-10-13 11:30:55.000000000 -0400
-+++ Python-2.4.1/pyconfig.h.in	2005-09-23 10:37:30.000000000 -0400
++++ Python-2.4.1/pyconfig.h.in	2005-09-23 17:19:14.000000000 -0400
 @@ -58,6 +58,9 @@
  /* Define if pthread_sigmask() does not work on your system. */
  #undef HAVE_BROKEN_PTHREAD_SIGMASK
