@@ -19,7 +19,7 @@
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 Version: %{pybasever}.1
-Release: 8
+Release: 9
 License: PSF - see LICENSE
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -358,6 +358,10 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Fri Sep 23 2005 Mihai Ibanescu <misa@redhat.com> 2.4.1-9
+- Fixed bug #169159 (don't let python core dump if no arguments are passed in)
+  Reworked the patch from -8 a bit more.
+
 * Thu Sep 22 2005 Peter Jones <pjones@redhat.com> 2.4.1-8
 - Fix bug #169046 more correctly.
 
