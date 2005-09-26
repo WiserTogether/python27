@@ -19,7 +19,7 @@
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 Version: %{pybasever}.1
-Release: 12
+Release: 13
 License: PSF - see LICENSE
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -358,6 +358,9 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Mon Sep 26 2005 Peter Jones <pjones@redhat.com> 2.4.1-13
+- So, 5 or 6 people have said it works for them with this patch...
+
 * Sun Sep 25 2005 Peter Jones <pjones@redhat.com> 2.4.1-12
 - Fixed bug #169159 (check for argc>0 and argv[0] == NULL, not just
     argv[0][0]='\0')
