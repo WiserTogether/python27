@@ -24,7 +24,6 @@ License: PSF - see LICENSE
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
 Provides: python(abi) = %{pybasever}
-ExcludeArch: s390 s390x
 # optik is part of python 2.3 as optparse
 Provides: python-optik = 1.4.1
 Obsoletes: python-optik
