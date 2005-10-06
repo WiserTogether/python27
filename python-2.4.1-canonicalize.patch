@@ -1,5 +1,5 @@
 --- Python-2.4.1/pyconfig.h.in.canonicalize	2004-10-13 11:30:55.000000000 -0400
-+++ Python-2.4.1/pyconfig.h.in	2005-09-26 16:03:35.000000000 -0400
++++ Python-2.4.1/pyconfig.h.in	2005-10-06 14:04:06.000000000 -0400
 @@ -58,6 +58,9 @@
  /* Define if pthread_sigmask() does not work on your system. */
  #undef HAVE_BROKEN_PTHREAD_SIGMASK
@@ -11,7 +11,7 @@
  #undef HAVE_CHOWN
  
 --- Python-2.4.1/Python/sysmodule.c.canonicalize	2005-01-27 13:58:30.000000000 -0500
-+++ Python-2.4.1/Python/sysmodule.c	2005-09-26 16:24:37.000000000 -0400
++++ Python-2.4.1/Python/sysmodule.c	2005-10-06 14:56:37.000000000 -0400
 @@ -1168,11 +1168,13 @@
  void
  PySys_SetArgv(int argc, char **argv)
@@ -26,25 +26,22 @@
  	PyObject *av = makeargvobject(argc, argv);
  	PyObject *path = PySys_GetObject("path");
  	if (av == NULL)
-@@ -1184,6 +1186,67 @@
+@@ -1184,6 +1186,64 @@
  		char *p = NULL;
  		int n = 0;
  		PyObject *a;
 +#ifdef HAVE_CANONICALIZE_FILE_NAME
 +		char *link = NULL, *argv0copy = NULL;
-+		int errnum;
 +                
 +                if (argc > 0 && argv0 != NULL) {
 +			
 +			link = canonicalize_file_name(argv0);
-+			errnum = errno;
-+			if (link == NULL && errno == ENOENT) {
++			if (link == NULL) {
 +				link = strdup(argv0);
 +				if (!link)
 +					Py_FatalError("no mem for sys.argv");
 +			}
 +		}
-+
 +		if (link) {
 +			if (link[0] == SEP) /* Link to absolute path */
 +				argv0 = link;
@@ -94,7 +91,7 @@
  #ifdef HAVE_READLINK
  		char link[MAXPATHLEN+1];
  		char argv0copy[2*MAXPATHLEN+1];
-@@ -1256,9 +1319,14 @@
+@@ -1256,9 +1316,14 @@
  #endif /* Unix */
  		}
  #endif /* All others */
@@ -103,14 +100,14 @@
  		if (a == NULL)
  			Py_FatalError("no mem for sys.path insertion");
 +#ifdef HAVE_CANONICALIZE_FILE_NAME
-+		if (argv0)
++		if (argc > 0 && argv0 != NULL)
 +			free(argv0);
 +#endif /* HAVE_CANONICALIZE_FILE_NAME */
  		if (PyList_Insert(path, 0, a) < 0)
  			Py_FatalError("sys.path.insert(0) failed");
  		Py_DECREF(a);
 --- Python-2.4.1/configure.in.canonicalize	2005-03-28 18:23:34.000000000 -0500
-+++ Python-2.4.1/configure.in	2005-09-26 16:03:35.000000000 -0400
++++ Python-2.4.1/configure.in	2005-10-06 14:04:06.000000000 -0400
 @@ -2096,8 +2096,8 @@
  AC_MSG_RESULT(MACHDEP_OBJS)
  
