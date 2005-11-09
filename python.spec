@@ -19,7 +19,7 @@
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 Version: %{pybasever}.1
-Release: 15
+Release: 16
 License: PSF - see LICENSE
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -54,7 +54,7 @@ BuildPrereq: db4-devel >= 4.3
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildPrereq: readline-devel, libtermcap-devel, openssl-devel, gmp-devel
 BuildPrereq: ncurses-devel, gdbm-devel, zlib-devel, expat-devel
-BuildPrereq: Mesa-devel tk tix gcc-c++ XFree86-devel glibc-devel
+BuildPrereq: Mesa-devel tk tix gcc-c++ xorg-x11-devel glibc-devel
 BuildPrereq: bzip2 tar /usr/bin/find pkgconfig tcl-devel tk-devel
 BuildPrereq: tix-devel bzip2-devel
 URL: http://www.python.org/
@@ -358,8 +358,9 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
-* Wed Nov  9 2005 Mihai Ibanescu <misa@redhat.com> 2.4.1-15
+* Wed Nov  9 2005 Mihai Ibanescu <misa@redhat.com> 2.4.1-16
 - Rebuilding against newer openssl.
+- XFree86-devel no longer exists
 
 * Mon Sep 26 2005 Peter Jones <pjones@redhat.com> 2.4.1-14
 - Once more -- this time, to fix -EPERM when you run it in a directory
