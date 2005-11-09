@@ -19,7 +19,7 @@
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 Version: %{pybasever}.1
-Release: 14
+Release: 15
 License: PSF - see LICENSE
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -358,6 +358,9 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Wed Nov  9 2005 Mihai Ibanescu <misa@redhat.com> 2.4.1-15
+- Rebuilding against newer openssl.
+
 * Mon Sep 26 2005 Peter Jones <pjones@redhat.com> 2.4.1-14
 - Once more -- this time, to fix -EPERM when you run it in a directory
   you can't read from.
