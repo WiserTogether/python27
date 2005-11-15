@@ -18,8 +18,8 @@
 
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
-Version: %{pybasever}.1
-Release: 16
+Version: %{pybasever}.2
+Release: 1
 License: PSF - see LICENSE
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -57,6 +57,7 @@ BuildPrereq: ncurses-devel, gdbm-devel, zlib-devel, expat-devel
 BuildPrereq: Mesa-devel tk tix gcc-c++ xorg-x11-devel glibc-devel
 BuildPrereq: bzip2 tar /usr/bin/find pkgconfig tcl-devel tk-devel
 BuildPrereq: tix-devel bzip2-devel
+BuildPrereq: autoconf
 URL: http://www.python.org/
 
 %description
@@ -358,6 +359,10 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Tue Nov 15 2005 Mihai Ibanescu <misa@redhat.com> 2.4.2-1
+- Upgraded to 2.4.2
+- BuildRequires autoconf
+
 * Wed Nov  9 2005 Mihai Ibanescu <misa@redhat.com> 2.4.1-16
 - Rebuilding against newer openssl.
 - XFree86-devel no longer exists
