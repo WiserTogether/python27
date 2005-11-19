@@ -19,7 +19,7 @@
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 Version: %{pybasever}.2
-Release: 1
+Release: 2
 License: PSF - see LICENSE
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -54,7 +54,7 @@ BuildPrereq: db4-devel >= 4.3
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildPrereq: readline-devel, libtermcap-devel, openssl-devel, gmp-devel
 BuildPrereq: ncurses-devel, gdbm-devel, zlib-devel, expat-devel
-BuildPrereq: Mesa-devel tk tix gcc-c++ xorg-x11-devel glibc-devel
+BuildPrereq: libGL-devel tk tix gcc-c++ libX11-devel glibc-devel
 BuildPrereq: bzip2 tar /usr/bin/find pkgconfig tcl-devel tk-devel
 BuildPrereq: tix-devel bzip2-devel
 BuildPrereq: autoconf
@@ -359,6 +359,9 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Sat Nov 19 2005 Bill Nottingham <notting@redhat.com> 2.4.2-2
+- fix build for modular X, remove X11R6 path references
+
 * Tue Nov 15 2005 Mihai Ibanescu <misa@redhat.com> 2.4.2-1
 - Upgraded to 2.4.2
 - BuildRequires autoconf
