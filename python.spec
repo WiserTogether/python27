@@ -19,7 +19,7 @@
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 Version: %{pybasever}.2
-Release: 3
+Release: 3.1
 License: PSF - see LICENSE
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -359,6 +359,9 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Tue Feb 07 2006 Jesse Keating <jkeating@redhat.com> - 2.4.2-3.1
+- rebuilt for new gcc4.1 snapshot and glibc changes
+
 * Fri Jan 20 2006 Mihai Ibanescu <misa@redhat.com> 2.4.2-3
 - fixed #136654 for another instance of audiotest.au
 
