@@ -18,8 +18,8 @@
 
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
-Version: %{pybasever}.2
-Release: 3.2.1
+Version: %{pybasever}.3
+Release: 1
 License: PSF - see LICENSE
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -32,7 +32,7 @@ Source5: http://www.python.jp/pub/JapaneseCodecs/JapaneseCodecs-%{jp_codecs}.tar
 Source6: http://gigue.peabody.jhu.edu/~mdboom/omi/source/shm_source/shmmodule.c
 Source7: python-2.3.4-optik.py
 
-Patch0: python-2.4.1-config.patch
+Patch0: python-2.4.3-config.patch
 Patch3: Python-2.2.1-pydocnogui.patch
 Patch7: python-2.3.4-lib64-regex.patch
 Patch8: python-2.4.1-lib64.patch
@@ -359,6 +359,9 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Thu Apr  6 2006 Mihai Ibanescu <misa@redhat.com> - 2.4.3-1
+- Updated to 2.4.3
+
 * Fri Feb 10 2006 Jesse Keating <jkeating@redhat.com> - 2.4.2-3.2.1
 - bump again for double-long bug on ppc(64)
 
