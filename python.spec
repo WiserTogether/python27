@@ -19,7 +19,7 @@
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 Version: %{pybasever}.3
-Release: 4.FC6
+Release: 5.FC6
 License: PSF - see LICENSE
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -31,6 +31,7 @@ Source: http://www.python.org/ftp/python/%{version}/Python-%{version}.tar.bz2
 Source5: http://www.python.jp/pub/JapaneseCodecs/JapaneseCodecs-%{jp_codecs}.tar.gz
 Source6: http://gigue.peabody.jhu.edu/~mdboom/omi/source/shm_source/shmmodule.c
 Source7: python-2.3.4-optik.py
+Source8: pydoc
 
 Patch0: python-2.4.3-config.patch
 Patch3: Python-2.2.1-pydocnogui.patch
@@ -294,12 +295,16 @@ rm -f $RPM_BUILD_ROOT%{_libdir}/python%{pybasever}/email/test/data/audiotest.au 
 install -d $RPM_BUILD_ROOT/usr/lib/python%{pybasever}/site-packages
 %endif
 
+# Install pydoc wrapper (bug #193484)
+install -m 0755 %{SOURCE8} %{_bindir}/pydoc
+
 %clean
 rm -fr $RPM_BUILD_ROOT
 
 %files -f dynfiles
 %defattr(-, root, root)
 %doc LICENSE README
+%{_bindir}/pydoc
 %{_bindir}/python*
 %{_mandir}/*/*
 %{_libdir}/libpython%{pybasever}.so*
@@ -359,6 +364,9 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Thu Jun  8 2006 Mihai Ibanescu <misa@redhat.com> - 2.4.3-5
+- Fixed bug #193484 (added pydoc)
+
 * Mon Jun  5 2006 Mihai Ibanescu <misa@redhat.com> - 2.4.3-4
 - Added dist in the release
 
