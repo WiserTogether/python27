@@ -249,7 +249,7 @@ install Tools/scripts/*py $RPM_BUILD_ROOT%{tools_dir}/scripts/
 
 # Documentation tools
 %{__tar} cf - Doc/tools | \
-    %{__tar} xf - -C %$RPM_BUILD_ROOT%{_libdir}/python%{pybasever}
+    %{__tar} xf - -C $RPM_BUILD_ROOT%{_libdir}/python%{pybasever}
 
 # Useful demo scripts
 install -m755 -d $RPM_BUILD_ROOT%{demo_dir}
