@@ -19,7 +19,7 @@
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 Version: %{pybasever}.3
-Release: 6.FC6
+Release: 7.FC6
 License: PSF - see LICENSE
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -41,6 +41,7 @@ Patch13: python-2.4-distutils-bdist-rpm.patch
 Patch14: python-2.3.4-pydocnodoc.patch
 Patch15: python-2.4.1-canonicalize.patch
 Patch16: python-2.4-gen-assert.patch
+Patch17: python-2.4-webbrowser.patch
 
 %if %{main_python}
 Obsoletes: Distutils
@@ -147,6 +148,7 @@ user interface for Python programming.
 %patch14 -p1 -b .no-doc
 %patch15 -p1 -b .canonicalize
 %patch16 -p2 -b .gen-assert
+%patch17 -p0 -b .web-browser
 
 # This shouldn't be necesarry, but is right now (2.2a3)
 find -name "*~" |xargs rm -f
@@ -366,6 +368,9 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Mon Jun 12 2006 Mihai Ibanescu <misa@redhat.com> - 2.4.3-7
+- Fixed bug #121198 (webbrowser.py should use the user's preferences first)
+
 * Mon Jun 12 2006 Mihai Ibanescu <misa@redhat.com> - 2.4.3-6
 - Fixed bug #192592 (too aggressive assertion fails) - SF#1257960
 - Fixed bug #167468 (Doc/tools not included) - added in the python-tools package
