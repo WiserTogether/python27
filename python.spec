@@ -31,7 +31,6 @@ Source: http://www.python.org/ftp/python/%{version}/Python-%{version}.tar.bz2
 Source5: http://www.python.jp/pub/JapaneseCodecs/JapaneseCodecs-%{jp_codecs}.tar.gz
 Source6: http://gigue.peabody.jhu.edu/~mdboom/omi/source/shm_source/shmmodule.c
 Source7: python-2.3.4-optik.py
-Source8: pydoc
 
 Patch0: python-2.4.3-config.patch
 Patch3: Python-2.2.1-pydocnogui.patch
@@ -301,16 +300,13 @@ rm -f $RPM_BUILD_ROOT%{_libdir}/python%{pybasever}/email/test/data/audiotest.au 
 install -d $RPM_BUILD_ROOT/usr/lib/python%{pybasever}/site-packages
 %endif
 
-# Install pydoc wrapper (bug #193484)
-install -m 0755 %{SOURCE8} %{_bindir}/pydoc
-
 %clean
 rm -fr $RPM_BUILD_ROOT
 
 %files -f dynfiles
 %defattr(-, root, root)
 %doc LICENSE README
-%{_bindir}/pydoc
+%{_bindir}/pydoc*
 %{_bindir}/python*
 %{_mandir}/*/*
 %{_libdir}/libpython%{pybasever}.so*
@@ -360,7 +356,6 @@ rm -fr $RPM_BUILD_ROOT
 %{_bindir}/pynche*
 %{_bindir}/pygettext*.py*
 %{_bindir}/msgfmt*.py*
-%{_bindir}/pydoc*
 %{tools_dir}
 %{demo_dir}
 %{_libdir}/python%{pybasever}/Doc
@@ -376,7 +371,7 @@ rm -fr $RPM_BUILD_ROOT
 - Fixed bug #167468 (Doc/tools not included) - added in the python-tools package
 
 * Thu Jun  8 2006 Mihai Ibanescu <misa@redhat.com> - 2.4.3-5
-- Fixed bug #193484 (added pydoc)
+- Fixed bug #193484 (added pydoc in the main package)
 
 * Mon Jun  5 2006 Mihai Ibanescu <misa@redhat.com> - 2.4.3-4
 - Added dist in the release
