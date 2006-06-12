@@ -19,7 +19,7 @@
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 Version: %{pybasever}.3
-Release: 5.FC6
+Release: 6.FC6
 License: PSF - see LICENSE
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -41,6 +41,7 @@ Patch9: japanese-codecs-lib64.patch
 Patch13: python-2.4-distutils-bdist-rpm.patch
 Patch14: python-2.3.4-pydocnodoc.patch
 Patch15: python-2.4.1-canonicalize.patch
+Patch16: python-2.4-gen-assert.patch
 
 %if %{main_python}
 Obsoletes: Distutils
@@ -146,6 +147,7 @@ user interface for Python programming.
 %patch13 -p1 -b .bdist-rpm
 %patch14 -p1 -b .no-doc
 %patch15 -p1 -b .canonicalize
+%patch16 -p2 -b .gen-assert
 
 # This shouldn't be necesarry, but is right now (2.2a3)
 find -name "*~" |xargs rm -f
@@ -244,6 +246,10 @@ install -m755  Tools/i18n/msgfmt.py $RPM_BUILD_ROOT%{_bindir}/
 install -m755 -d $RPM_BUILD_ROOT%{tools_dir}/scripts
 install Tools/README $RPM_BUILD_ROOT%{tools_dir}/
 install Tools/scripts/*py $RPM_BUILD_ROOT%{tools_dir}/scripts/
+
+# Documentation tools
+%{__tar} cf - Doc/tools | \
+    %{__tar} xf - -C %$RPM_BUILD_ROOT%{_libdir}/python%{pybasever}
 
 # Useful demo scripts
 install -m755 -d $RPM_BUILD_ROOT%{demo_dir}
@@ -357,6 +363,7 @@ rm -fr $RPM_BUILD_ROOT
 %{_bindir}/pydoc*
 %{tools_dir}
 %{demo_dir}
+%{_libdir}/python%{pybasever}/Doc
 
 %files -n %{tkinter}
 %defattr(-,root,root,755)
@@ -364,6 +371,10 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Mon Jun 12 2006 Mihai Ibanescu <misa@redhat.com> - 2.4.3-6
+- Fixed bug #192592 (too aggressive assertion fails) - SF#1257960
+- Fixed bug #167468 (Doc/tools not included) - added in the python-tools package
+
 * Thu Jun  8 2006 Mihai Ibanescu <misa@redhat.com> - 2.4.3-5
 - Fixed bug #193484 (added pydoc)
 
