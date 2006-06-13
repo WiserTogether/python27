@@ -303,9 +303,6 @@ rm -f $RPM_BUILD_ROOT%{_libdir}/python%{pybasever}/email/test/data/audiotest.au 
 install -d $RPM_BUILD_ROOT/usr/lib/python%{pybasever}/site-packages
 %endif
 
-# Install pydoc wrapper (bug #193484)
-install -m 0755 %{SOURCE8} %{_bindir}/pydoc
-
 # Make python-devel multilib-ready (bug #192747, #139911)
 %define _pyconfig32_h pyconfig-32.h
 %define _pyconfig64_h pyconfig-64.h
