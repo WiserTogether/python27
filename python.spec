@@ -395,7 +395,7 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
-* Mon Jun 12 2006 Mihai Ibanescu <misa@redhat.com> - 2.4.3-9
+* Tue Jun 13 2006 Mihai Ibanescu <misa@redhat.com> - 2.4.3-9
 - Fixed python-devel to be multilib friendly (bug #192747, #139911)
 
 * Tue Jun 13 2006 Mihai Ibanescu <misa@redhat.com> - 2.4.3-8
