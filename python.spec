@@ -20,7 +20,7 @@
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 Version: %{pybasever}.3
-Release: 9.FC6
+Release: 10.FC6
 License: PSF - see LICENSE
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -307,7 +307,7 @@ install -d $RPM_BUILD_ROOT/usr/lib/python%{pybasever}/site-packages
 %define _pyconfig32_h pyconfig-32.h
 %define _pyconfig64_h pyconfig-64.h
 
-%if %{_lib} == lib64
+%ifarch ppc64 s390x x86_64
 %define _pyconfig_h %{_pyconfig64_h}
 %else
 %define _pyconfig_h %{_pyconfig32_h}
@@ -392,6 +392,9 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Tue Jun 13 2006 Jeremy Katz <katzj@redhat.com> - 2.4.3-10.FC6
+- fix python-devel on ia64
+
 * Tue Jun 13 2006 Mihai Ibanescu <misa@redhat.com> - 2.4.3-9
 - Fixed python-devel to be multilib friendly (bug #192747, #139911)
 
