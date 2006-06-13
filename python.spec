@@ -308,9 +308,9 @@ install -d $RPM_BUILD_ROOT/usr/lib/python%{pybasever}/site-packages
 %define _pyconfig64_h pyconfig-64.h
 
 %if %{_lib} == lib64
-%define _pyconfig_h %{_pyconfig64.h}
+%define _pyconfig_h %{_pyconfig64_h}
 %else
-%define _pyconfig_h %{_pyconfig32.h}
+%define _pyconfig_h %{_pyconfig32_h}
 %endif
 mv $RPM_BUILD_ROOT%{_includedir}/python%{pybasever}/pyconfig.h \
    $RPM_BUILD_ROOT%{_includedir}/python%{pybasever}/%{_pyconfig_h}
