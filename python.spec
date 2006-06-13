@@ -20,7 +20,7 @@
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 Version: %{pybasever}.3
-Release: 8.FC6
+Release: 9.FC6
 License: PSF - see LICENSE
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -303,6 +303,32 @@ rm -f $RPM_BUILD_ROOT%{_libdir}/python%{pybasever}/email/test/data/audiotest.au 
 install -d $RPM_BUILD_ROOT/usr/lib/python%{pybasever}/site-packages
 %endif
 
+# Install pydoc wrapper (bug #193484)
+install -m 0755 %{SOURCE8} %{_bindir}/pydoc
+
+# Make python-devel multilib-ready (bug #192747, #139911)
+%define _pyconfig32_h pyconfig-32.h
+%define _pyconfig64_h pyconfig-64.h
+
+%if %{_lib} == lib64
+%define _pyconfig_h %{_pyconfig64.h}
+%else
+%define _pyconfig_h %{_pyconfig32.h}
+%endif
+mv $RPM_BUILD_ROOT%{_includedir}/python%{pybasever}/pyconfig.h \
+   $RPM_BUILD_ROOT%{_includedir}/python%{pybasever}/%{_pyconfig_h}
+cat > $RPM_BUILD_ROOT%{_includedir}/python%{pybasever}/pyconfig.h << EOF
+#include <bits/wordsize.h>
+
+#if __WORDSIZE == 32
+#include "%{_pyconfig32_h}"
+#elif __WORDSIZE == 64
+#include "%{_pyconfig64_h}"
+#else
+#error "Unkown word size"
+#endif
+EOF
+
 %clean
 rm -fr $RPM_BUILD_ROOT
 
@@ -369,6 +395,9 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Mon Jun 12 2006 Mihai Ibanescu <misa@redhat.com> - 2.4.3-9
+- Fixed python-devel to be multilib friendly (bug #192747, #139911)
+
 * Tue Jun 13 2006 Mihai Ibanescu <misa@redhat.com> - 2.4.3-8
 - Only copying mkhowto from the Docs - we don't need perl dependencies from
   python-tools.
