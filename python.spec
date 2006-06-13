@@ -15,11 +15,12 @@
 %define jp_codecs 1.4.11
 %define tools_dir %{_libdir}/python%{pybasever}/Tools
 %define demo_dir %{_libdir}/python%{pybasever}/Demo
+%define doc_tools_dir %{_libdir}/python%{pybasever}/Doc/tools
 
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 Version: %{pybasever}.3
-Release: 7.FC6
+Release: 8.FC6
 License: PSF - see LICENSE
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -249,8 +250,8 @@ install Tools/README $RPM_BUILD_ROOT%{tools_dir}/
 install Tools/scripts/*py $RPM_BUILD_ROOT%{tools_dir}/scripts/
 
 # Documentation tools
-%{__tar} cf - Doc/tools | \
-    %{__tar} xf - -C $RPM_BUILD_ROOT%{_libdir}/python%{pybasever}
+install -m755 -d $RPM_BUILD_ROOT%{doc_tools_dir}
+install -m755 Doc/tools/mkhowto $RPM_BUILD_ROOT%{doc_tools_dir}
 
 # Useful demo scripts
 install -m755 -d $RPM_BUILD_ROOT%{demo_dir}
@@ -368,6 +369,10 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Tue Jun 13 2006 Mihai Ibanescu <misa@redhat.com> - 2.4.3-8
+- Only copying mkhowto from the Docs - we don't need perl dependencies from
+  python-tools.
+
 * Mon Jun 12 2006 Mihai Ibanescu <misa@redhat.com> - 2.4.3-7
 - Fixed bug #121198 (webbrowser.py should use the user's preferences first)
 
