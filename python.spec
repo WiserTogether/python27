@@ -20,7 +20,7 @@
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 Version: %{pybasever}.3
-Release: 12%{?dist}
+Release: 13%{?dist}
 License: PSF - see LICENSE
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -43,6 +43,7 @@ Patch14: python-2.3.4-pydocnodoc.patch
 Patch15: python-2.4.1-canonicalize.patch
 Patch16: python-2.4-gen-assert.patch
 Patch17: python-2.4-webbrowser.patch
+Patch18: python-2.4.3-cflags.patch
 
 %if %{main_python}
 Obsoletes: Distutils
@@ -150,6 +151,7 @@ user interface for Python programming.
 %patch15 -p1 -b .canonicalize
 %patch16 -p2 -b .gen-assert
 %patch17 -p0 -b .web-browser
+%patch18 -p1 -b .cflags
 
 # This shouldn't be necesarry, but is right now (2.2a3)
 find -name "*~" |xargs rm -f
@@ -392,6 +394,9 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Thu Jul 20 2006 Mihai Ibanescu <misa@redhat.com> - 2.4.3-13
+- Fixed bug #199373 (on some platforms CFLAGS is needed when linking)
+
 * Mon Jul 17 2006 Mihai Ibanescu <misa@redhat.com> - 2.4.3-12
 - added dist tag back
 
