@@ -20,7 +20,7 @@
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 Version: %{pybasever}.3
-Release: 13%{?dist}
+Release: 14%{?dist}
 License: PSF - see LICENSE
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -44,6 +44,7 @@ Patch15: python-2.4.1-canonicalize.patch
 Patch16: python-2.4-gen-assert.patch
 Patch17: python-2.4-webbrowser.patch
 Patch18: python-2.4.3-cflags.patch
+Patch19: python-2.4.3-locale.patch
 
 %if %{main_python}
 Obsoletes: Distutils
@@ -152,6 +153,7 @@ user interface for Python programming.
 %patch16 -p2 -b .gen-assert
 %patch17 -p0 -b .web-browser
 %patch18 -p1 -b .cflags
+%patch19 -p2 -b .locale
 
 # This shouldn't be necesarry, but is right now (2.2a3)
 find -name "*~" |xargs rm -f
@@ -394,6 +396,9 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Fri Jul 21 2006 Mihai Ibanescu <misa@redhat.com> - 2.4.3-14
+- Fixed bug #198971 (case conversion not locale safe in logging library)
+
 * Thu Jul 20 2006 Mihai Ibanescu <misa@redhat.com> - 2.4.3-13
 - Fixed bug #199373 (on some platforms CFLAGS is needed when linking)
 
