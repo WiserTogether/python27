@@ -20,7 +20,7 @@
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 Version: %{pybasever}.3
-Release: 14%{?dist}
+Release: 15%{?dist}
 License: PSF - see LICENSE
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -330,6 +330,9 @@ cat > $RPM_BUILD_ROOT%{_includedir}/python%{pybasever}/pyconfig.h << EOF
 #endif
 EOF
 
+# Fix for bug 201434: make sure distutils looks at the right pyconfig.h file
+sed -i -e "s/'pyconfig.h'/'%{_pyconfig_h}'/" $RPM_BUILD_ROOT%{_libdir}/python%{pybasever}/distutils/sysconfig.py
+
 %clean
 rm -fr $RPM_BUILD_ROOT
 
@@ -396,6 +399,10 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Thu Aug 17 2006 Mihai Ibanescu <misa@redhat.com> - 2.4.3-15
+- Fixed bug #201434 (distutils.sysconfig is confused by the change to make
+  python-devel multilib friendly)
+
 * Fri Jul 21 2006 Mihai Ibanescu <misa@redhat.com> - 2.4.3-14
 - Fixed bug #198971 (case conversion not locale safe in logging library)
 
