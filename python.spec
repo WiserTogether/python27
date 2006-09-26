@@ -20,7 +20,7 @@
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 Version: %{pybasever}.3
-Release: 16%{?dist}
+Release: 17%{?dist}
 License: PSF - see LICENSE
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -401,7 +401,7 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
-* Tue Sep 26 2006 Mihai Ibanescu <misa@redhat.com> - 2.4.3-8.1
+* Tue Sep 26 2006 Mihai Ibanescu <misa@redhat.com> - 2.4.3-17
 - Fixed bug #208166 / CVE-2006-4980: repr unicode buffer overflow
 
 * Thu Aug 17 2006 Mihai Ibanescu <misa@redhat.com> - 2.4.3-15
