@@ -20,7 +20,7 @@
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 Version: %{pybasever}.3
-Release: 15%{?dist}
+Release: 16%{?dist}
 License: PSF - see LICENSE
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -45,6 +45,7 @@ Patch16: python-2.4-gen-assert.patch
 Patch17: python-2.4-webbrowser.patch
 Patch18: python-2.4.3-cflags.patch
 Patch19: python-2.4.3-locale.patch
+Patch20: python-2.4.3-unicodeobject.patch
 
 %if %{main_python}
 Obsoletes: Distutils
@@ -154,6 +155,7 @@ user interface for Python programming.
 %patch17 -p0 -b .web-browser
 %patch18 -p1 -b .cflags
 %patch19 -p2 -b .locale
+%patch20 -p3 -b .unicode-repr
 
 # This shouldn't be necesarry, but is right now (2.2a3)
 find -name "*~" |xargs rm -f
@@ -399,6 +401,9 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Tue Sep 26 2006 Mihai Ibanescu <misa@redhat.com> - 2.4.3-8.1
+- Fixed bug #208166 / CVE-2006-4980: repr unicode buffer overflow
+
 * Thu Aug 17 2006 Mihai Ibanescu <misa@redhat.com> - 2.4.3-15
 - Fixed bug #201434 (distutils.sysconfig is confused by the change to make
   python-devel multilib friendly)
