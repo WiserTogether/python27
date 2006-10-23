@@ -19,8 +19,8 @@
 
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
-Version: %{pybasever}.3
-Release: 18%{?dist}
+Version: %{pybasever}.4
+Release: 1%{?dist}
 License: PSF - see LICENSE
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -36,7 +36,7 @@ Source7: python-2.3.4-optik.py
 Patch0: python-2.4.3-config.patch
 Patch3: Python-2.2.1-pydocnogui.patch
 Patch7: python-2.3.4-lib64-regex.patch
-Patch8: python-2.4.1-lib64.patch
+Patch8: python-2.4.4-lib64.patch
 Patch9: japanese-codecs-lib64.patch
 Patch13: python-2.4-distutils-bdist-rpm.patch
 Patch14: python-2.3.4-pydocnodoc.patch
@@ -45,7 +45,6 @@ Patch16: python-2.4-gen-assert.patch
 Patch17: python-2.4-webbrowser.patch
 Patch18: python-2.4.3-cflags.patch
 Patch19: python-2.4.3-locale.patch
-Patch20: python-2.4.3-unicodeobject.patch
 
 %if %{main_python}
 Obsoletes: Distutils
@@ -155,7 +154,6 @@ user interface for Python programming.
 %patch17 -p0 -b .web-browser
 %patch18 -p1 -b .cflags
 %patch19 -p2 -b .locale
-%patch20 -p3 -b .unicode-repr
 
 # This shouldn't be necesarry, but is right now (2.2a3)
 find -name "*~" |xargs rm -f
@@ -401,6 +399,9 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Mon Oct 23 2006 Jeremy Katz <katzj@redhat.com> - 2.4.4-1
+- update to 2.4.4
+
 * Sun Oct 01 2006 Jesse Keating <jkeating@redhat.com> - 2.4.3-18
 - rebuilt for unwind info generation, broken in gcc-4.1.1-21
 
