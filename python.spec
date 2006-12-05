@@ -1,4 +1,5 @@
 %{!?__python_ver:%define __python_ver EMPTY}
+#define __python_ver 25
 %define unicode ucs4
 
 %if "%{__python_ver}" != "EMPTY"
@@ -11,49 +12,39 @@
 %define tkinter tkinter
 %endif
 
-%define pybasever 2.4
-%define jp_codecs 1.4.11
+%define pybasever 2.5
 %define tools_dir %{_libdir}/python%{pybasever}/Tools
 %define demo_dir %{_libdir}/python%{pybasever}/Demo
 %define doc_tools_dir %{_libdir}/python%{pybasever}/Doc/tools
 
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
-Version: %{pybasever}.4
-Release: 2%{?dist}
+#Version: %{pybasever}.3
+Version: 2.5
+Release: 0%{?dist}
 License: PSF - see LICENSE
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
 Provides: python(abi) = %{pybasever}
-# optik is part of python 2.3 as optparse
-Provides: python-optik = 1.4.1
-Obsoletes: python-optik
 Source: http://www.python.org/ftp/python/%{version}/Python-%{version}.tar.bz2
-Source5: http://www.python.jp/pub/JapaneseCodecs/JapaneseCodecs-%{jp_codecs}.tar.gz
-Source6: http://gigue.peabody.jhu.edu/~mdboom/omi/source/shm_source/shmmodule.c
-Source7: python-2.3.4-optik.py
 
-Patch0: python-2.4.3-config.patch
-Patch3: Python-2.2.1-pydocnogui.patch
-Patch7: python-2.3.4-lib64-regex.patch
-Patch8: python-2.4.4-lib64.patch
-Patch9: japanese-codecs-lib64.patch
-Patch13: python-2.4-distutils-bdist-rpm.patch
-Patch14: python-2.3.4-pydocnodoc.patch
-Patch15: python-2.4.1-canonicalize.patch
-Patch16: python-2.4-gen-assert.patch
-Patch17: python-2.4-webbrowser.patch
-Patch18: python-2.4.3-cflags.patch
-Patch19: python-2.4.3-locale.patch
+Patch0: python-2.5-config.patch
+Patch1: Python-2.2.1-pydocnogui.patch
+Patch2: python-2.5-distutils-bdist-rpm.patch
+Patch3: python-2.3.4-pydocnodoc.patch
+Patch4: python-2.4.1-canonicalize.patch
+Patch5: python-2.5-cflags.patch
+Patch6: python-db45.patch
+
+# lib64 patches
+Patch101: python-2.3.4-lib64-regex.patch
+Patch102: python-2.5-lib64.patch
 
 %if %{main_python}
 Obsoletes: Distutils
 Provides: Distutils
 Obsoletes: python2 
 Provides: python2 = %{version}
-BuildPrereq: db4-devel >= 4.3
-%else
-#BuildPrereq: db3-devel
 %endif
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
@@ -61,8 +52,10 @@ BuildPrereq: readline-devel, libtermcap-devel, openssl-devel, gmp-devel
 BuildPrereq: ncurses-devel, gdbm-devel, zlib-devel, expat-devel
 BuildPrereq: libGL-devel tk tix gcc-c++ libX11-devel glibc-devel
 BuildPrereq: bzip2 tar /usr/bin/find pkgconfig tcl-devel tk-devel
-BuildPrereq: tix-devel bzip2-devel
+BuildPrereq: tix-devel bzip2-devel sqlite-devel
 BuildPrereq: autoconf
+BuildPrereq: db4-devel >= 4.3
+
 URL: http://www.python.org/
 
 %description
@@ -138,22 +131,21 @@ You should install the tkinter package if you'd like to use a graphical
 user interface for Python programming.
 
 %prep
-%setup -q -n Python-%{version} -a 5
+%setup -q -n Python-%{version}
 
 %patch0 -p1 -b .rhconfig
-%patch3 -p1 -b .no_gui
+%patch1 -p1 -b .no_gui
+%patch2 -p1 -b .bdist-rpm
+%patch3 -p1 -b .no-doc
+%patch4 -p1 -b .canonicalize
+%patch5 -p1 -b .cflags
+%patch6 -p1 -b .db45
+
 %if %{_lib} == lib64
-%patch7 -p1 -b .lib64-regex
-%patch8 -p1 -b .lib64
-%patch9 -p0 -b .lib64-j
+%patch101 -p1 -b .lib64-regex
+%patch102 -p1 -b .lib64
 %endif
-%patch13 -p1 -b .bdist-rpm
-%patch14 -p1 -b .no-doc
-%patch15 -p1 -b .canonicalize
-%patch16 -p2 -b .gen-assert
-%patch17 -p0 -b .web-browser
-%patch18 -p1 -b .cflags
-%patch19 -p2 -b .locale
+
 
 # This shouldn't be necesarry, but is right now (2.2a3)
 find -name "*~" |xargs rm -f
@@ -161,17 +153,6 @@ find -name "*~" |xargs rm -f
 # Temporary workaround to avoid confusing find-requires: don't ship the tests
 # as executable files
 chmod 0644 Lib/test/test_*.py
-
-# shm module
-cp %{SOURCE6} Modules
-cat >> Modules/Setup.dist << EOF
-
-# Shared memory module
-shm shmmodule.c
-EOF
-
-# Backwards compatible optik
-install -m 0644 %{SOURCE7} Lib/optik.py
 
 %build
 topdir=`pwd`
@@ -185,13 +166,18 @@ if pkg-config openssl ; then
 fi
 # Force CC
 export CC=gcc
-# For patch 15, need to get a newer configure generated out of configure.in
+# For patch 4, need to get a newer configure generated out of configure.in
 autoconf
 %configure --enable-ipv6 --enable-unicode=%{unicode} --enable-shared
 
 make OPT="$CFLAGS" %{?_smp_mflags}
 LD_LIBRARY_PATH=$topdir $topdir/python Tools/scripts/pathfix.py -i "%{_bindir}/env python%{pybasever}" .
-make OPT="$CFLAGS" %{?_smp_mflags}
+# Rebuild with new python
+# We need a link to a versioned python in the build directory
+ln -s python python%{pybasever}
+LD_LIBRARY_PATH=$topdir PATH=$PATH:$topdir make -s OPT="$CFLAGS" %{?_smp_mflags}
+
+
 
 %install
 [ -d $RPM_BUILD_ROOT ] && rm -fr $RPM_BUILD_ROOT
@@ -272,7 +258,7 @@ rm -f $RPM_BUILD_ROOT%{_libdir}/python%{pybasever}/site-packages/modulator/Templ
 # Clean up the testsuite - we don't need compiled files for it
 find $RPM_BUILD_ROOT%{_libdir}/python%{pybasever}/test \
     -name "*.pyc" -o -name "*.pyo" | xargs rm -f
-rm -f $RPM_BUILD_ROOT%{_libdir}/python2.2/LICENSE.txt
+rm -f $RPM_BUILD_ROOT%{_libdir}/python%{pybasever}/LICENSE.txt
 
 
 #make the binaries install side by side with the main python
@@ -287,14 +273,6 @@ mv smtpd.py smtpd%{__python_ver}.py
 mv pydoc pydoc%{__python_ver}
 popd
 %endif
-
-# Japanese codecs
-pushd JapaneseCodecs-%{jp_codecs}
-# We need to set LD_LIBRARY_PATH since python is now compiled as shared, and
-# we always want to use the currently compiled one
-LD_LIBRARY_PATH=$RPM_BUILD_ROOT%{_libdir} \
-    ../python setup.py install --root=$RPM_BUILD_ROOT
-popd
 
 find $RPM_BUILD_ROOT%{_libdir}/python%{pybasever}/lib-dynload -type d | sed "s|$RPM_BUILD_ROOT|%dir |" > dynfiles
 find $RPM_BUILD_ROOT%{_libdir}/python%{pybasever}/lib-dynload -type f | grep -v "_tkinter.so$" | sed "s|$RPM_BUILD_ROOT||" >> dynfiles
@@ -333,6 +311,9 @@ EOF
 # Fix for bug 201434: make sure distutils looks at the right pyconfig.h file
 sed -i -e "s/'pyconfig.h'/'%{_pyconfig_h}'/" $RPM_BUILD_ROOT%{_libdir}/python%{pybasever}/distutils/sysconfig.py
 
+# Get rid of egg-info files (core python modules are installed through rpms)
+rm $RPM_BUILD_ROOT%{_libdir}/python%{pybasever}/*.egg-info
+
 %clean
 rm -fr $RPM_BUILD_ROOT
 
@@ -345,27 +326,26 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/libpython%{pybasever}.so*
 
 %dir %{_libdir}/python%{pybasever}
-%{_libdir}/python%{pybasever}/site-packages/japanese.pth
 %dir %{_libdir}/python%{pybasever}/site-packages
-%{_libdir}/python%{pybasever}/site-packages/japanese
 %{_libdir}/python%{pybasever}/site-packages/README
-%{_libdir}/python%{pybasever}/LICENSE.txt
 %{_libdir}/python%{pybasever}/*.py*
 %{_libdir}/python%{pybasever}/*.doc
 %{_libdir}/python%{pybasever}/bsddb
+%{_libdir}/python%{pybasever}/compiler
 %dir %{_libdir}/python%{pybasever}/config
 %{_libdir}/python%{pybasever}/config/Makefile
+%{_libdir}/python%{pybasever}/ctypes
 %{_libdir}/python%{pybasever}/curses
 %{_libdir}/python%{pybasever}/distutils
-%{_libdir}/python%{pybasever}/encodings
-%{_libdir}/python%{pybasever}/idlelib
-%{_libdir}/python%{pybasever}/lib-old
-%{_libdir}/python%{pybasever}/logging
-%{_libdir}/python%{pybasever}/xml
 %{_libdir}/python%{pybasever}/email
-%{_libdir}/python%{pybasever}/compiler
-%{_libdir}/python%{pybasever}/plat-linux2
+%{_libdir}/python%{pybasever}/encodings
 %{_libdir}/python%{pybasever}/hotshot
+%{_libdir}/python%{pybasever}/idlelib
+%{_libdir}/python%{pybasever}/logging
+%{_libdir}/python%{pybasever}/plat-linux2
+%{_libdir}/python%{pybasever}/sqlite3
+%{_libdir}/python%{pybasever}/wsgiref
+%{_libdir}/python%{pybasever}/xml
 %if %{_lib} == lib64
 %attr(0755,root,root) %dir /usr/lib/python%{pybasever}
 %attr(0755,root,root) %dir /usr/lib/python%{pybasever}/site-packages
@@ -399,33 +379,31 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
-* Fri Nov 10 2006 Jeremy Katz <katzj@redhat.com> - 2.4.4-2
-- rebuild against new db
+* Tue Dec  5 2006 Jeremy Katz <katzj@redhat.com>
+- support db 4.5
 
-* Mon Oct 23 2006 Jeremy Katz <katzj@redhat.com> - 2.4.4-1
-- update to 2.4.4
+* Mon Oct 30 2006 Jeremy Katz <katzj@redhat.com>
+- fix _md5 and _sha modules (Robert Sheck)
+- no longer provide optik compat; it's been a couple of years now
+- no longer provide the old shm module; if this is still needed, let's 
+  build it separately
+- no longer provide japanese codecs; should be a separate package
 
-* Sun Oct 01 2006 Jesse Keating <jkeating@redhat.com> - 2.4.3-18
-- rebuilt for unwind info generation, broken in gcc-4.1.1-21
+* Mon Oct 23 2006 Jeremy Katz <katzj@redhat.com> - 2.5-0
+- update to 2.5.0 final
 
-* Tue Sep 26 2006 Mihai Ibanescu <misa@redhat.com> - 2.4.3-17
-- Fixed bug #208166 / CVE-2006-4980: repr unicode buffer overflow
-
-* Thu Aug 17 2006 Mihai Ibanescu <misa@redhat.com> - 2.4.3-15
-- Fixed bug #201434 (distutils.sysconfig is confused by the change to make
-  python-devel multilib friendly)
-
-* Fri Jul 21 2006 Mihai Ibanescu <misa@redhat.com> - 2.4.3-14
-- Fixed bug #198971 (case conversion not locale safe in logging library)
-
-* Thu Jul 20 2006 Mihai Ibanescu <misa@redhat.com> - 2.4.3-13
+* Fri Aug 18 2006 Mihai Ibanescu <misa@redhat.com> - 2.4.99.c1
+- Updated to 2.5c1. Merged fixes from FC6 too:
 - Fixed bug #199373 (on some platforms CFLAGS is needed when linking)
+- Fixed bug #198971 (case conversion not locale safe in logging library)
+- Verified bug #201434 (distutils.sysconfig is confused by the change to make
+  python-devel multilib friendly) is fixed upstream
 
-* Mon Jul 17 2006 Mihai Ibanescu <misa@redhat.com> - 2.4.3-12
-- added dist tag back
+* Sun Jul 16 2006 Mihai Ibanescu <misa@redhat.com> - 2.4.99.b2
+- Updated to 2.5b2 (which for comparison reasons is re-labeled 2.4.99.b2)
 
-* Wed Jul 12 2006 Jesse Keating <jkeating@redhat.com> - 2.4.3-11.FC6.1
-- rebuild
+* Fri Jun 23 2006 Mihai Ibanescu <misa@redhat.com> - 2.4.99.b1
+- Updated to 2.5b1 (which for comparison reasons is re-labeled 2.4.99.b1)
 
 * Tue Jun 13 2006 Jeremy Katz <katzj@redhat.com> - 2.4.3-11.FC6
 - and fix it for real
