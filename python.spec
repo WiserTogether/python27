@@ -21,7 +21,7 @@ Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 #Version: %{pybasever}.3
 Version: 2.5
-Release: 0%{?dist}
+Release: 1%{?dist}
 License: PSF - see LICENSE
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -45,6 +45,9 @@ Obsoletes: Distutils
 Provides: Distutils
 Obsoletes: python2 
 Provides: python2 = %{version}
+Obsoletes: python-elementtree <= 1.2.6
+Obsoletes: python-sqlite < 2.3.2
+Provides: python-sqlite = 2.3.2
 %endif
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
@@ -381,6 +384,9 @@ rm -fr $RPM_BUILD_ROOT
 %changelog
 * Tue Dec  5 2006 Jeremy Katz <katzj@redhat.com>
 - support db 4.5
+- obsolete python-elementtree; since it requires some code tweaks, don't 
+  provide it
+- obsolete old python-sqlite; provide the version that's actually included
 
 * Mon Oct 30 2006 Jeremy Katz <katzj@redhat.com>
 - fix _md5 and _sha modules (Robert Sheck)
