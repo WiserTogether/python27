@@ -21,7 +21,7 @@ Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 #Version: %{pybasever}.3
 Version: 2.5
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: PSF - see LICENSE
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -36,9 +36,13 @@ Patch4: python-2.4.1-canonicalize.patch
 Patch5: python-2.5-cflags.patch
 Patch6: python-db45.patch
 
+# disable egg-infos for now
+Patch50: python-2.5-disable-egginfo.patch
+
 # lib64 patches
 Patch101: python-2.3.4-lib64-regex.patch
 Patch102: python-2.5-lib64.patch
+
 
 %if %{main_python}
 Obsoletes: Distutils
@@ -143,6 +147,8 @@ user interface for Python programming.
 %patch4 -p1 -b .canonicalize
 %patch5 -p1 -b .cflags
 %patch6 -p1 -b .db45
+
+%patch50 -p1 -b .egginfo
 
 %if %{_lib} == lib64
 %patch101 -p1 -b .lib64-regex
@@ -382,6 +388,9 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Wed Dec  6 2006 Jeremy Katz <katzj@redhat.com> - 2.5.3-2
+- disable installation of .egg-info files for now
+
 * Tue Dec  5 2006 Jeremy Katz <katzj@redhat.com>
 - support db 4.5
 - obsolete python-elementtree; since it requires some code tweaks, don't 
