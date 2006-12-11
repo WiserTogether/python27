@@ -21,8 +21,8 @@ Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 #Version: %{pybasever}.3
 Version: 2.5
-Release: 2%{?dist}
-License: PSF - see LICENSE
+Release: 3%{?dist}
+License: Python Software Foundation License v2 
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
 Provides: python(abi) = %{pybasever}
@@ -35,6 +35,9 @@ Patch3: python-2.3.4-pydocnodoc.patch
 Patch4: python-2.4.1-canonicalize.patch
 Patch5: python-2.5-cflags.patch
 Patch6: python-db45.patch
+
+# upstreamed
+Patch25: python-syslog-fail-noatexittb.patch
 
 # disable egg-infos for now
 Patch50: python-2.5-disable-egginfo.patch
@@ -81,6 +84,16 @@ set for Tk and RPM.
 
 Note that documentation for Python is provided in the python-docs
 package.
+
+%package libs
+Summary: The libraries for python runtime
+Group: Applications/System
+Requires: %{python} = %{version}-%{release}
+
+%description libs
+The python interpreter can be embedded into applications wanting to 
+use python as an embedded scripting language.  The python-libs package 
+provides the libraries needed for this.
 
 %package devel
 Summary: The libraries and header files needed for Python development.
@@ -147,6 +160,7 @@ user interface for Python programming.
 %patch4 -p1 -b .canonicalize
 %patch5 -p1 -b .cflags
 %patch6 -p1 -b .db45
+%patch25 -p1 -b .syslog-atexit
 
 %patch50 -p1 -b .egginfo
 
@@ -326,13 +340,17 @@ rm $RPM_BUILD_ROOT%{_libdir}/python%{pybasever}/*.egg-info
 %clean
 rm -fr $RPM_BUILD_ROOT
 
+%post -n libs -p /sbin/ldconfig
+
+%postun -n libs -p /sbin/ldconfig
+
+
 %files -f dynfiles
 %defattr(-, root, root)
 %doc LICENSE README
 %{_bindir}/pydoc*
 %{_bindir}/python*
 %{_mandir}/*/*
-%{_libdir}/libpython%{pybasever}.so*
 
 %dir %{_libdir}/python%{pybasever}
 %dir %{_libdir}/python%{pybasever}/site-packages
@@ -360,11 +378,17 @@ rm -fr $RPM_BUILD_ROOT
 %attr(0755,root,root) %dir /usr/lib/python%{pybasever}/site-packages
 %endif
 
+%files libs
+%defattr(-,root,root)
+%doc LICENSE README
+%{_libdir}/libpython%{pybasever}.so.*
+
 %files devel
 %defattr(-,root,root)
 /usr/include/*
 %{_libdir}/python%{pybasever}/config
 %{_libdir}/python%{pybasever}/test
+%{_libdir}/libpython%{pybasever}.so
 
 %files tools
 %defattr(-,root,root,755)
@@ -388,6 +412,11 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Mon Dec 11 2006 Jeremy Katz <katzj@redhat.com> - 2.5.3-3
+- fix atexit traceback with failed syslog logger (#218214)
+- split libpython into python-libs subpackage for multilib apps 
+  embedding python interpreters
+
 * Wed Dec  6 2006 Jeremy Katz <katzj@redhat.com> - 2.5.3-2
 - disable installation of .egg-info files for now
 
