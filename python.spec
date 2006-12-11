@@ -340,9 +340,9 @@ rm $RPM_BUILD_ROOT%{_libdir}/python%{pybasever}/*.egg-info
 %clean
 rm -fr $RPM_BUILD_ROOT
 
-%post -n libs -p /sbin/ldconfig
+%post libs -p /sbin/ldconfig
 
-%postun -n libs -p /sbin/ldconfig
+%postun libs -p /sbin/ldconfig
 
 
 %files -f dynfiles

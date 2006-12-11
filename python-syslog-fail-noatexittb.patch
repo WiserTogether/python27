@@ -1,0 +1,16 @@
+--- Python-2.4.4/Lib/logging/handlers.py.syslogexit	2006-12-05 11:41:12.000000000 -0500
++++ Python-2.4.4/Lib/logging/handlers.py	2006-12-05 11:41:20.000000000 -0500
+@@ -586,11 +586,11 @@
+         self.address = address
+         self.facility = facility
+         if type(address) == types.StringType:
+-            self._connect_unixsocket(address)
+             self.unixsocket = 1
++            self._connect_unixsocket(address)
+         else:
+-            self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+             self.unixsocket = 0
++            self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+ 
+         self.formatter = None
+ 
