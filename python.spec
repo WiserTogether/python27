@@ -21,7 +21,7 @@ Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 #Version: %{pybasever}.3
 Version: 2.5
-Release: 3%{?dist}
+Release: 4%{?dist}
 License: Python Software Foundation License v2 
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -55,6 +55,8 @@ Provides: python2 = %{version}
 Obsoletes: python-elementtree <= 1.2.6
 Obsoletes: python-sqlite < 2.3.2
 Provides: python-sqlite = 2.3.2
+Obsoletes: python-ctypes < 1.0.1
+Provides: python-ctypes = 1.0.1
 %endif
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
@@ -412,6 +414,9 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Tue Dec 12 2006 Jeremy Katz <katzj@redhat.com> - 2.5.3-4
+- obsolete/provide python-ctypes (#219256)
+
 * Mon Dec 11 2006 Jeremy Katz <katzj@redhat.com> - 2.5.3-3
 - fix atexit traceback with failed syslog logger (#218214)
 - split libpython into python-libs subpackage for multilib apps 
