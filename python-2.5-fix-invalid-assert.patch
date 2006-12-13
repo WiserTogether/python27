@@ -1,0 +1,22 @@
+diff -urp Python-2.5/Lib/test/test_grammar.py Python-2.5-fixes/Lib/test/test_grammar.py
+--- Python-2.5/Lib/test/test_grammar.py	2006-09-04 23:56:01.000000000 -0400
++++ Python-2.5-fixes/Lib/test/test_grammar.py	2006-12-13 12:38:03.000000000 -0500
+@@ -709,6 +709,7 @@ x = {'one': 1, 'two': 2, 'three': 3, 'fo
+ 
+ x = `x`
+ x = `1 or 2 or 3`
++x = `1,2`
+ x = x
+ x = 'x'
+ x = 123
+diff -urp Python-2.5/Python/ast.c Python-2.5-fixes/Python/ast.c
+--- Python-2.5/Python/ast.c	2006-09-04 23:56:01.000000000 -0400
++++ Python-2.5-fixes/Python/ast.c	2006-12-13 12:39:30.000000000 -0500
+@@ -538,6 +538,7 @@ seq_for_testlist(struct compiling *c, co
+ 	   || TYPE(n) == listmaker
+ 	   || TYPE(n) == testlist_gexp
+ 	   || TYPE(n) == testlist_safe
++	   || TYPE(n) == testlist1
+ 	   );
+ 
+     seq = asdl_seq_new((NCH(n) + 1) / 2, c->c_arena);

@@ -21,7 +21,7 @@ Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 #Version: %{pybasever}.3
 Version: 2.5
-Release: 4%{?dist}
+Release: 5%{?dist}
 License: Python Software Foundation License v2 
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -38,6 +38,7 @@ Patch6: python-db45.patch
 
 # upstreamed
 Patch25: python-syslog-fail-noatexittb.patch
+Patch26: python-2.5-fix-invalid-assert.patch
 
 # disable egg-infos for now
 Patch50: python-2.5-disable-egginfo.patch
@@ -163,6 +164,7 @@ user interface for Python programming.
 %patch5 -p1 -b .cflags
 %patch6 -p1 -b .db45
 %patch25 -p1 -b .syslog-atexit
+%patch26 -p1 -b .invalid-assert
 
 %patch50 -p1 -b .egginfo
 
@@ -414,6 +416,9 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Wed Dec 13 2006 Jarod Wilson <jwilson@redhat.com> - 2.5.3-5
+- fix invalid assert in debug mode (upstream changeset 52622)
+
 * Tue Dec 12 2006 Jeremy Katz <katzj@redhat.com> - 2.5.3-4
 - obsolete/provide python-ctypes (#219256)
 
