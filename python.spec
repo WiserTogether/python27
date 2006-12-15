@@ -21,7 +21,7 @@ Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 #Version: %{pybasever}.3
 Version: 2.5
-Release: 5%{?dist}
+Release: 6%{?dist}
 License: Python Software Foundation License v2 
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -416,6 +416,9 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Fri Dec 15 2006 Jeremy Katz <katzj@redhat.com> - 2.5.3-6
+- don't link against compat-db (Robert Scheck)
+
 * Wed Dec 13 2006 Jarod Wilson <jwilson@redhat.com> - 2.5.3-5
 - fix invalid assert in debug mode (upstream changeset 52622)
 
