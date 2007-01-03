@@ -21,7 +21,7 @@ Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 #Version: %{pybasever}.3
 Version: 2.5
-Release: 6%{?dist}
+Release: 7%{?dist}
 License: Python Software Foundation License v2 
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -35,6 +35,7 @@ Patch3: python-2.3.4-pydocnodoc.patch
 Patch4: python-2.4.1-canonicalize.patch
 Patch5: python-2.5-cflags.patch
 Patch6: python-db45.patch
+Patch7: python-ctypes-execstack.patch
 
 # upstreamed
 Patch25: python-syslog-fail-noatexittb.patch
@@ -46,7 +47,6 @@ Patch50: python-2.5-disable-egginfo.patch
 # lib64 patches
 Patch101: python-2.3.4-lib64-regex.patch
 Patch102: python-2.5-lib64.patch
-
 
 %if %{main_python}
 Obsoletes: Distutils
@@ -163,6 +163,7 @@ user interface for Python programming.
 %patch4 -p1 -b .canonicalize
 %patch5 -p1 -b .cflags
 %patch6 -p1 -b .db45
+%patch7 -p1 -b .ctypes-exec
 %patch25 -p1 -b .syslog-atexit
 %patch26 -p1 -b .invalid-assert
 
@@ -172,7 +173,6 @@ user interface for Python programming.
 %patch101 -p1 -b .lib64-regex
 %patch102 -p1 -b .lib64
 %endif
-
 
 # This shouldn't be necesarry, but is right now (2.2a3)
 find -name "*~" |xargs rm -f
@@ -416,6 +416,9 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Wed Jan  3 2007 Jeremy Katz <katzj@redhat.com> - 2.5.3-7
+- fix ctypes to not require execstack (#220669)
+
 * Fri Dec 15 2006 Jeremy Katz <katzj@redhat.com> - 2.5.3-6
 - don't link against compat-db (Robert Scheck)
 
