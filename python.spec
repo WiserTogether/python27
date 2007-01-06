@@ -21,7 +21,7 @@ Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 #Version: %{pybasever}.3
 Version: 2.5
-Release: 7%{?dist}
+Release: 8%{?dist}
 License: Python Software Foundation License v2 
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -172,6 +172,11 @@ user interface for Python programming.
 %if %{_lib} == lib64
 %patch101 -p1 -b .lib64-regex
 %patch102 -p1 -b .lib64
+%endif
+
+%ifarch alpha ia64
+# 64bit, but not lib64 arches need this too...
+%patch101 -p1 -b .lib64-regex
 %endif
 
 # This shouldn't be necesarry, but is right now (2.2a3)
@@ -334,6 +339,7 @@ cat > $RPM_BUILD_ROOT%{_includedir}/python%{pybasever}/pyconfig.h << EOF
 #error "Unkown word size"
 #endif
 EOF
+ln -s ../../libpython%{pybasever}.so $RPM_BUILD_ROOT%{_libdir}/python%{pybasever}/config/libpython%{pybasever}.so
 
 # Fix for bug 201434: make sure distutils looks at the right pyconfig.h file
 sed -i -e "s/'pyconfig.h'/'%{_pyconfig_h}'/" $RPM_BUILD_ROOT%{_libdir}/python%{pybasever}/distutils/sysconfig.py
@@ -363,8 +369,6 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/*.doc
 %{_libdir}/python%{pybasever}/bsddb
 %{_libdir}/python%{pybasever}/compiler
-%dir %{_libdir}/python%{pybasever}/config
-%{_libdir}/python%{pybasever}/config/Makefile
 %{_libdir}/python%{pybasever}/ctypes
 %{_libdir}/python%{pybasever}/curses
 %{_libdir}/python%{pybasever}/distutils
@@ -390,7 +394,8 @@ rm -fr $RPM_BUILD_ROOT
 %files devel
 %defattr(-,root,root)
 /usr/include/*
-%{_libdir}/python%{pybasever}/config
+%dir %{_libdir}/python%{pybasever}/config
+%{_libdir}/python%{pybasever}/config/*
 %{_libdir}/python%{pybasever}/test
 %{_libdir}/libpython%{pybasever}.so
 
@@ -416,6 +421,10 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Sat Jan  6 2007 Jeremy Katz <katzj@redhat.com> - 2.5.3-8
+- fix extensions to use shared libpython (#219564)
+- all 64bit platforms need the regex fix (#122304)
+
 * Wed Jan  3 2007 Jeremy Katz <katzj@redhat.com> - 2.5.3-7
 - fix ctypes to not require execstack (#220669)
 
