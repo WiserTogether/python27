@@ -21,7 +21,7 @@ Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 #Version: %{pybasever}.3
 Version: 2.5
-Release: 8%{?dist}
+Release: 9%{?dist}
 License: Python Software Foundation License v2 
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -61,7 +61,7 @@ Provides: python-ctypes = 1.0.1
 %endif
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
-BuildPrereq: readline-devel, libtermcap-devel, openssl-devel, gmp-devel
+BuildPrereq: readline-devel, openssl-devel, gmp-devel
 BuildPrereq: ncurses-devel, gdbm-devel, zlib-devel, expat-devel
 BuildPrereq: libGL-devel tk tix gcc-c++ libX11-devel glibc-devel
 BuildPrereq: bzip2 tar /usr/bin/find pkgconfig tcl-devel tk-devel
@@ -421,6 +421,9 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Tue Jan 16 2007 Miroslav Lichvar <mlichvar@redhat.com> - 2.5.3-9
+- link with ncurses
+
 * Sat Jan  6 2007 Jeremy Katz <katzj@redhat.com> - 2.5.3-8
 - fix extensions to use shared libpython (#219564)
 - all 64bit platforms need the regex fix (#122304)
