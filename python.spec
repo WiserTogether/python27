@@ -21,7 +21,7 @@ Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 #Version: %{pybasever}.3
 Version: 2.5
-Release: 11%{?dist}
+Release: 12%{?dist}
 License: Python Software Foundation License v2 
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -321,7 +321,7 @@ install -d $RPM_BUILD_ROOT/usr/lib/python%{pybasever}/site-packages
 %define _pyconfig32_h pyconfig-32.h
 %define _pyconfig64_h pyconfig-64.h
 
-%ifarch ppc64 s390x x86_64 ia64
+%ifarch ppc64 s390x x86_64 ia64 alpha
 %define _pyconfig_h %{_pyconfig64_h}
 %else
 %define _pyconfig_h %{_pyconfig32_h}
@@ -421,6 +421,9 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Mon Mar 19 2007 Jeremy Katz <katzj@redhat.com> - 2.5.3-12
+- fix alpha build (#231961)
+
 * Tue Feb 13 2007 Jeremy Katz <katzj@redhat.com> - 2.5.3-11
 - tcl/tk was reverted; rebuild again
 
