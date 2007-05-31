@@ -19,9 +19,8 @@
 
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
-#Version: %{pybasever}.3
-Version: 2.5
-Release: 12%{?dist}
+Version: 2.5.1
+Release: 1%{?dist}
 License: Python Software Foundation License v2 
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -30,16 +29,11 @@ Source: http://www.python.org/ftp/python/%{version}/Python-%{version}.tar.bz2
 
 Patch0: python-2.5-config.patch
 Patch1: Python-2.2.1-pydocnogui.patch
-Patch2: python-2.5-distutils-bdist-rpm.patch
-Patch3: python-2.3.4-pydocnodoc.patch
-Patch4: python-2.4.1-canonicalize.patch
-Patch5: python-2.5-cflags.patch
-Patch6: python-db45.patch
-Patch7: python-ctypes-execstack.patch
+Patch2: python-2.3.4-pydocnodoc.patch
+Patch3: python-2.4.1-canonicalize.patch
+Patch4: python-2.5-cflags.patch
 
 # upstreamed
-Patch25: python-syslog-fail-noatexittb.patch
-Patch26: python-2.5-fix-invalid-assert.patch
 
 # disable egg-infos for now
 Patch50: python-2.5-disable-egginfo.patch
@@ -158,14 +152,9 @@ user interface for Python programming.
 
 %patch0 -p1 -b .rhconfig
 %patch1 -p1 -b .no_gui
-%patch2 -p1 -b .bdist-rpm
-%patch3 -p1 -b .no-doc
-%patch4 -p1 -b .canonicalize
-%patch5 -p1 -b .cflags
-%patch6 -p1 -b .db45
-%patch7 -p1 -b .ctypes-exec
-%patch25 -p1 -b .syslog-atexit
-%patch26 -p1 -b .invalid-assert
+%patch2 -p1 -b .no-doc
+%patch3 -p1 -b .canonicalize
+%patch4 -p1 -b .cflags
 
 %patch50 -p1 -b .egginfo
 
@@ -181,10 +170,6 @@ user interface for Python programming.
 
 # This shouldn't be necesarry, but is right now (2.2a3)
 find -name "*~" |xargs rm -f
-
-# Temporary workaround to avoid confusing find-requires: don't ship the tests
-# as executable files
-chmod 0644 Lib/test/test_*.py
 
 %build
 topdir=`pwd`
@@ -228,6 +213,9 @@ for fixed in $RPM_BUILD_ROOT%{_bindir}/pydoc; do
     sed 's,#!.*/python$,#!%{_bindir}/env python%{pybasever},' $fixed > $fixed- \
         && cat $fixed- > $fixed && rm -f $fixed-
 done
+
+# don't include tests that are run at build time in the package
+rm -rf $RPM_BUILD_ROOT/%{_libdir}/python%{pybasever}/test
 
 %if %{main_python}
 ln -s python $RPM_BUILD_ROOT%{_bindir}/python2
@@ -287,9 +275,6 @@ find . -name ".cvsignore"|xargs rm -f
 #zero length
 rm -f $RPM_BUILD_ROOT%{_libdir}/python%{pybasever}/site-packages/modulator/Templates/copyright
 
-# Clean up the testsuite - we don't need compiled files for it
-find $RPM_BUILD_ROOT%{_libdir}/python%{pybasever}/test \
-    -name "*.pyc" -o -name "*.pyo" | xargs rm -f
 rm -f $RPM_BUILD_ROOT%{_libdir}/python%{pybasever}/LICENSE.txt
 
 
@@ -396,7 +381,6 @@ rm -fr $RPM_BUILD_ROOT
 /usr/include/*
 %dir %{_libdir}/python%{pybasever}/config
 %{_libdir}/python%{pybasever}/config/*
-%{_libdir}/python%{pybasever}/test
 %{_libdir}/libpython%{pybasever}.so
 
 %files tools
@@ -421,6 +405,9 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Thu May 31 2007 Jeremy Katz <katzj@redhat.com> - 2.5.1-1
+- update to python 2.5.1
+
 * Mon Mar 19 2007 Jeremy Katz <katzj@redhat.com> - 2.5.3-12
 - fix alpha build (#231961)
 
