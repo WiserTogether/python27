@@ -20,7 +20,7 @@
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 Version: 2.5.1
-Release: 3%{?dist}
+Release: 4%{?dist}
 License: Python Software Foundation License v2 
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -332,6 +332,15 @@ sed -i -e "s/'pyconfig.h'/'%{_pyconfig_h}'/" $RPM_BUILD_ROOT%{_libdir}/python%{p
 # Get rid of egg-info files (core python modules are installed through rpms)
 rm $RPM_BUILD_ROOT%{_libdir}/python%{pybasever}/*.egg-info
 
+# python's build is stupid and doesn't fail if extensions fail to build
+# let's list a few that we care about...
+for so in _bsddb.so _ctypes.so _cursesmodule.so _elementtree.so _sqlite3.so _ssl.so readline.so _hashlib.so zlibmodule.so bz2.so pyexpat.so; do
+    if [ ! -f $RPM_BUILD_ROOT/%{_libdir}/python%{pybasever}/lib-dynload/$so ]; then
+       echo "Missing $so!!!"
+       exit 1
+    fi
+done
+
 %clean
 rm -fr $RPM_BUILD_ROOT
 
@@ -405,6 +414,11 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Wed Jun 27 2007 Jeremy Katz <katzj@redhat.com> - 2.5.1-4
+- fix _elementtree.so build (#245703)
+- ensure that extension modules we expect are actually built rather than 
+  having them silently fall out of the package
+
 * Tue Jun 26 2007 Jeremy Katz <katzj@redhat.com> - 2.5.1-3
 - link with system expat (#245703)
 
