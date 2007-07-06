@@ -20,7 +20,7 @@
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 Version: 2.5.1
-Release: 4%{?dist}
+Release: 5%{?dist}
 License: Python Software Foundation License v2 
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -57,7 +57,7 @@ Provides: python-ctypes = 1.0.1
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildPrereq: readline-devel, openssl-devel, gmp-devel
 BuildPrereq: ncurses-devel, gdbm-devel, zlib-devel, expat-devel
-BuildPrereq: libGL-devel tk tix gcc-c++ libX11-devel glibc-devel
+BuildPrereq: libGL-devel tk gcc-c++ libX11-devel glibc-devel
 BuildPrereq: bzip2 tar /usr/bin/find pkgconfig tcl-devel tk-devel
 BuildPrereq: tix-devel bzip2-devel sqlite-devel
 BuildPrereq: autoconf
@@ -414,6 +414,9 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Fri Jul  6 2007 Jeremy Katz <katzj@redhat.com> - 2.5.1-5
+- link curses modules with ncursesw (#246385)
+
 * Wed Jun 27 2007 Jeremy Katz <katzj@redhat.com> - 2.5.1-4
 - fix _elementtree.so build (#245703)
 - ensure that extension modules we expect are actually built rather than 

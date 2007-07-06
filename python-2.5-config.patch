@@ -36,7 +36,7 @@
  # It's okay for this to be a shared library, too.
  
 -#readline readline.c -lreadline -ltermcap
-+readline readline.c -lreadline -lncurses
++readline readline.c -lreadline -lncursesw
  
  
  # Modules that should always be present (non UNIX dependent):
@@ -214,10 +214,10 @@
  # First, look at Setup.config; configure may have set this for you.
  
 -#_curses _cursesmodule.c -lcurses -ltermcap
-+_curses _cursesmodule.c -lncurses
++_curses _cursesmodule.c -lncursesw
  # Wrapper for the panel library that's part of ncurses and SYSV curses.
 -#_curses_panel _curses_panel.c -lpanel -lncurses 
-+_curses_panel _curses_panel.c -lpanel -lncurses 
++_curses_panel _curses_panel.c -lpanel -lncursesw 
  
  
  # Generic (SunOS / SVR4) dynamic loading module.
