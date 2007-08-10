@@ -20,7 +20,7 @@
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 Version: 2.5.1
-Release: 5%{?dist}
+Release: 6%{?dist}
 License: Python Software Foundation License v2 
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -32,6 +32,7 @@ Patch1: Python-2.2.1-pydocnogui.patch
 Patch2: python-2.3.4-pydocnodoc.patch
 Patch3: python-2.4.1-canonicalize.patch
 Patch4: python-2.5-cflags.patch
+Patch5: python-2.5-ctypes-exec-stack.patch
 
 # upstreamed
 
@@ -155,6 +156,7 @@ user interface for Python programming.
 %patch2 -p1 -b .no-doc
 %patch3 -p1 -b .canonicalize
 %patch4 -p1 -b .cflags
+%patch5 -p1 -b .ctypesexec
 
 %patch50 -p1 -b .egginfo
 
@@ -414,6 +416,9 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Fri Aug 10 2007 Jeremy Katz <katzj@redhat.com> - 2.5.1-6
+- fix ctypes again on some arches (Hans de Goede, #251637)
+
 * Fri Jul  6 2007 Jeremy Katz <katzj@redhat.com> - 2.5.1-5
 - link curses modules with ncursesw (#246385)
 
