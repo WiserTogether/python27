@@ -32,7 +32,7 @@ Patch1: Python-2.2.1-pydocnogui.patch
 Patch2: python-2.3.4-pydocnodoc.patch
 Patch3: python-2.4.1-canonicalize.patch
 Patch4: python-2.5-cflags.patch
-Patch5: python-2.5-ctypes-exec-stack.patch
+Patch5: python-2.5.1-ctypes-exec-stack.patch
 
 # upstreamed
 
