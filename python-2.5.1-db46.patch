@@ -1,40 +1,6 @@
 diff -up Python-2.5.1/setup.py.db46 Python-2.5.1/setup.py
 --- Python-2.5.1/setup.py.db46	2007-08-14 12:53:45.000000000 -0400
 +++ Python-2.5.1/setup.py	2007-08-14 14:11:08.000000000 -0400
-@@ -244,7 +244,7 @@ class PyBuildExt(build_ext):
- 
-     def detect_modules(self):
-         # Ensure that /usr/local is always used
--        add_dir_to_list(self.compiler.library_dirs, '/usr/local/lib')
-+        add_dir_to_list(self.compiler.library_dirs, '/usr/local/lib64')
-         add_dir_to_list(self.compiler.include_dirs, '/usr/local/include')
- 
-         # Add paths specified in the environment variables LDFLAGS and
-@@ -496,11 +496,11 @@ class PyBuildExt(build_ext):
-             elif self.compiler.find_library_file(lib_dirs, 'curses'):
-                 readline_libs.append('curses')
-             elif self.compiler.find_library_file(lib_dirs +
--                                               ['/usr/lib/termcap'],
-+                                               ['/usr/lib64/termcap'],
-                                                'termcap'):
-                 readline_libs.append('termcap')
-             exts.append( Extension('readline', ['readline.c'],
--                                   library_dirs=['/usr/lib/termcap'],
-+                                   library_dirs=['/usr/lib64/termcap'],
-                                    extra_link_args=readline_extra_link_args,
-                                    libraries=readline_libs) )
-         if platform not in ['mac']:
-@@ -532,8 +532,8 @@ class PyBuildExt(build_ext):
-             if krb5_h:
-                 ssl_incs += krb5_h
-         ssl_libs = find_library_file(self.compiler, 'ssl',lib_dirs,
--                                     ['/usr/local/ssl/lib',
--                                      '/usr/contrib/ssl/lib/'
-+                                     ['/usr/local/ssl/lib64',
-+                                      '/usr/contrib/ssl/lib64/'
-                                      ] )
- 
-         if (ssl_incs is not None and
 @@ -606,9 +606,9 @@ class PyBuildExt(build_ext):
          # a release.  Most open source OSes come with one or more
          # versions of BerkeleyDB already installed.
