@@ -248,7 +248,7 @@
 -#DBINC=$(DB)/include
 -#DBLIB=$(DB)/lib
 -#_bsddb _bsddb.c -I$(DBINC) -L$(DBLIB) -ldb-$(DBLIBVER)
-+DBLIBVER=4.5
++DBLIBVER=4.6
 +DBINC=/usr/include/db4
 +DBLIB=/usr/lib
 +_bsddb _bsddb.c -I$(DBINC) -L$(DBLIB) -ldb-$(DBLIBVER)
