@@ -66,7 +66,7 @@ BuildPrereq: libGL-devel tk gcc-c++ libX11-devel glibc-devel
 BuildPrereq: bzip2 tar /usr/bin/find pkgconfig tcl-devel tk-devel
 BuildPrereq: tix-devel bzip2-devel sqlite-devel
 BuildPrereq: autoconf
-BuildPrereq: db4-devel >= 4.3
+BuildPrereq: db4-devel >= 4.6
 
 URL: http://www.python.org/
 
