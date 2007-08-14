@@ -20,7 +20,7 @@
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 Version: 2.5.1
-Release: 6%{?dist}
+Release: 7%{?dist}
 License: Python Software Foundation License v2 
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -308,7 +308,7 @@ install -d $RPM_BUILD_ROOT/usr/lib/python%{pybasever}/site-packages
 %define _pyconfig32_h pyconfig-32.h
 %define _pyconfig64_h pyconfig-64.h
 
-%ifarch ppc64 s390x x86_64 ia64 alpha
+%ifarch ppc64 s390x x86_64 ia64 alpha sparc64
 %define _pyconfig_h %{_pyconfig64_h}
 %else
 %define _pyconfig_h %{_pyconfig32_h}
@@ -416,6 +416,9 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Tue Aug 14 2007 Dennis Gilmore <dennis@ausil.us> - 2.5.1-7
+- add sparc64 to the list of archs for _pyconfig64_h
+
 * Fri Aug 10 2007 Jeremy Katz <katzj@redhat.com> - 2.5.1-6
 - fix ctypes again on some arches (Hans de Goede, #251637)
 
