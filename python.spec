@@ -20,7 +20,7 @@
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 Version: 2.5.1
-Release: 7%{?dist}
+Release: 8%{?dist}
 License: Python Software Foundation License v2 
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -39,9 +39,13 @@ Patch5: python-2.5.1-ctypes-exec-stack.patch
 # disable egg-infos for now
 Patch50: python-2.5-disable-egginfo.patch
 
+# new db version
+Patch60: python-2.5.1-db46.patch
+
 # lib64 patches
 Patch101: python-2.3.4-lib64-regex.patch
 Patch102: python-2.5-lib64.patch
+
 
 %if %{main_python}
 Obsoletes: Distutils
@@ -159,6 +163,7 @@ user interface for Python programming.
 %patch5 -p1 -b .ctypesexec
 
 %patch50 -p1 -b .egginfo
+%patch60 -p1 -b .db46
 
 %if %{_lib} == lib64
 %patch101 -p1 -b .lib64-regex
@@ -416,6 +421,9 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Tue Aug 14 2007 Jeremy Katz <katzj@redhat.com> - 2.5.1-8
+- build against db4.6
+
 * Tue Aug 14 2007 Dennis Gilmore <dennis@ausil.us> - 2.5.1-7
 - add sparc64 to the list of archs for _pyconfig64_h
 
