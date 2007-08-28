@@ -20,7 +20,7 @@
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 Version: 2.5.1
-Release: 8%{?dist}
+Release: 9%{?dist}
 License: Python Software Foundation License v2 
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -421,6 +421,9 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Tue Aug 28 2007 Jeremy Katz <katzj@redhat.com> - 2.5.1-9
+- rebuild against new expat
+
 * Tue Aug 14 2007 Jeremy Katz <katzj@redhat.com> - 2.5.1-8
 - build against db4.6
 
