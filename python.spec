@@ -20,7 +20,7 @@
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 Version: 2.5.1
-Release: 10%{?dist}
+Release: 11%{?dist}
 License: Python Software Foundation License v2 
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -34,6 +34,7 @@ Patch3: python-2.4.1-canonicalize.patch
 Patch4: python-2.5-cflags.patch
 Patch5: python-2.5.1-ctypes-exec-stack.patch
 Patch6: python-2.5.1-plural-fix.patch
+Patch7: python-2.5.1-sqlite-encoding.patch
 
 # upstreamed
 
@@ -163,6 +164,7 @@ user interface for Python programming.
 %patch4 -p1 -b .cflags
 %patch5 -p1 -b .ctypesexec
 %patch6 -p1 -b .plural
+%patch7 -p1
 
 %patch50 -p1 -b .egginfo
 %patch60 -p1 -b .db46
@@ -423,6 +425,10 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Fri Sep 14 2007 Jeremy Katz <katzj@redhat.com> - 2.5.1-11
+- fix encoding of sqlite .py files to work around weird encoding problem 
+  in Turkish (#283331)
+
 * Mon Sep 10 2007 Jeremy Katz <katzj@redhat.com> - 2.5.1-10
 - work around problems with multi-line plural specification (#252136)
 
