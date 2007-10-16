@@ -20,7 +20,7 @@
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 Version: 2.5.1
-Release: 11%{?dist}
+Release: 12%{?dist}
 License: Python Software Foundation License v2 
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -35,6 +35,7 @@ Patch4: python-2.5-cflags.patch
 Patch5: python-2.5.1-ctypes-exec-stack.patch
 Patch6: python-2.5.1-plural-fix.patch
 Patch7: python-2.5.1-sqlite-encoding.patch
+Patch8: python-2.5-xmlrpclib-marshal-objects.patch
 
 # upstreamed
 
@@ -165,6 +166,7 @@ user interface for Python programming.
 %patch5 -p1 -b .ctypesexec
 %patch6 -p1 -b .plural
 %patch7 -p1
+%patch8 -p1 -b .xmlrpc
 
 %patch50 -p1 -b .egginfo
 %patch60 -p1 -b .db46
@@ -425,6 +427,9 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Tue Oct 16 2007 Mike Bonnet <mikeb@redhat.com> - 2.5.1-12
+- fix marshalling of objects in xmlrpclib (python bug #1739842)
+
 * Fri Sep 14 2007 Jeremy Katz <katzj@redhat.com> - 2.5.1-11
 - fix encoding of sqlite .py files to work around weird encoding problem 
   in Turkish (#283331)
