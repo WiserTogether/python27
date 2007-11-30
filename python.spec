@@ -408,6 +408,7 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/logging
 %{_libdir}/python%{pybasever}/plat-linux2
 %{_libdir}/python%{pybasever}/sqlite3
+%{_libdir}/python%{pybasever}/test
 %{_libdir}/python%{pybasever}/wsgiref
 %{_libdir}/python%{pybasever}/xml
 %if %{_lib} == lib64
