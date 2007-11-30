@@ -20,7 +20,7 @@
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 Version: 2.5.1
-Release: 12%{?dist}
+Release: 16%{?dist}
 License: Python Software Foundation License v2 
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -36,6 +36,10 @@ Patch5: python-2.5.1-ctypes-exec-stack.patch
 Patch6: python-2.5.1-plural-fix.patch
 Patch7: python-2.5.1-sqlite-encoding.patch
 Patch8: python-2.5-xmlrpclib-marshal-objects.patch
+Patch9: python-2.5-tkinter.patch
+Patch10: python-2.5.1-binutils-no-dep.patch
+Patch11: python-2.5.1-codec-ascii-tolower.patch
+Patch12: python-2.5.1-pysqlite.patch
 
 # upstreamed
 
@@ -48,6 +52,8 @@ Patch60: python-2.5.1-db46.patch
 # lib64 patches
 Patch101: python-2.3.4-lib64-regex.patch
 Patch102: python-2.5-lib64.patch
+
+Patch999: python-2.5.CVE-2007-4965-int-overflow.patch
 
 
 %if %{main_python}
@@ -65,7 +71,7 @@ Provides: python-ctypes = 1.0.1
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildPrereq: readline-devel, openssl-devel, gmp-devel
 BuildPrereq: ncurses-devel, gdbm-devel, zlib-devel, expat-devel
-BuildPrereq: libGL-devel tk gcc-c++ libX11-devel glibc-devel
+BuildPrereq: libGL-devel tk tix gcc-c++ libX11-devel glibc-devel
 BuildPrereq: bzip2 tar /usr/bin/find pkgconfig tcl-devel tk-devel
 BuildPrereq: tix-devel bzip2-devel sqlite-devel
 BuildPrereq: autoconf
@@ -94,6 +100,8 @@ package.
 Summary: The libraries for python runtime
 Group: Applications/System
 Requires: %{python} = %{version}-%{release}
+# Needed for ctypes, to load libraries, worked around for Live CDs size
+# Requires: binutils
 
 %description libs
 The python interpreter can be embedded into applications wanting to 
@@ -176,10 +184,17 @@ user interface for Python programming.
 %patch102 -p1 -b .lib64
 %endif
 
+%patch9 -p1 -b .tkinter
+%patch10 -p1 -b .binutils-no-dep
+%patch11 -p1 -b .ascii-tolower
+%patch12 -p1 -b .pysqlite-2.3.3-minimal
+
 %ifarch alpha ia64
 # 64bit, but not lib64 arches need this too...
 %patch101 -p1 -b .lib64-regex
 %endif
+
+%patch999 -p1 -b .cve2007-4965
 
 # This shouldn't be necesarry, but is right now (2.2a3)
 find -name "*~" |xargs rm -f
@@ -228,7 +243,14 @@ for fixed in $RPM_BUILD_ROOT%{_bindir}/pydoc; do
 done
 
 # don't include tests that are run at build time in the package
+# This is documented, and used: rhbz#387401
+mkdir save_bits_of_test
+for i in test_support.py __init__.py; do
+  cp -a $RPM_BUILD_ROOT/%{_libdir}/python%{pybasever}/test/$i save_bits_of_test
+done
 rm -rf $RPM_BUILD_ROOT/%{_libdir}/python%{pybasever}/test
+mkdir $RPM_BUILD_ROOT/%{_libdir}/python%{pybasever}/test
+cp -a save_bits_of_test/* $RPM_BUILD_ROOT/%{_libdir}/python%{pybasever}/test
 
 %if %{main_python}
 ln -s python $RPM_BUILD_ROOT%{_bindir}/python2
@@ -334,7 +356,7 @@ cat > $RPM_BUILD_ROOT%{_includedir}/python%{pybasever}/pyconfig.h << EOF
 #elif __WORDSIZE == 64
 #include "%{_pyconfig64_h}"
 #else
-#error "Unkown word size"
+#error "Unknown word size"
 #endif
 EOF
 ln -s ../../libpython%{pybasever}.so $RPM_BUILD_ROOT%{_libdir}/python%{pybasever}/config/libpython%{pybasever}.so
@@ -427,6 +449,29 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
 %changelog
+* Fri Nov 30 2007 James Antill <jantill@redhat.com> - 2.5.1-16
+- Fix pyconfig.h comment typo.
+- Add back test_support.py and the __init__.py file.
+- Resolves: rhbz#387401
+
+* Tue Oct 30 2007 James Antill <jantill@redhat.com> - 2.5.1-15
+- Do codec lowercase in C Locale.
+- Resolves: 207134 191096
+- Fix stupid namespacing in pysqlite, minimal upgrade to 2.3.3 pysqlite
+- Resolves: 263221
+
+* Wed Oct 24 2007 James Antill <jantill@redhat.com> - 2.5.1-14
+- Remove bintuils dep. for live CD ... add work around for ctypes
+
+* Mon Oct 22 2007 James Antill <jantill@redhat.com> - 2.5.1-13
+- Add tix buildprereq
+- Add tkinter patch
+- Resolves: #281751
+- Fix ctypes loading of libraries, add requires on binutils
+- Resolves: #307221
+- Possible fix for CVE-2007-4965 possible exploitable integer overflow
+- Resolves: #295971
+
 * Tue Oct 16 2007 Mike Bonnet <mikeb@redhat.com> - 2.5.1-12
 - fix marshalling of objects in xmlrpclib (python bug #1739842)
 

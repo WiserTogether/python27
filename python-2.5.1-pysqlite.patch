@@ -1,0 +1,33 @@
+diff -up Python-2.5.1/Modules/_sqlite/cache.h.pysqlite Python-2.5.1/Modules/_sqlite/cache.h
+--- Python-2.5.1/Modules/_sqlite/cache.h.pysqlite	2006-04-23 16:24:26.000000000 +0100
++++ Python-2.5.1/Modules/_sqlite/cache.h	2007-10-25 11:21:31.000000000 +0100
+@@ -64,7 +64,7 @@ extern PyTypeObject CacheType;
+ int node_init(Node* self, PyObject* args, PyObject* kwargs);
+ void node_dealloc(Node* self);
+ 
+-int cache_init(Cache* self, PyObject* args, PyObject* kwargs);
++int pysqlite_cache_init(Cache* self, PyObject* args, PyObject* kwargs);
+ void cache_dealloc(Cache* self);
+ PyObject* cache_get(Cache* self, PyObject* args);
+ 
+diff -up Python-2.5.1/Modules/_sqlite/cache.c.pysqlite Python-2.5.1/Modules/_sqlite/cache.c
+--- Python-2.5.1/Modules/_sqlite/cache.c.pysqlite	2006-04-23 16:24:26.000000000 +0100
++++ Python-2.5.1/Modules/_sqlite/cache.c	2007-10-25 11:22:10.000000000 +0100
+@@ -54,7 +54,7 @@ void node_dealloc(Node* self)
+     self->ob_type->tp_free((PyObject*)self);
+ }
+ 
+-int cache_init(Cache* self, PyObject* args, PyObject* kwargs)
++int pysqlite_cache_init(Cache* self, PyObject* args, PyObject* kwargs)
+ {
+     PyObject* factory;
+     int size = 10;
+@@ -352,7 +352,7 @@ PyTypeObject CacheType = {
+         0,                                              /* tp_descr_get */
+         0,                                              /* tp_descr_set */
+         0,                                              /* tp_dictoffset */
+-        (initproc)cache_init,                           /* tp_init */
++        (initproc)pysqlite_cache_init,                  /* tp_init */
+         0,                                              /* tp_alloc */
+         0,                                              /* tp_new */
+         0                                               /* tp_free */
