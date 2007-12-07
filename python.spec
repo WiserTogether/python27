@@ -20,7 +20,7 @@
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 Version: 2.5.1
-Release: 17%{?dist}
+Release: 18%{?dist}
 License: Python Software Foundation License v2 
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -43,7 +43,6 @@ Patch12: python-2.5.1-pysqlite.patch
 
 # upstreamed
 
-# disable egg-infos for now
 Patch50: python-2.5-disable-egginfo.patch
 
 # new db version
@@ -163,6 +162,20 @@ the Python scripting language.
 You should install the tkinter package if you'd like to use a graphical
 user interface for Python programming.
 
+%package test
+Summary: The test modules from the main python package
+Group: Development/Languages
+Requires: %{name} = %{version}-%{release}
+
+%description test
+
+The test modules from the main python pacakge: %{name}
+These have been removed to save space, as they are never or almost
+never used in production.
+
+You might want to install the python-test package if you're developing python
+code that uses more than just unittest and/or test_support.py.
+
 %prep
 %setup -q -n Python-%{version}
 
@@ -176,7 +189,8 @@ user interface for Python programming.
 %patch7 -p1
 %patch8 -p1 -b .xmlrpc
 
-%patch50 -p1 -b .egginfo
+# Try not disabling egg-infos, bz#414711
+#patch50 -p1 -b .egginfo
 %patch60 -p1 -b .db46
 
 %if %{_lib} == lib64
@@ -242,8 +256,13 @@ for fixed in $RPM_BUILD_ROOT%{_bindir}/pydoc; do
         && cat $fixed- > $fixed && rm -f $fixed-
 done
 
+# Junk, no point in putting in -test sub-pkg
+rm -f $RPM_BUILD_ROOT/%{_libdir}/python%{pybasever}/idlelib/testcode.py*
+
 # don't include tests that are run at build time in the package
 # This is documented, and used: rhbz#387401
+if /bin/false; then
+ # Move this to -test subpackage.
 mkdir save_bits_of_test
 for i in test_support.py __init__.py; do
   cp -a $RPM_BUILD_ROOT/%{_libdir}/python%{pybasever}/test/$i save_bits_of_test
@@ -251,6 +270,7 @@ done
 rm -rf $RPM_BUILD_ROOT/%{_libdir}/python%{pybasever}/test
 mkdir $RPM_BUILD_ROOT/%{_libdir}/python%{pybasever}/test
 cp -a save_bits_of_test/* $RPM_BUILD_ROOT/%{_libdir}/python%{pybasever}/test
+fi
 
 %if %{main_python}
 ln -s python $RPM_BUILD_ROOT%{_bindir}/python2
@@ -327,7 +347,11 @@ popd
 %endif
 
 find $RPM_BUILD_ROOT%{_libdir}/python%{pybasever}/lib-dynload -type d | sed "s|$RPM_BUILD_ROOT|%dir |" > dynfiles
-find $RPM_BUILD_ROOT%{_libdir}/python%{pybasever}/lib-dynload -type f | grep -v "_tkinter.so$" | sed "s|$RPM_BUILD_ROOT||" >> dynfiles
+find $RPM_BUILD_ROOT%{_libdir}/python%{pybasever}/lib-dynload -type f | \
+  grep -v "_tkinter.so$" | \
+  grep -v "_ctypes_test.so$" | \
+  grep -v "_testcapimodule.so$" | \
+  sed "s|$RPM_BUILD_ROOT||" >> dynfiles
 
 # Fix for bug #136654
 rm -f $RPM_BUILD_ROOT%{_libdir}/python%{pybasever}/email/test/data/audiotest.au $RPM_BUILD_ROOT%{_libdir}/python%{pybasever}/test/audiotest.au
@@ -396,19 +420,30 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/site-packages/README
 %{_libdir}/python%{pybasever}/*.py*
 %{_libdir}/python%{pybasever}/*.doc
-%{_libdir}/python%{pybasever}/bsddb
+%dir %{_libdir}/python%{pybasever}/bsddb
+%{_libdir}/python%{pybasever}/bsddb/*.py*
 %{_libdir}/python%{pybasever}/compiler
-%{_libdir}/python%{pybasever}/ctypes
+%dir %{_libdir}/python%{pybasever}/ctypes
+%{_libdir}/python%{pybasever}/ctypes/*.py*
+%{_libdir}/python%{pybasever}/ctypes/macholib
 %{_libdir}/python%{pybasever}/curses
-%{_libdir}/python%{pybasever}/distutils
-%{_libdir}/python%{pybasever}/email
+%dir %{_libdir}/python%{pybasever}/distutils
+%{_libdir}/python%{pybasever}/distutils/*.py*
+%{_libdir}/python%{pybasever}/distutils/README
+%{_libdir}/python%{pybasever}/distutils/command
+%dir %{_libdir}/python%{pybasever}/email
+%{_libdir}/python%{pybasever}/email/*.py*
+%{_libdir}/python%{pybasever}/email/mime
 %{_libdir}/python%{pybasever}/encodings
 %{_libdir}/python%{pybasever}/hotshot
 %{_libdir}/python%{pybasever}/idlelib
 %{_libdir}/python%{pybasever}/logging
 %{_libdir}/python%{pybasever}/plat-linux2
-%{_libdir}/python%{pybasever}/sqlite3
-%{_libdir}/python%{pybasever}/test
+%dir %{_libdir}/python%{pybasever}/sqlite3
+%{_libdir}/python%{pybasever}/sqlite3/*.py*
+%dir %{_libdir}/python%{pybasever}/test
+%{_libdir}/python%{pybasever}/test/test_support.py*
+%{_libdir}/python%{pybasever}/test/__init__.py*
 %{_libdir}/python%{pybasever}/wsgiref
 %{_libdir}/python%{pybasever}/xml
 %if %{_lib} == lib64
@@ -449,7 +484,23 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-tk
 %{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
 
+%files test
+%defattr(-, root, root)
+%{_libdir}/python%{pybasever}/bsddb/test
+%{_libdir}/python%{pybasever}/ctypes/test
+%{_libdir}/python%{pybasever}/distutils/tests
+%{_libdir}/python%{pybasever}/email/test
+%{_libdir}/python%{pybasever}/sqlite3/test
+%{_libdir}/python%{pybasever}/test
+%{_libdir}/python%{pybasever}/lib-dynload/_ctypes_test.so
+%{_libdir}/python%{pybasever}/lib-dynload/_testcapimodule.so
+
 %changelog
+* Fri Dec  7 2007 James Antill <jantill@redhat.com> - 2.5.1-18
+- Create a python-test sub-module, over 3MB of stuff noone wants.
+- Don't remove egginfo files, try this see what happens ... may revert.
+- Resolves: rhbz#414711
+
 * Mon Dec  3 2007 Jeremy Katz <katzj@redhat.com> - 2.5.1-17
 - rebuild for new libssl
 
