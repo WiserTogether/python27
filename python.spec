@@ -496,7 +496,7 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_testcapimodule.so
 
 %changelog
-* Fri Jan  4 2007 Tom "spot" Callaway <tcallawa@redhat.com> - 2.5.1-19
+* Fri Jan  4 2008 Tom "spot" Callaway <tcallawa@redhat.com> - 2.5.1-19
 - rebuild for new tcl/tk in rawhide
 
 * Fri Dec  7 2007 James Antill <jantill@redhat.com> - 2.5.1-18
