@@ -20,7 +20,7 @@
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 Version: 2.5.1
-Release: 18%{?dist}
+Release: 19%{?dist}
 License: Python Software Foundation License v2 
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -496,6 +496,9 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_testcapimodule.so
 
 %changelog
+* Fri Jan  4 2007 Tom "spot" Callaway <tcallawa@redhat.com> - 2.5.1-19
+- rebuild for new tcl/tk in rawhide
+
 * Fri Dec  7 2007 James Antill <jantill@redhat.com> - 2.5.1-18
 - Create a python-test sub-module, over 3MB of stuff noone wants.
 - Don't remove egginfo files, try this see what happens ... may revert.
