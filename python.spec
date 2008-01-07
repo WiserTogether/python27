@@ -20,7 +20,7 @@
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 Version: 2.5.1
-Release: 19%{?dist}
+Release: 20%{?dist}
 License: Python Software Foundation License v2 
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -51,6 +51,9 @@ Patch60: python-2.5.1-db46.patch
 # lib64 patches
 Patch101: python-2.3.4-lib64-regex.patch
 Patch102: python-2.5-lib64.patch
+
+# New API from 2.6
+Patch260: python2.6-set_wakeup_fd4.patch
 
 Patch999: python-2.5.CVE-2007-4965-int-overflow.patch
 
@@ -207,6 +210,8 @@ code that uses more than just unittest and/or test_support.py.
 # 64bit, but not lib64 arches need this too...
 %patch101 -p1 -b .lib64-regex
 %endif
+
+%patch260 -p1 -b .set_wakeup_fd
 
 %patch999 -p1 -b .cve2007-4965
 
@@ -459,6 +464,7 @@ rm -fr $RPM_BUILD_ROOT
 %files devel
 %defattr(-,root,root)
 /usr/include/*
+%doc Misc/README.valgrind Misc/valgrind-python.supp Misc/gdbinit
 %dir %{_libdir}/python%{pybasever}/config
 %{_libdir}/python%{pybasever}/config/*
 %{_libdir}/libpython%{pybasever}.so
@@ -496,6 +502,14 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_testcapimodule.so
 
 %changelog
+* Mon Jan  7 2008 James Antill <jantill@redhat.com> - 2.5.1-20
+- Add valgrind support files, as doc, to python-devel
+- Relates: rhbz#418621
+- Add new API from 2.6, set_wakeup_fd ... use at own risk, presumably won't
+- change but I have no control to guarantee that.
+- Resolves: rhbz#427794
+- Add gdbinit support file, as doc, to python-devel
+
 * Fri Jan  4 2008 Tom "spot" Callaway <tcallawa@redhat.com> - 2.5.1-19
 - rebuild for new tcl/tk in rawhide
 
