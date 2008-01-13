@@ -20,7 +20,7 @@
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 Version: 2.5.1
-Release: 20%{?dist}
+Release: 21%{?dist}
 License: Python Software Foundation License v2 
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -502,6 +502,9 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_testcapimodule.so
 
 %changelog
+* Sun Jan 13 2008 Tom "spot" Callaway <tcallawa@redhat.com> - 2.5.1-21
+- rebuild for new tk in rawhide
+
 * Mon Jan  7 2008 James Antill <jantill@redhat.com> - 2.5.1-20
 - Add valgrind support files, as doc, to python-devel
 - Relates: rhbz#418621
