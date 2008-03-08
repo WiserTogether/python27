@@ -20,7 +20,7 @@
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 Version: 2.5.1
-Release: 22%{?dist}
+Release: 23%{?dist}
 License: Python Software Foundation License v2 
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -40,6 +40,7 @@ Patch9: python-2.5-tkinter.patch
 Patch10: python-2.5.1-binutils-no-dep.patch
 Patch11: python-2.5.1-codec-ascii-tolower.patch
 Patch12: python-2.5.1-pysqlite.patch
+Patch13: python-2.5.1-socketmodule-constants.patch
 
 # upstreamed
 
@@ -205,6 +206,7 @@ code that uses more than just unittest and/or test_support.py.
 %patch10 -p1 -b .binutils-no-dep
 %patch11 -p1 -b .ascii-tolower
 %patch12 -p1 -b .pysqlite-2.3.3-minimal
+%patch13 -p1 -b .socketmodule
 
 %ifarch alpha ia64
 # 64bit, but not lib64 arches need this too...
@@ -502,6 +504,10 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_testcapimodule.so
 
 %changelog
+* Sat Mar  8 2008 James Antill <jantill@redhat.com> - 2.5.1-22
+- Add constants to socketmodule
+- Resolves: bug#436560
+
 * Tue Feb 19 2008 Fedora Release Engineering <rel-eng@fedoraproject.org> - 2.5.1-22
 - Autorebuild for GCC 4.3
 
