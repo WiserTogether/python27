@@ -20,7 +20,7 @@
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 Version: 2.5.1
-Release: 23%{?dist}
+Release: 24%{?dist}
 License: Python Software Foundation License v2 
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -41,6 +41,7 @@ Patch10: python-2.5.1-binutils-no-dep.patch
 Patch11: python-2.5.1-codec-ascii-tolower.patch
 Patch12: python-2.5.1-pysqlite.patch
 Patch13: python-2.5.1-socketmodule-constants.patch
+Patch14: python-2.5.1-socketmodule-constants2.patch
 
 # upstreamed
 
@@ -207,6 +208,7 @@ code that uses more than just unittest and/or test_support.py.
 %patch11 -p1 -b .ascii-tolower
 %patch12 -p1 -b .pysqlite-2.3.3-minimal
 %patch13 -p1 -b .socketmodule
+%patch14 -p1 -b .socketmodule
 
 %ifarch alpha ia64
 # 64bit, but not lib64 arches need this too...
@@ -504,6 +506,9 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_testcapimodule.so
 
 %changelog
+* Tue Mar 25 2008 James Antill <jantill@redhat.com> - 2.5.1-24
+- Add more constants to socketmodule
+
 * Sat Mar  8 2008 James Antill <jantill@redhat.com> - 2.5.1-22
 - Add constants to socketmodule
 - Resolves: bug#436560
