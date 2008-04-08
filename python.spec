@@ -20,7 +20,7 @@
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 Version: 2.5.1
-Release: 24%{?dist}
+Release: 25%{?dist}
 License: Python Software Foundation License v2 
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -506,6 +506,10 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_testcapimodule.so
 
 %changelog
+* Mon Apr  7 2008 James Antill <jantill@redhat.com> - 2.5.1-25
+- Rebuild to re-gen autoconf file due to glibc change.
+- Resolves: bug#441003
+
 * Tue Mar 25 2008 James Antill <jantill@redhat.com> - 2.5.1-24
 - Add more constants to socketmodule
 
