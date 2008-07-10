@@ -20,8 +20,8 @@
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 Version: 2.5.1
-Release: 25%{?dist}
-License: Python Software Foundation License v2 
+Release: 27%{?dist}
+License: Python
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
 Provides: python(abi) = %{pybasever}
@@ -42,13 +42,14 @@ Patch11: python-2.5.1-codec-ascii-tolower.patch
 Patch12: python-2.5.1-pysqlite.patch
 Patch13: python-2.5.1-socketmodule-constants.patch
 Patch14: python-2.5.1-socketmodule-constants2.patch
+Patch15: python-2.5.1-listdir.patch
 
 # upstreamed
 
 Patch50: python-2.5-disable-egginfo.patch
 
 # new db version
-Patch60: python-2.5.1-db46.patch
+Patch60: python-2.5.1-db47.patch
 
 # lib64 patches
 Patch101: python-2.3.4-lib64-regex.patch
@@ -196,7 +197,7 @@ code that uses more than just unittest and/or test_support.py.
 
 # Try not disabling egg-infos, bz#414711
 #patch50 -p1 -b .egginfo
-%patch60 -p1 -b .db46
+%patch60 -p1 -b .db47
 
 %if %{_lib} == lib64
 %patch101 -p1 -b .lib64-regex
@@ -209,6 +210,7 @@ code that uses more than just unittest and/or test_support.py.
 %patch12 -p1 -b .pysqlite-2.3.3-minimal
 %patch13 -p1 -b .socketmodule
 %patch14 -p1 -b .socketmodule
+%patch15 -p1 -b .socketmodule
 
 %ifarch alpha ia64
 # 64bit, but not lib64 arches need this too...
@@ -506,6 +508,14 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_testcapimodule.so
 
 %changelog
+* Thu Jul 10 2008 Tom "spot" Callaway <tcallawa@redhat.com> - 2.5.1-27
+- fix license tag
+- enable support for db4-4.7
+
+* Sun Jun 15 2008 James Antill <jantill@redhat.com> - 2.5.1-26
+- Fix sporadic listdir problem
+- Resolves: bug#451494
+
 * Mon Apr  7 2008 James Antill <jantill@redhat.com> - 2.5.1-25
 - Rebuild to re-gen autoconf file due to glibc change.
 - Resolves: bug#441003
