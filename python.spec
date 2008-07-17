@@ -20,7 +20,7 @@
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 Version: 2.5.1
-Release: 27%{?dist}
+Release: 28%{?dist}
 License: Python
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -508,6 +508,9 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_testcapimodule.so
 
 %changelog
+* Thu Jul 17 2008 Jeremy Katz <katzj@redhat.com> - 2.5.1-28
+- And actually build against db4-4.7 (#455170)
+
 * Thu Jul 10 2008 Tom "spot" Callaway <tcallawa@redhat.com> - 2.5.1-27
 - fix license tag
 - enable support for db4-4.7
