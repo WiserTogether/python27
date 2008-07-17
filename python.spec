@@ -2,6 +2,8 @@
 #define __python_ver 25
 %define unicode ucs4
 
+%define _default_patch_fuzz	2
+
 %if "%{__python_ver}" != "EMPTY"
 %define main_python 0
 %define python python%{__python_ver}
@@ -20,7 +22,7 @@
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
 Version: 2.5.1
-Release: 28%{?dist}
+Release: 29%{?dist}
 License: Python
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -80,7 +82,7 @@ BuildPrereq: libGL-devel tk tix gcc-c++ libX11-devel glibc-devel
 BuildPrereq: bzip2 tar /usr/bin/find pkgconfig tcl-devel tk-devel
 BuildPrereq: tix-devel bzip2-devel sqlite-devel
 BuildPrereq: autoconf
-BuildPrereq: db4-devel >= 4.6
+BuildPrereq: db4-devel >= 4.7
 
 URL: http://www.python.org/
 
@@ -199,7 +201,7 @@ code that uses more than just unittest and/or test_support.py.
 #patch50 -p1 -b .egginfo
 %patch60 -p1 -b .db47
 
-%if %{_lib} == lib64
+%if "%{_lib}" == "lib64"
 %patch101 -p1 -b .lib64-regex
 %patch102 -p1 -b .lib64
 %endif
@@ -368,7 +370,7 @@ find $RPM_BUILD_ROOT%{_libdir}/python%{pybasever}/lib-dynload -type f | \
 rm -f $RPM_BUILD_ROOT%{_libdir}/python%{pybasever}/email/test/data/audiotest.au $RPM_BUILD_ROOT%{_libdir}/python%{pybasever}/test/audiotest.au
 
 # Fix bug #143667: python should own /usr/lib/python2.x on 64-bit machines
-%if %{_lib} == lib64
+%if "%{_lib}" == "lib64"
 install -d $RPM_BUILD_ROOT/usr/lib/python%{pybasever}/site-packages
 %endif
 
@@ -457,7 +459,7 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/test/__init__.py*
 %{_libdir}/python%{pybasever}/wsgiref
 %{_libdir}/python%{pybasever}/xml
-%if %{_lib} == lib64
+%if "%{_lib}" == "lib64"
 %attr(0755,root,root) %dir /usr/lib/python%{pybasever}
 %attr(0755,root,root) %dir /usr/lib/python%{pybasever}/site-packages
 %endif
@@ -508,6 +510,9 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_testcapimodule.so
 
 %changelog
+* Thu Jul 17 2008 Jeremy Katz <katzj@redhat.com> - 2.5.1-29
+- Fix up the build for new rpm
+
 * Thu Jul 17 2008 Jeremy Katz <katzj@redhat.com> - 2.5.1-28
 - And actually build against db4-4.7 (#455170)
 
