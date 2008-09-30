@@ -1,0 +1,20 @@
+diff -ru Python-2.5.2-orig/Lib/ctypes/util.py Python-2.5.2/Lib/ctypes/util.py
+--- Python-2.5.2-orig/Lib/ctypes/util.py	2007-09-14 16:05:26.000000000 -0400
++++ Python-2.5.2/Lib/ctypes/util.py	2008-09-24 17:30:06.000000000 -0400
+@@ -83,9 +83,14 @@
+             if not f:
+                 return None
+             cmd = "objdump -p -j .dynamic 2>/dev/null " + f
+-            res = re.search(r'\sSONAME\s+([^\s]+)', os.popen(cmd).read())
++            try:
++                res = re.search(r'\sSONAME\s+([^\s]+)', os.popen(cmd).read())
++            except:
++                res = None
+             if not res:
+-                return None
++                return os.path.basename(f) #  This is good for GLibc, I think,
++                                           # and a dep on binutils is big (for
++                                           # live CDs).
+             return res.group(1)
+ 
+     if (sys.platform.startswith("freebsd")

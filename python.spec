@@ -21,8 +21,8 @@
 
 Summary: An interpreted, interactive, object-oriented programming language.
 Name: %{python}
-Version: 2.5.1
-Release: 30%{?dist}
+Version: 2.5.2
+Release: 1%{?dist}
 License: Python
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -39,7 +39,7 @@ Patch6: python-2.5.1-plural-fix.patch
 Patch7: python-2.5.1-sqlite-encoding.patch
 Patch8: python-2.5-xmlrpclib-marshal-objects.patch
 Patch9: python-2.5-tkinter.patch
-Patch10: python-2.5.1-binutils-no-dep.patch
+Patch10: python-2.5.2-binutils-no-dep.patch
 Patch11: python-2.5.1-codec-ascii-tolower.patch
 Patch12: python-2.5.1-pysqlite.patch
 Patch13: python-2.5.1-socketmodule-constants.patch
@@ -51,16 +51,17 @@ Patch15: python-2.5.1-listdir.patch
 Patch50: python-2.5-disable-egginfo.patch
 
 # new db version
-Patch60: python-2.5.1-db47.patch
+Patch60: python-2.5.2-db47.patch
 
 # lib64 patches
 Patch101: python-2.3.4-lib64-regex.patch
 Patch102: python-2.5-lib64.patch
 
 # New API from 2.6
-Patch260: python2.6-set_wakeup_fd4.patch
+Patch260: python-2.5.2-set_wakeup_fd4.patch
 
 Patch999: python-2.5.CVE-2007-4965-int-overflow.patch
+Patch998: python-2.5-CVE-2008-2316.patch
 
 
 %if %{main_python}
@@ -206,7 +207,6 @@ code that uses more than just unittest and/or test_support.py.
 %patch102 -p1 -b .lib64
 %endif
 
-%patch9 -p1 -b .tkinter
 %patch10 -p1 -b .binutils-no-dep
 %patch11 -p1 -b .ascii-tolower
 %patch12 -p1 -b .pysqlite-2.3.3-minimal
@@ -222,6 +222,7 @@ code that uses more than just unittest and/or test_support.py.
 %patch260 -p1 -b .set_wakeup_fd
 
 %patch999 -p1 -b .cve2007-4965
+%patch998 -p0 -b .cve2008-2316
 
 # This shouldn't be necesarry, but is right now (2.2a3)
 find -name "*~" |xargs rm -f
@@ -510,6 +511,10 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_testcapimodule.so
 
 %changelog
+* Tue Sep 30 2008 James Antill <katzj@redhat.com> - 2.5.2-1
+- Move to 2.5.2
+- Fix CVE-2008-2316 hashlib overflow.
+
 * Thu Jul 17 2008 Jeremy Katz <katzj@redhat.com> - 2.5.1-30
 - Fix up the build for new rpm
 - And actually build against db4-4.7 (#455170)
