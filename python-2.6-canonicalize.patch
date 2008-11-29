@@ -1,8 +1,22 @@
---- Python-2.4.1/pyconfig.h.in.canonicalize	2004-10-13 11:30:55.000000000 -0400
-+++ Python-2.4.1/pyconfig.h.in	2005-10-06 14:04:06.000000000 -0400
-@@ -58,6 +58,9 @@
- /* Define if pthread_sigmask() does not work on your system. */
- #undef HAVE_BROKEN_PTHREAD_SIGMASK
+diff -up Python-2.6/configure.in.canonicalize Python-2.6/configure.in
+--- Python-2.6/configure.in.canonicalize	2008-09-07 15:18:16.000000000 -0400
++++ Python-2.6/configure.in	2008-11-24 02:09:29.000000000 -0500
+@@ -2445,7 +2445,8 @@ fi
+ AC_MSG_RESULT(MACHDEP_OBJS)
+ 
+ # checks for library functions
+-AC_CHECK_FUNCS(alarm setitimer getitimer bind_textdomain_codeset chown \
++AC_CHECK_FUNCS(alarm setitimer getitimer bind_textdomain_codeset \
++ canonicalize_file_name chown \
+  clock confstr ctermid execv fchmod fchown fork fpathconf ftime ftruncate \
+  gai_strerror getgroups getlogin getloadavg getpeername getpgid getpid \
+  getpriority getpwent getspnam getspent getsid getwd \
+diff -up Python-2.6/pyconfig.h.in.canonicalize Python-2.6/pyconfig.h.in
+--- Python-2.6/pyconfig.h.in.canonicalize	2008-09-07 01:15:18.000000000 -0400
++++ Python-2.6/pyconfig.h.in	2008-11-24 02:07:11.000000000 -0500
+@@ -79,6 +79,9 @@
+ /* Define to 1 if you have the `chflags' function. */
+ #undef HAVE_CHFLAGS
  
 +/* Define to 1 if you have the `canonicalize_file_name' function. */
 +#undef HAVE_CANONICALIZE_FILE_NAME
@@ -10,9 +24,10 @@
  /* Define to 1 if you have the `chown' function. */
  #undef HAVE_CHOWN
  
---- Python-2.4.1/Python/sysmodule.c.canonicalize	2005-01-27 13:58:30.000000000 -0500
-+++ Python-2.4.1/Python/sysmodule.c	2005-10-06 14:56:37.000000000 -0400
-@@ -1168,11 +1168,13 @@
+diff -up Python-2.6/Python/sysmodule.c.canonicalize Python-2.6/Python/sysmodule.c
+--- Python-2.6/Python/sysmodule.c.canonicalize	2008-07-10 13:13:55.000000000 -0400
++++ Python-2.6/Python/sysmodule.c	2008-11-24 02:07:11.000000000 -0500
+@@ -1524,11 +1524,13 @@ makeargvobject(int argc, char **argv)
  void
  PySys_SetArgv(int argc, char **argv)
  {
@@ -26,9 +41,9 @@
  	PyObject *av = makeargvobject(argc, argv);
  	PyObject *path = PySys_GetObject("path");
  	if (av == NULL)
-@@ -1184,6 +1186,64 @@
+@@ -1540,6 +1542,64 @@ PySys_SetArgv(int argc, char **argv)
  		char *p = NULL;
- 		int n = 0;
+ 		Py_ssize_t n = 0;
  		PyObject *a;
 +#ifdef HAVE_CANONICALIZE_FILE_NAME
 +		char *link = NULL, *argv0copy = NULL;
@@ -91,7 +106,7 @@
  #ifdef HAVE_READLINK
  		char link[MAXPATHLEN+1];
  		char argv0copy[2*MAXPATHLEN+1];
-@@ -1256,9 +1316,14 @@
+@@ -1612,9 +1672,14 @@ PySys_SetArgv(int argc, char **argv)
  #endif /* Unix */
  		}
  #endif /* All others */
@@ -106,16 +121,3 @@
  		if (PyList_Insert(path, 0, a) < 0)
  			Py_FatalError("sys.path.insert(0) failed");
  		Py_DECREF(a);
---- Python-2.4.1/configure.in.canonicalize	2005-03-28 18:23:34.000000000 -0500
-+++ Python-2.4.1/configure.in	2005-10-06 14:04:06.000000000 -0400
-@@ -2096,8 +2096,8 @@
- AC_MSG_RESULT(MACHDEP_OBJS)
- 
- # checks for library functions
--AC_CHECK_FUNCS(alarm bind_textdomain_codeset chown clock confstr ctermid \
-- execv fork fpathconf ftime ftruncate \
-+AC_CHECK_FUNCS(alarm bind_textdomain_codeset canonicalize_file_name chown \
-+ clock confstr ctermid execv fork fpathconf ftime ftruncate \
-  gai_strerror getgroups getlogin getloadavg getpeername getpgid getpid \
-  getpriority getpwent getsid getwd \
-  kill killpg lchown lstat mkfifo mknod mktime \

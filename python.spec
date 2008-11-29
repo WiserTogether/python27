@@ -1,8 +1,8 @@
 %{!?__python_ver:%define __python_ver EMPTY}
-#define __python_ver 25
+#define __python_ver 26
 %define unicode ucs4
 
-%define _default_patch_fuzz	2
+%define _default_patch_fuzz 2
 
 %if "%{__python_ver}" != "EMPTY"
 %define main_python 0
@@ -14,14 +14,14 @@
 %define tkinter tkinter
 %endif
 
-%define pybasever 2.5
+%define pybasever 2.6
 %define tools_dir %{_libdir}/python%{pybasever}/Tools
 %define demo_dir %{_libdir}/python%{pybasever}/Demo
 %define doc_tools_dir %{_libdir}/python%{pybasever}/Doc/tools
 
-Summary: An interpreted, interactive, object-oriented programming language.
+Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
-Version: 2.5.2
+Version: 2.6
 Release: 1%{?dist}
 License: Python
 Group: Development/Languages
@@ -29,39 +29,40 @@ Provides: python-abi = %{pybasever}
 Provides: python(abi) = %{pybasever}
 Source: http://www.python.org/ftp/python/%{version}/Python-%{version}.tar.bz2
 
-Patch0: python-2.5-config.patch
+Patch0: python-2.6-config.patch
 Patch1: Python-2.2.1-pydocnogui.patch
-Patch2: python-2.3.4-pydocnodoc.patch
-Patch3: python-2.4.1-canonicalize.patch
+#Patch2: python-2.3.4-pydocnodoc.patch
+Patch3: python-2.6-canonicalize.patch
 Patch4: python-2.5-cflags.patch
-Patch5: python-2.5.1-ctypes-exec-stack.patch
+#Patch5: python-2.5.1-ctypes-exec-stack.patch
 Patch6: python-2.5.1-plural-fix.patch
 Patch7: python-2.5.1-sqlite-encoding.patch
-Patch8: python-2.5-xmlrpclib-marshal-objects.patch
-Patch9: python-2.5-tkinter.patch
+#Patch8: python-2.5-xmlrpclib-marshal-objects.patch
+#Patch9: python-2.5-tkinter.patch
 Patch10: python-2.5.2-binutils-no-dep.patch
 Patch11: python-2.5.1-codec-ascii-tolower.patch
-Patch12: python-2.5.1-pysqlite.patch
+#Patch12: python-2.5.1-pysqlite.patch
 Patch13: python-2.5.1-socketmodule-constants.patch
 Patch14: python-2.5.1-socketmodule-constants2.patch
-Patch15: python-2.5.1-listdir.patch
+#Patch15: python-2.5.1-listdir.patch
+Patch16: python-2.6-rpath.patch
 
 # upstreamed
 
-Patch50: python-2.5-disable-egginfo.patch
+#Patch50: python-2.5-disable-egginfo.patch
 
 # new db version
-Patch60: python-2.5.2-db47.patch
+#Patch60: python-2.5.2-db47.patch
 
 # lib64 patches
 Patch101: python-2.3.4-lib64-regex.patch
-Patch102: python-2.5-lib64.patch
+Patch102: python-2.6-lib64.patch
 
 # New API from 2.6
-Patch260: python-2.5.2-set_wakeup_fd4.patch
+#Patch260: python-2.5.2-set_wakeup_fd4.patch
 
-Patch999: python-2.5.CVE-2007-4965-int-overflow.patch
-Patch998: python-2.5-CVE-2008-2316.patch
+#Patch999: python-2.5.CVE-2007-4965-int-overflow.patch
+#Patch998: python-2.5-CVE-2008-2316.patch
 
 
 %if %{main_python}
@@ -77,13 +78,13 @@ Provides: python-ctypes = 1.0.1
 %endif
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
-BuildPrereq: readline-devel, openssl-devel, gmp-devel
-BuildPrereq: ncurses-devel, gdbm-devel, zlib-devel, expat-devel
-BuildPrereq: libGL-devel tk tix gcc-c++ libX11-devel glibc-devel
-BuildPrereq: bzip2 tar /usr/bin/find pkgconfig tcl-devel tk-devel
-BuildPrereq: tix-devel bzip2-devel sqlite-devel
-BuildPrereq: autoconf
-BuildPrereq: db4-devel >= 4.7
+BuildRequires: readline-devel, openssl-devel, gmp-devel
+BuildRequires: ncurses-devel, gdbm-devel, zlib-devel, expat-devel
+BuildRequires: libGL-devel tk tix gcc-c++ libX11-devel glibc-devel
+BuildRequires: bzip2 tar /usr/bin/find pkgconfig tcl-devel tk-devel
+BuildRequires: tix-devel bzip2-devel sqlite-devel
+BuildRequires: autoconf
+BuildRequires: db4-devel >= 4.7
 
 URL: http://www.python.org/
 
@@ -156,7 +157,7 @@ to build python programs.
 %package -n %{tkinter}
 Summary: A graphical user interface for the Python scripting language.
 Group: Development/Languages
-BuildPrereq:  tcl, tk
+BuildRequires:  tcl, tk
 Requires: %{name} = %{version}-%{release}
 %if %{main_python}
 Obsoletes: tkinter2
@@ -190,17 +191,17 @@ code that uses more than just unittest and/or test_support.py.
 
 %patch0 -p1 -b .rhconfig
 %patch1 -p1 -b .no_gui
-%patch2 -p1 -b .no-doc
+#%%patch2 -p1 -b .no-doc
 %patch3 -p1 -b .canonicalize
 %patch4 -p1 -b .cflags
-%patch5 -p1 -b .ctypesexec
+#%%patch5 -p1 -b .ctypesexec
 %patch6 -p1 -b .plural
 %patch7 -p1
-%patch8 -p1 -b .xmlrpc
+#%%patch8 -p1 -b .xmlrpc
 
 # Try not disabling egg-infos, bz#414711
 #patch50 -p1 -b .egginfo
-%patch60 -p1 -b .db47
+#%%patch60 -p1 -b .db47
 
 %if "%{_lib}" == "lib64"
 %patch101 -p1 -b .lib64-regex
@@ -209,20 +210,21 @@ code that uses more than just unittest and/or test_support.py.
 
 %patch10 -p1 -b .binutils-no-dep
 %patch11 -p1 -b .ascii-tolower
-%patch12 -p1 -b .pysqlite-2.3.3-minimal
+#%%patch12 -p1 -b .pysqlite-2.3.3-minimal
 %patch13 -p1 -b .socketmodule
-%patch14 -p1 -b .socketmodule
-%patch15 -p1 -b .socketmodule
+%patch14 -p1 -b .socketmodule2
+#%%patch15 -p1 -b .listdir
+%patch16 -p1 -b .rpath
 
 %ifarch alpha ia64
 # 64bit, but not lib64 arches need this too...
 %patch101 -p1 -b .lib64-regex
 %endif
 
-%patch260 -p1 -b .set_wakeup_fd
+#%%patch260 -p1 -b .set_wakeup_fd
 
-%patch999 -p1 -b .cve2007-4965
-%patch998 -p0 -b .cve2008-2316
+#%%patch999 -p1 -b .cve2007-4965
+#%%patch998 -p0 -b .cve2008-2316
 
 # This shouldn't be necesarry, but is right now (2.2a3)
 find -name "*~" |xargs rm -f
@@ -234,8 +236,8 @@ export CXXFLAGS="$RPM_OPT_FLAGS -D_GNU_SOURCE -fPIC"
 export OPT="$RPM_OPT_FLAGS -D_GNU_SOURCE -fPIC"
 export LINKCC="gcc"
 if pkg-config openssl ; then
-	export CFLAGS="$CFLAGS `pkg-config --cflags openssl`"
-	export LDFLAGS="$LDFLAGS `pkg-config --libs-only-L openssl`"
+  export CFLAGS="$CFLAGS `pkg-config --cflags openssl`"
+  export LDFLAGS="$LDFLAGS `pkg-config --libs-only-L openssl`"
 fi
 # Force CC
 export CC=gcc
@@ -330,7 +332,7 @@ install Tools/scripts/*py $RPM_BUILD_ROOT%{tools_dir}/scripts/
 
 # Documentation tools
 install -m755 -d $RPM_BUILD_ROOT%{doc_tools_dir}
-install -m755 Doc/tools/mkhowto $RPM_BUILD_ROOT%{doc_tools_dir}
+#install -m755 Doc/tools/mkhowto $RPM_BUILD_ROOT%{doc_tools_dir}
 
 # Useful demo scripts
 install -m755 -d $RPM_BUILD_ROOT%{demo_dir}
@@ -451,7 +453,10 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/encodings
 %{_libdir}/python%{pybasever}/hotshot
 %{_libdir}/python%{pybasever}/idlelib
+%dir %{_libdir}/python%{pybasever}/json
+%{_libdir}/python%{pybasever}/json/*.py*
 %{_libdir}/python%{pybasever}/logging
+%{_libdir}/python%{pybasever}/multiprocessing
 %{_libdir}/python%{pybasever}/plat-linux2
 %dir %{_libdir}/python%{pybasever}/sqlite3
 %{_libdir}/python%{pybasever}/sqlite3/*.py*
@@ -482,9 +487,11 @@ rm -fr $RPM_BUILD_ROOT
 %defattr(-,root,root,755)
 %doc Tools/modulator/README.modulator
 %doc Tools/pynche/README.pynche
+%{_libdir}/python%{pybasever}/lib2to3
 %{_libdir}/python%{pybasever}/site-packages/modulator
 %{_libdir}/python%{pybasever}/site-packages/pynche
 %{_bindir}/smtpd*.py*
+%{_bindir}/2to3*
 %{_bindir}/idle*
 %{_bindir}/modulator*
 %{_bindir}/pynche*
@@ -505,12 +512,16 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/ctypes/test
 %{_libdir}/python%{pybasever}/distutils/tests
 %{_libdir}/python%{pybasever}/email/test
+%{_libdir}/python%{pybasever}/json/tests
 %{_libdir}/python%{pybasever}/sqlite3/test
 %{_libdir}/python%{pybasever}/test
 %{_libdir}/python%{pybasever}/lib-dynload/_ctypes_test.so
 %{_libdir}/python%{pybasever}/lib-dynload/_testcapimodule.so
 
 %changelog
+* Fri Nov 28 2008 Ignacio Vazquez-Abrams <ivazqueznet+rpm@gmail.com> - 2.6-1
+- Update to 2.6
+
 * Tue Sep 30 2008 James Antill <katzj@redhat.com> - 2.5.2-1
 - Move to 2.5.2
 - Fix CVE-2008-2316 hashlib overflow.

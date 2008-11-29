@@ -1,5 +1,6 @@
---- Python-2.5.1/Include/pyexpat.h.rhconfig	2006-06-19 19:21:25.000000000 -0400
-+++ Python-2.5.1/Include/pyexpat.h	2007-06-27 10:12:45.000000000 -0400
+diff -up Python-2.6/Include/pyexpat.h.rhconfig Python-2.6/Include/pyexpat.h
+--- Python-2.6/Include/pyexpat.h.rhconfig	2006-06-19 19:21:25.000000000 -0400
++++ Python-2.6/Include/pyexpat.h	2008-11-24 02:00:47.000000000 -0500
 @@ -5,6 +5,19 @@
  
  #define PyExpat_CAPI_MAGIC  "pyexpat.expat_CAPI 1.0"
@@ -20,9 +21,10 @@
  struct PyExpat_CAPI 
  {
      char* magic; /* set to PyExpat_CAPI_MAGIC */
---- Python-2.5.1/Modules/Setup.dist.rhconfig	2006-08-06 03:26:21.000000000 -0400
-+++ Python-2.5.1/Modules/Setup.dist	2007-06-27 10:12:45.000000000 -0400
-@@ -149,7 +149,7 @@ GLHACK=-Dclear=__GLclear
+diff -up Python-2.6/Modules/Setup.dist.rhconfig Python-2.6/Modules/Setup.dist
+--- Python-2.6/Modules/Setup.dist.rhconfig	2008-09-21 03:31:52.000000000 -0400
++++ Python-2.6/Modules/Setup.dist	2008-11-24 02:03:41.000000000 -0500
+@@ -152,7 +152,7 @@ GLHACK=-Dclear=__GLclear
  # modules are to be built as shared libraries (see above for more
  # detail; also note that *static* reverses this effect):
  
@@ -31,12 +33,12 @@
  
  # GNU readline.  Unlike previous Python incarnations, GNU readline is
  # now incorporated in an optional module, configured in the Setup file
-@@ -159,69 +159,69 @@ GLHACK=-Dclear=__GLclear
+@@ -162,69 +162,69 @@ GLHACK=-Dclear=__GLclear
  # it, depending on your system -- see the GNU readline instructions.
  # It's okay for this to be a shared library, too.
  
 -#readline readline.c -lreadline -ltermcap
-+readline readline.c -lreadline -lncursesw
++readline readline.c -lreadline -ltermcap
  
  
  # Modules that should always be present (non UNIX dependent):
@@ -50,7 +52,7 @@
 -#_weakref _weakref.c	# basic weak reference support
 -#_testcapi _testcapimodule.c    # Python C API test module
 -#_random _randommodule.c	# Random number generator
--#collections collectionsmodule.c # Container types
+-#_collections _collectionsmodule.c # Container types
 -#itertools itertoolsmodule.c	# Functions creating iterators for efficient looping 
 -#strop stropmodule.c		# String manipulations
 +array arraymodule.c	# array objects
@@ -62,7 +64,7 @@
 +_weakref _weakref.c	# basic weak reference support
 +_testcapi _testcapimodule.c    # Python C API test module
 +_random _randommodule.c	# Random number generator
-+collections collectionsmodule.c # Container types
++_collections _collectionsmodule.c # Container types
 +itertools itertoolsmodule.c	# Functions creating iterators for efficient looping 
 +strop stropmodule.c		# String manipulations
  
@@ -115,7 +117,7 @@
  # First, look at Setup.config; configure may have set this for you.
  
 -#crypt cryptmodule.c # -lcrypt	# crypt(3); needs -lcrypt on some systems
-+crypt cryptmodule.c -lcrypt	# crypt(3); needs -lcrypt on some systems
++crypt cryptmodule.c # -lcrypt	# crypt(3); needs -lcrypt on some systems
  
  
  # Some more UNIX dependent modules -- off by default, since these
@@ -130,20 +132,18 @@
  
  
  # Multimedia modules -- off by default.
-@@ -229,9 +229,9 @@ GLHACK=-Dclear=__GLclear
+@@ -232,8 +232,8 @@ GLHACK=-Dclear=__GLclear
  # #993173 says audioop works on 64-bit platforms, though.
  # These represent audio samples or images as strings:
  
 -#audioop audioop.c	# Operations on audio samples
 -#imageop imageop.c	# Operations on images
--#rgbimg rgbimgmodule.c	# Read SGI RGB image files (but coded portably)
 +audioop audioop.c	# Operations on audio samples
 +imageop imageop.c	# Operations on images
-+rgbimg rgbimgmodule.c	# Read SGI RGB image files (but coded portably)
  
  
  # Note that the _md5 and _sha modules are normally only built if the
-@@ -241,12 +241,12 @@ GLHACK=-Dclear=__GLclear
+@@ -243,14 +243,14 @@ GLHACK=-Dclear=__GLclear
  # Message-Digest Algorithm, described in RFC 1321.  The necessary files
  # md5.c and md5.h are included here.
  
@@ -151,14 +151,18 @@
 +_md5 md5module.c md5.c
  
  
- # The _sha module implements the SHA checksum algorithm.
- # (NIST's Secure Hash Algorithm.)
+ # The _sha module implements the SHA checksum algorithms.
+ # (NIST's Secure Hash Algorithms.)
 -#_sha shamodule.c
+-#_sha256 sha256module.c
+-#_sha512 sha512module.c
 +_sha shamodule.c
++_sha256 sha256module.c
++_sha512 sha512module.c
  
  
  # SGI IRIX specific modules -- off by default.
-@@ -293,12 +293,12 @@ GLHACK=-Dclear=__GLclear
+@@ -297,12 +297,12 @@ GLHACK=-Dclear=__GLclear
  # A Linux specific module -- off by default; this may also work on 
  # some *BSDs.
  
@@ -173,7 +177,7 @@
  
  
  # The _tkinter module.
-@@ -313,7 +313,7 @@ GLHACK=-Dclear=__GLclear
+@@ -317,7 +317,7 @@ GLHACK=-Dclear=__GLclear
  # every system.
  
  # *** Always uncomment this (leave the leading underscore in!):
@@ -182,7 +186,7 @@
  # *** Uncomment and edit to reflect where your Tcl/Tk libraries are:
  #	-L/usr/local/lib \
  # *** Uncomment and edit to reflect where your Tcl/Tk headers are:
-@@ -323,7 +323,7 @@ GLHACK=-Dclear=__GLclear
+@@ -327,7 +327,7 @@ GLHACK=-Dclear=__GLclear
  # *** Or uncomment this for Solaris:
  #	-I/usr/openwin/include \
  # *** Uncomment and edit for Tix extension only:
@@ -191,7 +195,7 @@
  # *** Uncomment and edit for BLT extension only:
  #	-DWITH_BLT -I/usr/local/blt/blt8.0-unoff/include -lBLT8.0 \
  # *** Uncomment and edit for PIL (TkImaging) extension only:
-@@ -332,7 +332,7 @@ GLHACK=-Dclear=__GLclear
+@@ -336,7 +336,7 @@ GLHACK=-Dclear=__GLclear
  # *** Uncomment and edit for TOGL extension only:
  #	-DWITH_TOGL togl.c \
  # *** Uncomment and edit to reflect your Tcl/Tk versions:
@@ -200,7 +204,7 @@
  # *** Uncomment and edit to reflect where your X11 libraries are:
  #	-L/usr/X11R6/lib \
  # *** Or uncomment this for Solaris:
-@@ -342,7 +342,7 @@ GLHACK=-Dclear=__GLclear
+@@ -346,7 +346,7 @@ GLHACK=-Dclear=__GLclear
  # *** Uncomment for AIX:
  #	-lld \
  # *** Always uncomment this; X11 libraries to link with:
@@ -209,7 +213,7 @@
  
  # Lance Ellinghaus's syslog module
  #syslog syslogmodule.c		# syslog daemon interface
-@@ -354,9 +354,9 @@ GLHACK=-Dclear=__GLclear
+@@ -358,9 +358,9 @@ GLHACK=-Dclear=__GLclear
  #
  # First, look at Setup.config; configure may have set this for you.
  
@@ -221,7 +225,7 @@
  
  
  # Generic (SunOS / SVR4) dynamic loading module.
-@@ -364,7 +364,7 @@ GLHACK=-Dclear=__GLclear
+@@ -368,7 +368,7 @@ GLHACK=-Dclear=__GLclear
  # it is a highly experimental and dangerous device for calling
  # *arbitrary* C functions in *arbitrary* shared libraries:
  
@@ -230,7 +234,7 @@
  
  
  # Modules that provide persistent dictionary-like semantics.  You will
-@@ -387,7 +387,7 @@ GLHACK=-Dclear=__GLclear
+@@ -391,7 +391,7 @@ GLHACK=-Dclear=__GLclear
  #
  # First, look at Setup.config; configure may have set this for you.
  
@@ -239,7 +243,7 @@
  
  
  # Sleepycat Berkeley DB interface.
-@@ -402,11 +402,10 @@ GLHACK=-Dclear=__GLclear
+@@ -406,11 +406,10 @@ GLHACK=-Dclear=__GLclear
  #
  # Edit the variables DB and DBLIBVERto point to the db top directory
  # and the subdirectory of PORT where you built it.
@@ -255,7 +259,7 @@
  
  # Historical Berkeley DB 1.85
  #
-@@ -421,14 +420,14 @@ GLHACK=-Dclear=__GLclear
+@@ -425,14 +424,14 @@ GLHACK=-Dclear=__GLclear
  
  
  # Helper module for various ascii-encoders
@@ -274,7 +278,7 @@
  
  
  # Lee Busby's SIGFPE modules.
-@@ -451,7 +450,7 @@ GLHACK=-Dclear=__GLclear
+@@ -455,7 +454,7 @@ GLHACK=-Dclear=__GLclear
  # Andrew Kuchling's zlib module.
  # This require zlib 1.1.3 (or later).
  # See http://www.gzip.org/zlib/
@@ -283,7 +287,7 @@
  
  # Interface to the Expat XML parser
  #
-@@ -465,20 +464,20 @@ GLHACK=-Dclear=__GLclear
+@@ -469,20 +468,20 @@ GLHACK=-Dclear=__GLclear
  # More information on Expat can be found at www.libexpat.org.
  #
  #EXPAT_DIR=/usr/local/src/expat-1.95.2
@@ -312,9 +316,10 @@
  
  # Example -- included for reference only:
  # xx xxmodule.c
---- Python-2.5.1/setup.py.rhconfig	2007-06-27 10:26:41.000000000 -0400
-+++ Python-2.5.1/setup.py	2007-06-27 10:26:51.000000000 -0400
-@@ -998,7 +998,6 @@ class PyBuildExt(build_ext):
+diff -up Python-2.6/setup.py.rhconfig Python-2.6/setup.py
+--- Python-2.6/setup.py.rhconfig	2008-09-29 20:15:45.000000000 -0400
++++ Python-2.6/setup.py	2008-11-24 02:00:47.000000000 -0500
+@@ -1189,7 +1189,6 @@ class PyBuildExt(build_ext):
  
          exts.append(Extension('pyexpat',
                                define_macros = define_macros,
@@ -322,11 +327,11 @@
                                sources = ['pyexpat.c',
                                           'expat/xmlparse.c',
                                           'expat/xmlrole.c',
-@@ -1013,7 +1012,6 @@ class PyBuildExt(build_ext):
+@@ -1204,7 +1203,6 @@ class PyBuildExt(build_ext):
              define_macros.append(('USE_PYEXPAT_CAPI', None))
              exts.append(Extension('_elementtree',
                                    define_macros = define_macros,
 -                                  include_dirs = [expatinc],
                                    sources = ['_elementtree.c'],
                                    ))
- 
+         else:
