@@ -22,7 +22,7 @@
 Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 Version: 2.6
-Release: 2%{?dist}
+Release: 3%{?dist}
 License: Python
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -46,6 +46,9 @@ Patch13: python-2.5.1-socketmodule-constants.patch
 Patch14: python-2.5.1-socketmodule-constants2.patch
 #Patch15: python-2.5.1-listdir.patch
 Patch16: python-2.6-rpath.patch
+
+# Fix distutils to follow the Fedora/RHEL/CentOS policies of having .pyo files
+Patch51: python-2.6-distutils_rpm.patch
 
 # upstreamed
 
@@ -215,6 +218,8 @@ code that uses more than just unittest and/or test_support.py.
 %patch14 -p1 -b .socketmodule2
 #%%patch15 -p1 -b .listdir
 %patch16 -p1 -b .rpath
+
+%patch51 -p1 -b .brprpm
 
 %ifarch alpha ia64
 # 64bit, but not lib64 arches need this too...
@@ -519,13 +524,17 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_testcapimodule.so
 
 %changelog
+* Tue Jan  6 2009 James Antill <james.antill@redhat.com> - 2.6-3
+- Fix distutils generated rpms.
+- Resolves: bug#236535
+
 * Wed Dec 10 2008 Ignacio Vazquez-Abrams <ivazqueznet+rpm@gmail.com> - 2.6-2
 - Enable -lcrypt for cryptmodule
 
 * Fri Nov 28 2008 Ignacio Vazquez-Abrams <ivazqueznet+rpm@gmail.com> - 2.6-1
 - Update to 2.6
 
-* Tue Sep 30 2008 James Antill <katzj@redhat.com> - 2.5.2-1
+* Tue Sep 30 2008 James Antill <james.antill@redhat.com> - 2.5.2-1
 - Move to 2.5.2
 - Fix CVE-2008-2316 hashlib overflow.
 
