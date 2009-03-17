@@ -22,6 +22,7 @@
 Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 Version: 2.6
+Release: 6%{?dist}
 Release: 5%{?dist}
 License: Python
 Group: Development/Languages
@@ -88,6 +89,7 @@ BuildRequires: bzip2 tar /usr/bin/find pkgconfig tcl-devel tk-devel
 BuildRequires: tix-devel bzip2-devel sqlite-devel
 BuildRequires: autoconf
 BuildRequires: db4-devel >= 4.7
+BuildRequires: libffi-devel
 
 URL: http://www.python.org/
 
@@ -238,6 +240,7 @@ find -name "*~" |xargs rm -f
 topdir=`pwd`
 export CFLAGS="$RPM_OPT_FLAGS -D_GNU_SOURCE -fPIC"
 export CXXFLAGS="$RPM_OPT_FLAGS -D_GNU_SOURCE -fPIC"
+export CPPFLAGS="`pkg-config --cflags-only-I libffi`"
 export OPT="$RPM_OPT_FLAGS -D_GNU_SOURCE -fPIC"
 export LINKCC="gcc"
 if pkg-config openssl ; then
@@ -248,7 +251,7 @@ fi
 export CC=gcc
 # For patch 4, need to get a newer configure generated out of configure.in
 autoconf
-%configure --enable-ipv6 --enable-unicode=%{unicode} --enable-shared
+%configure --enable-ipv6 --enable-unicode=%{unicode} --enable-shared --with-system-ffi
 
 make OPT="$CFLAGS" %{?_smp_mflags}
 LD_LIBRARY_PATH=$topdir $topdir/python Tools/scripts/pathfix.py -i "%{_bindir}/env python%{pybasever}" .
@@ -524,6 +527,10 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_testcapimodule.so
 
 %changelog
+* Tue Mar 17 2009 James Antill <james@fedoraproject.org> - 2.6-6
+- Use system libffi
+- Resolves: bug#490573
+
 * Thu Feb 26 2009 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2.6-5
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_11_Mass_Rebuild
 
