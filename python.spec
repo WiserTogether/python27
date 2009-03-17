@@ -62,7 +62,7 @@ Patch101: python-2.3.4-lib64-regex.patch
 Patch102: python-2.6-lib64.patch
 
 # SELinux patches
-Patch110: python-2.6-lib64.patch
+Patch110: python-2.6-ctypes-noexecmem.patch
 
 # New API from 2.6
 #Patch260: python-2.5.2-set_wakeup_fd4.patch
