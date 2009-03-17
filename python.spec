@@ -22,7 +22,7 @@
 Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 Version: 2.6
-Release: 6%{?dist}
+Release: 7%{?dist}
 License: Python
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -60,6 +60,9 @@ Patch51: python-2.6-distutils_rpm.patch
 # lib64 patches
 Patch101: python-2.3.4-lib64-regex.patch
 Patch102: python-2.6-lib64.patch
+
+# SELinux patches
+Patch110: python-2.6-lib64.patch
 
 # New API from 2.6
 #Patch260: python-2.5.2-set_wakeup_fd4.patch
@@ -226,6 +229,8 @@ code that uses more than just unittest and/or test_support.py.
 # 64bit, but not lib64 arches need this too...
 %patch101 -p1 -b .lib64-regex
 %endif
+
+%patch110 -p1 -b .selinux
 
 #%%patch260 -p1 -b .set_wakeup_fd
 
@@ -526,9 +531,11 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_testcapimodule.so
 
 %changelog
-* Tue Mar 17 2009 James Antill <james@fedoraproject.org> - 2.6-6
+* Tue Mar 17 2009 James Antill <james@fedoraproject.org> - 2.6-7
 - Use system libffi
 - Resolves: bug#490573
+- Fix SELinux execmem problems
+- Resolves: bug#488396
 
 * Thu Feb 26 2009 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2.6-5
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_11_Mass_Rebuild
