@@ -23,7 +23,6 @@ Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 Version: 2.6
 Release: 6%{?dist}
-Release: 5%{?dist}
 License: Python
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
