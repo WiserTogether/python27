@@ -22,7 +22,7 @@
 Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 Version: 2.6
-Release: 7%{?dist}
+Release: 8%{?dist}
 License: Python
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -81,6 +81,10 @@ Obsoletes: python-sqlite < 2.3.2
 Provides: python-sqlite = 2.3.2
 Obsoletes: python-ctypes < 1.0.1
 Provides: python-ctypes = 1.0.1
+Obsoletes: python-hashlib < 20081120
+Provides: python-hashlib = 20081120
+Obsoletes: python-uuid < 1.31
+Provides: python-uuid = 1.31
 %endif
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
@@ -531,6 +535,9 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_testcapimodule.so
 
 %changelog
+* Wed Apr 15 2009 Ignacio Vazquez-Abrams <ivazqueznet+rpm@gmail.com> 2.6-8
+- Replace python-hashlib and python-uuid (#484715)
+
 * Tue Mar 17 2009 James Antill <james@fedoraproject.org> - 2.6-7
 - Use system libffi
 - Resolves: bug#490573
