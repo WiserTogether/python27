@@ -22,7 +22,7 @@
 Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 Version: 2.6
-Release: 8%{?dist}
+Release: 9%{?dist}
 License: Python
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -162,8 +162,9 @@ Provides: python2-tools = %{version}
 %endif
 
 %description tools
-The Python package includes several development tools that are used
-to build python programs.
+This package includes several tools to help with the development of Python   
+programs, including IDLE (an IDE with editing and debugging facilities), a 
+color editor (pynche), and a python gettext program (pygettext.py).  
 
 %package -n %{tkinter}
 Summary: A graphical user interface for the Python scripting language.
@@ -535,6 +536,9 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_testcapimodule.so
 
 %changelog
+* Sun Jun 28 2009 Jonathan Steffan <jsteffan@fedoraproject.org> - 2.6-9
+- Update python-tools description (#448940)
+
 * Wed Apr 15 2009 Ignacio Vazquez-Abrams <ivazqueznet+rpm@gmail.com> 2.6-8
 - Replace python-hashlib and python-uuid (#484715)
 
