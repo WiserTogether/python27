@@ -22,7 +22,7 @@
 Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 Version: 2.6
-Release: 9%{?dist}
+Release: 10%{?dist}
 License: Python
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -87,7 +87,7 @@ Obsoletes: python-uuid < 1.31
 Provides: python-uuid = 1.31
 %endif
 
-BuildRoot: %{_tmppath}/%{name}-%{version}-root
+BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires: readline-devel, openssl-devel, gmp-devel
 BuildRequires: ncurses-devel, gdbm-devel, zlib-devel, expat-devel
 BuildRequires: libGL-devel tk tix gcc-c++ libX11-devel glibc-devel
@@ -445,7 +445,9 @@ rm -fr $RPM_BUILD_ROOT
 %defattr(-, root, root)
 %doc LICENSE README
 %{_bindir}/pydoc*
-%{_bindir}/python*
+%{_bindir}/python
+%{_bindir}/python2
+%{_bindir}/python2.6
 %{_mandir}/*/*
 
 %dir %{_libdir}/python%{pybasever}
@@ -497,6 +499,8 @@ rm -fr $RPM_BUILD_ROOT
 /usr/include/*
 %doc Misc/README.valgrind Misc/valgrind-python.supp Misc/gdbinit
 %dir %{_libdir}/python%{pybasever}/config
+%{_bindir}/python-config
+%{_bindir}/python2.6-config
 %{_libdir}/python%{pybasever}/config/*
 %{_libdir}/libpython%{pybasever}.so
 
@@ -536,6 +540,10 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_testcapimodule.so
 
 %changelog
+* Sat Jul 4 2009 Jonathan Steffan <jsteffan@fedoraproject.org> - 2.6-10
+- Move python-config to devel subpackage (#506153)
+- Update BuildRoot for new standard
+
 * Sun Jun 28 2009 Jonathan Steffan <jsteffan@fedoraproject.org> - 2.6-9
 - Update python-tools description (#448940)
 
