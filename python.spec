@@ -21,25 +21,24 @@
 
 Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
-Version: 2.6
-Release: 11%{?dist}
+Version: 2.6.2
+Release: 1%{?dist}
 License: Python
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
 Provides: python(abi) = %{pybasever}
 Source: http://www.python.org/ftp/python/%{version}/Python-%{version}.tar.bz2
 
-Patch0: python-2.6-config.patch
+Patch0: python-2.6.2-config.patch
 Patch1: Python-2.2.1-pydocnogui.patch
 #Patch2: python-2.3.4-pydocnodoc.patch
-Patch3: python-2.6-canonicalize.patch
 Patch4: python-2.5-cflags.patch
 #Patch5: python-2.5.1-ctypes-exec-stack.patch
 Patch6: python-2.5.1-plural-fix.patch
 Patch7: python-2.5.1-sqlite-encoding.patch
 #Patch8: python-2.5-xmlrpclib-marshal-objects.patch
 #Patch9: python-2.5-tkinter.patch
-Patch10: python-2.5.2-binutils-no-dep.patch
+Patch10: python-2.6.2-binutils-no-dep.patch
 Patch11: python-2.5.1-codec-ascii-tolower.patch
 #Patch12: python-2.5.1-pysqlite.patch
 Patch13: python-2.5.1-socketmodule-constants.patch
@@ -204,7 +203,6 @@ code that uses more than just unittest and/or test_support.py.
 %patch0 -p1 -b .rhconfig
 %patch1 -p1 -b .no_gui
 #%%patch2 -p1 -b .no-doc
-%patch3 -p1 -b .canonicalize
 %patch4 -p1 -b .cflags
 #%%patch5 -p1 -b .ctypesexec
 %patch6 -p1 -b .plural
@@ -540,6 +538,9 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_testcapimodule.so
 
 %changelog
+* Mon Jul 27 2009 James Antill <james.antill@redhat.com> - 2.6.2-1
+- Update to 2.6.2
+
 * Sun Jul 26 2009 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2.6-11
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_12_Mass_Rebuild
 
