@@ -22,7 +22,7 @@
 Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 Version: 2.6.2
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: Python
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -538,6 +538,9 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_testcapimodule.so
 
 %changelog
+* Fri Aug 21 2009 Tomas Mraz <tmraz@redhat.com> - 2.6.2-2
+- rebuilt with new openssl
+
 * Mon Jul 27 2009 James Antill <james.antill@redhat.com> - 2.6.2-1
 - Update to 2.6.2
 
