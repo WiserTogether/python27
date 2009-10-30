@@ -22,7 +22,7 @@
 Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 Version: 2.6.4
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: Python
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -487,6 +487,14 @@ rm -fr $RPM_BUILD_ROOT
 %attr(0755,root,root) %dir /usr/lib/python%{pybasever}/site-packages
 %endif
 
+# "Makefile" and the config-32/64.h file are needed by
+# distutils/sysconfig.py:_init_posix(), so we include them in the core
+# package, along with their parent directories (bug 531901):
+%dir %{_libdir}/python%{pybasever}/config
+%{_libdir}/python%{pybasever}/config/Makefile
+%dir /usr/include/python%{pybasever}
+/usr/include/python%{pybasever}/%{_pyconfig_h}
+
 %files libs
 %defattr(-,root,root)
 %doc LICENSE README
@@ -494,9 +502,11 @@ rm -fr $RPM_BUILD_ROOT
 
 %files devel
 %defattr(-,root,root)
-/usr/include/*
+%{_libdir}/python%{pybasever}/config/*
+%exclude %{_libdir}/python%{pybasever}/config/Makefile
+/usr/include/python%{pybasever}/*.h
+%exclude /usr/include/python%{pybasever}/%{_pyconfig_h}
 %doc Misc/README.valgrind Misc/valgrind-python.supp Misc/gdbinit
-%dir %{_libdir}/python%{pybasever}/config
 %{_bindir}/python-config
 %{_bindir}/python2.6-config
 %{_libdir}/python%{pybasever}/config/*
@@ -538,6 +548,11 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_testcapimodule.so
 
 %changelog
+* Thu Oct 29 2009 David Malcolm <dmalcolm@redhat.com> - 2.6.4-2
+- "Makefile" and the config-32/64.h file are needed by distutils/sysconfig.py
+_init_posix(), so we include them in the core package, along with their parent
+directories (bug 531901)
+
 * Mon Oct 26 2009 David Malcolm <dmalcolm@redhat.com> - 2.6.4-1
 - Update to 2.6.4
 
