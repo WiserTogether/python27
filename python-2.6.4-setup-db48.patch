@@ -1,0 +1,27 @@
+diff -up Python-2.6.4/Modules/Setup.dist.setup-db48 Python-2.6.4/Modules/Setup.dist
+--- Python-2.6.4/Modules/Setup.dist.setup-db48	2009-12-17 22:05:07.000020150 -0500
++++ Python-2.6.4/Modules/Setup.dist	2009-12-17 22:05:12.545015367 -0500
+@@ -411,7 +411,7 @@ gdbm gdbmmodule.c -lgdbm
+ #
+ # Edit the variables DB and DBLIBVERto point to the db top directory
+ # and the subdirectory of PORT where you built it.
+-DBLIBVER=4.7
++DBLIBVER=4.8
+ DBINC=/usr/include/db4
+ DBLIB=/usr/lib
+ _bsddb _bsddb.c -I$(DBINC) -L$(DBLIB) -ldb-$(DBLIBVER)
+diff -up Python-2.6.4/setup.py.setup-db48 Python-2.6.4/setup.py
+--- Python-2.6.4/setup.py.setup-db48	2009-12-17 22:03:58.048015993 -0500
++++ Python-2.6.4/setup.py	2009-12-17 22:03:58.169016398 -0500
+@@ -705,9 +705,9 @@ class PyBuildExt(build_ext):
+         # a release.  Most open source OSes come with one or more
+         # versions of BerkeleyDB already installed.
+ 
+-        max_db_ver = (4, 7)
++        max_db_ver = (4, 8)
+         min_db_ver = (3, 3)
+-        db_setup_debug = False   # verbose debug prints from this script?
++        db_setup_debug = True   # verbose debug prints from this script?
+ 
+         def allow_db_ver(db_ver):
+             """Returns a boolean if the given BerkeleyDB version is acceptable.
