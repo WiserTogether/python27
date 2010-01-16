@@ -1,28 +1,28 @@
-%{!?__python_ver:%define __python_ver EMPTY}
-#define __python_ver 26
-%define unicode ucs4
+%{!?__python_ver:%global __python_ver EMPTY}
+#global __python_ver 26
+%global unicode ucs4
 
-%define _default_patch_fuzz 2
+%global _default_patch_fuzz 2
 
 %if "%{__python_ver}" != "EMPTY"
-%define main_python 0
-%define python python%{__python_ver}
-%define tkinter tkinter%{__python_ver}
+%global main_python 0
+%global python python%{__python_ver}
+%global tkinter tkinter%{__python_ver}
 %else
-%define main_python 1
-%define python python
-%define tkinter tkinter
+%global main_python 1
+%global python python
+%global tkinter tkinter
 %endif
 
-%define pybasever 2.6
-%define tools_dir %{_libdir}/python%{pybasever}/Tools
-%define demo_dir %{_libdir}/python%{pybasever}/Demo
-%define doc_tools_dir %{_libdir}/python%{pybasever}/Doc/tools
+%global pybasever 2.6
+%global tools_dir %{_libdir}/python%{pybasever}/Tools
+%global demo_dir %{_libdir}/python%{pybasever}/Demo
+%global doc_tools_dir %{_libdir}/python%{pybasever}/Doc/tools
 
 Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 Version: 2.6.4
-Release: 4%{?dist}
+Release: 5%{?dist}
 License: Python
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -142,7 +142,7 @@ provides the libraries needed for this.
 %package devel
 Summary: The libraries and header files needed for Python development.
 Group: Development/Libraries
-Requires: %{python} = %{version}-%{release}
+Requires: %{python}%{?_isa} = %{version}-%{release}
 # Needed here because of the migration of Makefile from -devel to the main
 # package
 Conflicts: %{python} < %{version}-%{release}
@@ -211,6 +211,12 @@ code that uses more than just unittest and/or test_support.py.
 
 %prep
 %setup -q -n Python-%{version}
+
+# Ensure that we're using the system copy of libffi, rather than the copy
+# shipped by upstream in the tarball:
+for SUBDIR in darwin libffi libffi_arm_wince libffi_msvc libffi_osx ; do
+  rm -r Modules/_ctypes/$SUBDIR || exit 1 ;
+done
 
 %patch0 -p1 -b .rhconfig
 %patch1 -p1 -b .no_gui
@@ -407,13 +413,13 @@ install -d $RPM_BUILD_ROOT/usr/lib/python%{pybasever}/site-packages
 %endif
 
 # Make python-devel multilib-ready (bug #192747, #139911)
-%define _pyconfig32_h pyconfig-32.h
-%define _pyconfig64_h pyconfig-64.h
+%global _pyconfig32_h pyconfig-32.h
+%global _pyconfig64_h pyconfig-64.h
 
 %ifarch ppc64 s390x x86_64 ia64 alpha sparc64
-%define _pyconfig_h %{_pyconfig64_h}
+%global _pyconfig_h %{_pyconfig64_h}
 %else
-%define _pyconfig_h %{_pyconfig32_h}
+%global _pyconfig_h %{_pyconfig32_h}
 %endif
 mv $RPM_BUILD_ROOT%{_includedir}/python%{pybasever}/pyconfig.h \
    $RPM_BUILD_ROOT%{_includedir}/python%{pybasever}/%{_pyconfig_h}
@@ -499,8 +505,8 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/wsgiref
 %{_libdir}/python%{pybasever}/xml
 %if "%{_lib}" == "lib64"
-%attr(0755,root,root) %dir /usr/lib/python%{pybasever}
-%attr(0755,root,root) %dir /usr/lib/python%{pybasever}/site-packages
+%attr(0755,root,root) %dir %{_prefix}/lib/python%{pybasever}
+%attr(0755,root,root) %dir %{_prefix}/lib/python%{pybasever}/site-packages
 %endif
 
 # "Makefile" and the config-32/64.h file are needed by
@@ -508,8 +514,8 @@ rm -fr $RPM_BUILD_ROOT
 # package, along with their parent directories (bug 531901):
 %dir %{_libdir}/python%{pybasever}/config
 %{_libdir}/python%{pybasever}/config/Makefile
-%dir /usr/include/python%{pybasever}
-/usr/include/python%{pybasever}/%{_pyconfig_h}
+%dir %{_includedir}/python%{pybasever}
+%{_includedir}/python%{pybasever}/%{_pyconfig_h}
 
 %files libs
 %defattr(-,root,root)
@@ -520,8 +526,8 @@ rm -fr $RPM_BUILD_ROOT
 %defattr(-,root,root)
 %{_libdir}/python%{pybasever}/config/*
 %exclude %{_libdir}/python%{pybasever}/config/Makefile
-/usr/include/python%{pybasever}/*.h
-%exclude /usr/include/python%{pybasever}/%{_pyconfig_h}
+%{_includedir}/python%{pybasever}/*.h
+%exclude %{_includedir}/python%{pybasever}/%{_pyconfig_h}
 %doc Misc/README.valgrind Misc/valgrind-python.supp Misc/gdbinit
 %{_bindir}/python-config
 %{_bindir}/python%{pybasever}-config
@@ -564,6 +570,14 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_testcapimodule.so
 
 %changelog
+* Fri Jan 15 2010 David Malcolm <dmalcolm@redhat.com> - 2.6.4-5
+- replace usage of %%define with %%global
+- use the %%{_isa} macro to ensure that the python-devel dependency on python
+is for the correct multilib arch (#555943)
+- delete bundled copy of libffi to make sure we use the system one
+- replace references to /usr with %%{_prefix}; replace references to
+/usr/include with %%{_includedir}
+
 * Wed Dec 16 2009 David Malcolm <dmalcolm@redhat.com> - 2.6.4-4
 - automatically disable arena allocator when run under valgrind (upstream
 issue 2422; patch 52)
