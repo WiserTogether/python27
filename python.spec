@@ -22,7 +22,7 @@
 Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 Version: 2.6.4
-Release: 5%{?dist}
+Release: 6%{?dist}
 License: Python
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -73,6 +73,10 @@ Patch102: python-2.6-lib64.patch
 
 # SELinux patches
 Patch110: python-2.6-ctypes-noexecmem.patch
+
+# Patch the Makefile.pre.in so that the generated Makefile doesn't try to build
+# a libpythonMAJOR.MINOR.a (bug 550692):
+Patch111: python-2.6.4-no-static-lib.patch
 
 # New API from 2.6
 #Patch260: python-2.5.2-set_wakeup_fd4.patch
@@ -255,6 +259,8 @@ done
 
 %patch110 -p1 -b .selinux
 
+%patch111 -p1 -b .no-static-lib
+
 #%%patch260 -p1 -b .set_wakeup_fd
 
 #%%patch999 -p1 -b .cve2007-4965
@@ -278,7 +284,12 @@ fi
 export CC=gcc
 # For patches 4 and 52, need to get a newer configure generated out of configure.in
 autoconf
-%configure --enable-ipv6 --enable-unicode=%{unicode} --enable-shared --with-system-ffi --with-valgrind
+%configure \
+  --enable-ipv6 \
+  --enable-unicode=%{unicode} \
+  --enable-shared \
+  --with-system-ffi \
+  --with-valgrind
 
 make OPT="$CFLAGS" %{?_smp_mflags}
 LD_LIBRARY_PATH=$topdir $topdir/python Tools/scripts/pathfix.py -i "%{_bindir}/env python%{pybasever}" .
@@ -570,6 +581,10 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_testcapimodule.so
 
 %changelog
+* Mon Jan 18 2010 David Malcolm <dmalcolm@redhat.com> - 2.6.4-6
+- patch Makefile.pre.in to avoid building static library (patch111, bug 556092)
+- split up the "configure" invocation flags onto individual lines
+
 * Fri Jan 15 2010 David Malcolm <dmalcolm@redhat.com> - 2.6.4-5
 - replace usage of %%define with %%global
 - use the %%{_isa} macro to ensure that the python-devel dependency on python
