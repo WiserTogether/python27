@@ -22,7 +22,7 @@
 Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 Version: 2.6.4
-Release: 6%{?dist}
+Release: 7%{?dist}
 License: Python
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -505,6 +505,7 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/idlelib
 %dir %{_libdir}/python%{pybasever}/json
 %{_libdir}/python%{pybasever}/json/*.py*
+%{_libdir}/python%{pybasever}/lib2to3
 %{_libdir}/python%{pybasever}/logging
 %{_libdir}/python%{pybasever}/multiprocessing
 %{_libdir}/python%{pybasever}/plat-linux2
@@ -549,7 +550,6 @@ rm -fr $RPM_BUILD_ROOT
 %defattr(-,root,root,755)
 %doc Tools/modulator/README.modulator
 %doc Tools/pynche/README.pynche
-%{_libdir}/python%{pybasever}/lib2to3
 %{_libdir}/python%{pybasever}/site-packages/modulator
 %{_libdir}/python%{pybasever}/site-packages/pynche
 %{_bindir}/smtpd*.py*
@@ -581,6 +581,9 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_testcapimodule.so
 
 %changelog
+* Wed Jan 20 2010 David Malcolm <dmalcolm@redhat.com> - 2.6.4-7
+- move lib2to3 from -tools subpackage to main package (bug 556667)
+
 * Mon Jan 18 2010 David Malcolm <dmalcolm@redhat.com> - 2.6.4-6
 - patch Makefile.pre.in to avoid building static library (patch111, bug 556092)
 - split up the "configure" invocation flags onto individual lines
