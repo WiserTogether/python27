@@ -22,7 +22,7 @@
 Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 Version: 2.6.4
-Release: 7%{?dist}
+Release: 8%{?dist}
 License: Python
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -581,6 +581,9 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_testcapimodule.so
 
 %changelog
+* Fri Jan 22 2010 David Malcolm <dmalcolm@redhat.com> - 2.6.4-8
+- rebuild (bug 556975)
+
 * Wed Jan 20 2010 David Malcolm <dmalcolm@redhat.com> - 2.6.4-7
 - move lib2to3 from -tools subpackage to main package (bug 556667)
 
