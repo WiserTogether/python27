@@ -200,18 +200,6 @@ diff -ru Python-2.6-orig Python-2.6
  
  # Lance Ellinghaus's syslog module
  #syslog syslogmodule.c		# syslog daemon interface
-@@ -363,9 +363,9 @@
- #
- # First, look at Setup.config; configure may have set this for you.
- 
--#_curses _cursesmodule.c -lcurses -ltermcap
-+_curses _cursesmodule.c -lcurses -ltermcap
- # Wrapper for the panel library that's part of ncurses and SYSV curses.
--#_curses_panel _curses_panel.c -lpanel -lncurses 
-+_curses_panel _curses_panel.c -lpanel -lncurses 
- 
- 
- # Generic (SunOS / SVR4) dynamic loading module.
 @@ -373,7 +373,7 @@
  # it is a highly experimental and dangerous device for calling
  # *arbitrary* C functions in *arbitrary* shared libraries:

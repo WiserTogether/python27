@@ -22,7 +22,7 @@
 Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 Version: 2.6.4
-Release: 8%{?dist}
+Release: 9%{?dist}
 License: Python
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -455,12 +455,18 @@ rm $RPM_BUILD_ROOT%{_libdir}/python%{pybasever}/*.egg-info
 
 # python's build is stupid and doesn't fail if extensions fail to build
 # let's list a few that we care about...
-for so in _bsddb.so _ctypes.so _cursesmodule.so _elementtree.so _sqlite3.so _ssl.so readline.so _hashlib.so zlibmodule.so bz2.so pyexpat.so; do
+for so in _bsddb.so _ctypes.so _curses.so _elementtree.so _sqlite3.so _ssl.so readline.so _hashlib.so zlibmodule.so bz2.so pyexpat.so; do
     if [ ! -f $RPM_BUILD_ROOT/%{_libdir}/python%{pybasever}/lib-dynload/$so ]; then
        echo "Missing $so!!!"
        exit 1
     fi
 done
+
+# Ensure that the curses module was linked against libncursesw.so, rather than
+# libncurses.so (bug 539917)
+ldd $RPM_BUILD_ROOT/%{_libdir}/python%{pybasever}/lib-dynload/_curses*.so \
+    | grep curses \
+    | grep libncurses.so && (echo "_curses.so linked against libncurses.so" ; exit 1)
 
 %clean
 rm -fr $RPM_BUILD_ROOT
@@ -581,6 +587,14 @@ rm -fr $RPM_BUILD_ROOT
 %{_libdir}/python%{pybasever}/lib-dynload/_testcapimodule.so
 
 %changelog
+* Mon Jan 25 2010 David Malcolm <dmalcolm@redhat.com> - 2.6.4-9
+- change python-2.6.2-config.patch to remove our downstream change to curses
+configuration in Modules/Setup.dist, so that the curses modules are built using
+setup.py with the downstream default (linking against libncursesw.so, rather
+than libncurses.so), rather than within the Makefile; add a test to %%install
+to verify the dso files that the curses module is linked against the correct
+DSO (bug 539917; changes _cursesmodule.so -> _curses.so)
+
 * Fri Jan 22 2010 David Malcolm <dmalcolm@redhat.com> - 2.6.4-8
 - rebuild (bug 556975)
 
