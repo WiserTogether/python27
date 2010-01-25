@@ -15,14 +15,17 @@
 %endif
 
 %global pybasever 2.6
-%global tools_dir %{_libdir}/python%{pybasever}/Tools
-%global demo_dir %{_libdir}/python%{pybasever}/Demo
-%global doc_tools_dir %{_libdir}/python%{pybasever}/Doc/tools
+%global pylibdir %{_libdir}/python%{pybasever}
+%global tools_dir %{pylibdir}/Tools
+%global demo_dir %{pylibdir}/Demo
+%global doc_tools_dir %{pylibdir}/Doc/tools
+%global dynload_dir %{pylibdir}/lib-dynload
+%global site_packages %{pylibdir}/site-packages
 
 Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 Version: 2.6.4
-Release: 9%{?dist}
+Release: 10%{?dist}
 License: Python
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -216,12 +219,19 @@ code that uses more than just unittest and/or test_support.py.
 %prep
 %setup -q -n Python-%{version}
 
-# Ensure that we're using the system copy of libffi, rather than the copy
-# shipped by upstream in the tarball:
+# Ensure that we're using the system copy of various libraries, rather than
+# copies shipped by upstream in the tarball:
+#   Remove embedded copy of libffi:
 for SUBDIR in darwin libffi libffi_arm_wince libffi_msvc libffi_osx ; do
   rm -r Modules/_ctypes/$SUBDIR || exit 1 ;
 done
 
+#   Remove embedded copy of zlib:
+rm -r Modules/zlib || exit 1
+
+#
+# Apply patches:
+#
 %patch0 -p1 -b .rhconfig
 %patch1 -p1 -b .no_gui
 #%%patch2 -p1 -b .no-doc
@@ -319,7 +329,7 @@ for fixed in $RPM_BUILD_ROOT%{_bindir}/pydoc; do
 done
 
 # Junk, no point in putting in -test sub-pkg
-rm -f $RPM_BUILD_ROOT/%{_libdir}/python%{pybasever}/idlelib/testcode.py*
+rm -f $RPM_BUILD_ROOT/%{pylibdir}/idlelib/testcode.py*
 
 # don't include tests that are run at build time in the package
 # This is documented, and used: rhbz#387401
@@ -327,11 +337,11 @@ if /bin/false; then
  # Move this to -test subpackage.
 mkdir save_bits_of_test
 for i in test_support.py __init__.py; do
-  cp -a $RPM_BUILD_ROOT/%{_libdir}/python%{pybasever}/test/$i save_bits_of_test
+  cp -a $RPM_BUILD_ROOT/%{pylibdir}/test/$i save_bits_of_test
 done
-rm -rf $RPM_BUILD_ROOT/%{_libdir}/python%{pybasever}/test
-mkdir $RPM_BUILD_ROOT/%{_libdir}/python%{pybasever}/test
-cp -a save_bits_of_test/* $RPM_BUILD_ROOT/%{_libdir}/python%{pybasever}/test
+rm -rf $RPM_BUILD_ROOT/%{pylibdir}/test
+mkdir $RPM_BUILD_ROOT/%{pylibdir}/test
+cp -a save_bits_of_test/* $RPM_BUILD_ROOT/%{pylibdir}/test
 fi
 
 %if %{main_python}
@@ -343,26 +353,26 @@ mv $RPM_BUILD_ROOT/%{_mandir}/man1/python.1 $RPM_BUILD_ROOT/%{_mandir}/man1/pyth
 
 # tools
 
-mkdir -p ${RPM_BUILD_ROOT}%{_libdir}/python%{pybasever}/site-packages
+mkdir -p ${RPM_BUILD_ROOT}%{site_packages}
 
 #modulator
 cat > ${RPM_BUILD_ROOT}%{_bindir}/modulator << EOF
 #!/bin/bash
-exec %{_libdir}/python%{pybasever}/site-packages/modulator/modulator.py
+exec %{site_packages}/modulator/modulator.py
 EOF
 chmod 755 ${RPM_BUILD_ROOT}%{_bindir}/modulator
 cp -r Tools/modulator \
-  ${RPM_BUILD_ROOT}%{_libdir}/python%{pybasever}/site-packages/
+  ${RPM_BUILD_ROOT}%{site_packages}/
 
 #pynche
 cat > ${RPM_BUILD_ROOT}%{_bindir}/pynche << EOF
 #!/bin/bash
-exec %{_libdir}/python%{pybasever}/site-packages/pynche/pynche
+exec %{site_packages}/pynche/pynche
 EOF
 chmod 755 ${RPM_BUILD_ROOT}%{_bindir}/pynche
 rm -f Tools/pynche/*.pyw
 cp -r Tools/pynche \
-  ${RPM_BUILD_ROOT}%{_libdir}/python%{pybasever}/site-packages/
+  ${RPM_BUILD_ROOT}%{site_packages}/
 
 mv Tools/modulator/README Tools/modulator/README.modulator
 mv Tools/pynche/README Tools/pynche/README.pynche
@@ -390,9 +400,9 @@ find $RPM_BUILD_ROOT/ -name ".cvsignore"|xargs rm -f
 find . -name "*~"|xargs rm -f
 find . -name ".cvsignore"|xargs rm -f
 #zero length
-rm -f $RPM_BUILD_ROOT%{_libdir}/python%{pybasever}/site-packages/modulator/Templates/copyright
+rm -f $RPM_BUILD_ROOT%{site_packages}/modulator/Templates/copyright
 
-rm -f $RPM_BUILD_ROOT%{_libdir}/python%{pybasever}/LICENSE.txt
+rm -f $RPM_BUILD_ROOT%{pylibdir}/LICENSE.txt
 
 
 #make the binaries install side by side with the main python
@@ -408,15 +418,8 @@ mv pydoc pydoc%{__python_ver}
 popd
 %endif
 
-find $RPM_BUILD_ROOT%{_libdir}/python%{pybasever}/lib-dynload -type d | sed "s|$RPM_BUILD_ROOT|%dir |" > dynfiles
-find $RPM_BUILD_ROOT%{_libdir}/python%{pybasever}/lib-dynload -type f | \
-  grep -v "_tkinter.so$" | \
-  grep -v "_ctypes_test.so$" | \
-  grep -v "_testcapimodule.so$" | \
-  sed "s|$RPM_BUILD_ROOT||" >> dynfiles
-
 # Fix for bug #136654
-rm -f $RPM_BUILD_ROOT%{_libdir}/python%{pybasever}/email/test/data/audiotest.au $RPM_BUILD_ROOT%{_libdir}/python%{pybasever}/test/audiotest.au
+rm -f $RPM_BUILD_ROOT%{pylibdir}/email/test/data/audiotest.au $RPM_BUILD_ROOT%{pylibdir}/test/audiotest.au
 
 # Fix bug #143667: python should own /usr/lib/python2.x on 64-bit machines
 %if "%{_lib}" == "lib64"
@@ -445,26 +448,17 @@ cat > $RPM_BUILD_ROOT%{_includedir}/python%{pybasever}/pyconfig.h << EOF
 #error "Unknown word size"
 #endif
 EOF
-ln -s ../../libpython%{pybasever}.so $RPM_BUILD_ROOT%{_libdir}/python%{pybasever}/config/libpython%{pybasever}.so
+ln -s ../../libpython%{pybasever}.so $RPM_BUILD_ROOT%{pylibdir}/config/libpython%{pybasever}.so
 
 # Fix for bug 201434: make sure distutils looks at the right pyconfig.h file
-sed -i -e "s/'pyconfig.h'/'%{_pyconfig_h}'/" $RPM_BUILD_ROOT%{_libdir}/python%{pybasever}/distutils/sysconfig.py
+sed -i -e "s/'pyconfig.h'/'%{_pyconfig_h}'/" $RPM_BUILD_ROOT%{pylibdir}/distutils/sysconfig.py
 
 # Get rid of egg-info files (core python modules are installed through rpms)
-rm $RPM_BUILD_ROOT%{_libdir}/python%{pybasever}/*.egg-info
-
-# python's build is stupid and doesn't fail if extensions fail to build
-# let's list a few that we care about...
-for so in _bsddb.so _ctypes.so _curses.so _elementtree.so _sqlite3.so _ssl.so readline.so _hashlib.so zlibmodule.so bz2.so pyexpat.so; do
-    if [ ! -f $RPM_BUILD_ROOT/%{_libdir}/python%{pybasever}/lib-dynload/$so ]; then
-       echo "Missing $so!!!"
-       exit 1
-    fi
-done
+rm $RPM_BUILD_ROOT%{pylibdir}/*.egg-info
 
 # Ensure that the curses module was linked against libncursesw.so, rather than
 # libncurses.so (bug 539917)
-ldd $RPM_BUILD_ROOT/%{_libdir}/python%{pybasever}/lib-dynload/_curses*.so \
+ldd $RPM_BUILD_ROOT/%{dynload_dir}/_curses*.so \
     | grep curses \
     | grep libncurses.so && (echo "_curses.so linked against libncurses.so" ; exit 1)
 
@@ -476,7 +470,7 @@ rm -fr $RPM_BUILD_ROOT
 %postun libs -p /sbin/ldconfig
 
 
-%files -f dynfiles
+%files
 %defattr(-, root, root)
 %doc LICENSE README
 %{_bindir}/pydoc*
@@ -487,41 +481,116 @@ rm -fr $RPM_BUILD_ROOT
 %{_bindir}/python%{pybasever}
 %{_mandir}/*/*
 
-%dir %{_libdir}/python%{pybasever}
-%dir %{_libdir}/python%{pybasever}/site-packages
-%{_libdir}/python%{pybasever}/site-packages/README
-%{_libdir}/python%{pybasever}/*.py*
-%{_libdir}/python%{pybasever}/*.doc
-%dir %{_libdir}/python%{pybasever}/bsddb
-%{_libdir}/python%{pybasever}/bsddb/*.py*
-%{_libdir}/python%{pybasever}/compiler
-%dir %{_libdir}/python%{pybasever}/ctypes
-%{_libdir}/python%{pybasever}/ctypes/*.py*
-%{_libdir}/python%{pybasever}/ctypes/macholib
-%{_libdir}/python%{pybasever}/curses
-%dir %{_libdir}/python%{pybasever}/distutils
-%{_libdir}/python%{pybasever}/distutils/*.py*
-%{_libdir}/python%{pybasever}/distutils/README
-%{_libdir}/python%{pybasever}/distutils/command
-%dir %{_libdir}/python%{pybasever}/email
-%{_libdir}/python%{pybasever}/email/*.py*
-%{_libdir}/python%{pybasever}/email/mime
-%{_libdir}/python%{pybasever}/encodings
-%{_libdir}/python%{pybasever}/hotshot
-%{_libdir}/python%{pybasever}/idlelib
-%dir %{_libdir}/python%{pybasever}/json
-%{_libdir}/python%{pybasever}/json/*.py*
-%{_libdir}/python%{pybasever}/lib2to3
-%{_libdir}/python%{pybasever}/logging
-%{_libdir}/python%{pybasever}/multiprocessing
-%{_libdir}/python%{pybasever}/plat-linux2
-%dir %{_libdir}/python%{pybasever}/sqlite3
-%{_libdir}/python%{pybasever}/sqlite3/*.py*
-%dir %{_libdir}/python%{pybasever}/test
-%{_libdir}/python%{pybasever}/test/test_support.py*
-%{_libdir}/python%{pybasever}/test/__init__.py*
-%{_libdir}/python%{pybasever}/wsgiref
-%{_libdir}/python%{pybasever}/xml
+%dir %{pylibdir}
+%dir %{dynload_dir}
+%{dynload_dir}/Python-%{version}-py%{pybasever}.egg-info
+%{dynload_dir}/_bisectmodule.so
+%{dynload_dir}/_bsddb.so
+%{dynload_dir}/_bytesio.so
+%{dynload_dir}/_codecs_cn.so
+%{dynload_dir}/_codecs_hk.so
+%{dynload_dir}/_codecs_iso2022.so
+%{dynload_dir}/_codecs_jp.so
+%{dynload_dir}/_codecs_kr.so
+%{dynload_dir}/_codecs_tw.so
+%{dynload_dir}/_collectionsmodule.so
+%{dynload_dir}/_csv.so
+%{dynload_dir}/_ctypes.so
+%{dynload_dir}/_curses.so
+%{dynload_dir}/_curses_panel.so
+%{dynload_dir}/_elementtree.so
+%{dynload_dir}/_fileio.so
+%{dynload_dir}/_functoolsmodule.so
+%{dynload_dir}/_hashlib.so
+%{dynload_dir}/_heapq.so
+%{dynload_dir}/_hotshot.so
+%{dynload_dir}/_json.so
+%{dynload_dir}/_localemodule.so
+%{dynload_dir}/_lsprof.so
+%{dynload_dir}/_md5module.so
+%{dynload_dir}/_multibytecodecmodule.so
+%{dynload_dir}/_multiprocessing.so
+%{dynload_dir}/_randommodule.so
+%{dynload_dir}/_sha256module.so
+%{dynload_dir}/_sha512module.so
+%{dynload_dir}/_shamodule.so
+%{dynload_dir}/_socketmodule.so
+%{dynload_dir}/_sqlite3.so
+%{dynload_dir}/_ssl.so
+%{dynload_dir}/_struct.so
+%{dynload_dir}/_weakref.so
+%{dynload_dir}/arraymodule.so
+%{dynload_dir}/audioop.so
+%{dynload_dir}/binascii.so
+%{dynload_dir}/bz2.so
+%{dynload_dir}/cPickle.so
+%{dynload_dir}/cStringIO.so
+%{dynload_dir}/cmathmodule.so
+%{dynload_dir}/cryptmodule.so
+%{dynload_dir}/datetime.so
+%{dynload_dir}/dbm.so
+%{dynload_dir}/dlmodule.so
+%{dynload_dir}/fcntlmodule.so
+%{dynload_dir}/future_builtins.so
+%{dynload_dir}/gdbmmodule.so
+%{dynload_dir}/grpmodule.so
+%{dynload_dir}/imageop.so
+%{dynload_dir}/itertoolsmodule.so
+%{dynload_dir}/linuxaudiodev.so
+%{dynload_dir}/mathmodule.so
+%{dynload_dir}/mmapmodule.so
+%{dynload_dir}/nismodule.so
+%{dynload_dir}/operator.so
+%{dynload_dir}/ossaudiodev.so
+%{dynload_dir}/parsermodule.so
+%{dynload_dir}/pyexpat.so
+%{dynload_dir}/readline.so
+%{dynload_dir}/resource.so
+%{dynload_dir}/selectmodule.so
+%{dynload_dir}/spwdmodule.so
+%{dynload_dir}/stropmodule.so
+%{dynload_dir}/syslog.so
+%{dynload_dir}/termios.so
+%{dynload_dir}/timemodule.so
+%{dynload_dir}/timingmodule.so
+%{dynload_dir}/unicodedata.so
+%{dynload_dir}/xxsubtype.so
+%{dynload_dir}/zlibmodule.so
+
+%dir %{site_packages}
+%{site_packages}/README
+%{pylibdir}/*.py*
+%{pylibdir}/*.doc
+%dir %{pylibdir}/bsddb
+%{pylibdir}/bsddb/*.py*
+%{pylibdir}/compiler
+%dir %{pylibdir}/ctypes
+%{pylibdir}/ctypes/*.py*
+%{pylibdir}/ctypes/macholib
+%{pylibdir}/curses
+%dir %{pylibdir}/distutils
+%{pylibdir}/distutils/*.py*
+%{pylibdir}/distutils/README
+%{pylibdir}/distutils/command
+%dir %{pylibdir}/email
+%{pylibdir}/email/*.py*
+%{pylibdir}/email/mime
+%{pylibdir}/encodings
+%{pylibdir}/hotshot
+%{pylibdir}/idlelib
+%dir %{pylibdir}/json
+%{pylibdir}/json/*.py*
+%{pylibdir}/lib2to3
+%{pylibdir}/logging
+%{pylibdir}/multiprocessing
+%{pylibdir}/plat-linux2
+%dir %{pylibdir}/sqlite3
+%{pylibdir}/sqlite3/*.py*
+%dir %{pylibdir}/test
+%{pylibdir}/test/test_support.py*
+%{pylibdir}/test/__init__.py*
+%{pylibdir}/wsgiref
+%{pylibdir}/xml
 %if "%{_lib}" == "lib64"
 %attr(0755,root,root) %dir %{_prefix}/lib/python%{pybasever}
 %attr(0755,root,root) %dir %{_prefix}/lib/python%{pybasever}/site-packages
@@ -530,8 +599,8 @@ rm -fr $RPM_BUILD_ROOT
 # "Makefile" and the config-32/64.h file are needed by
 # distutils/sysconfig.py:_init_posix(), so we include them in the core
 # package, along with their parent directories (bug 531901):
-%dir %{_libdir}/python%{pybasever}/config
-%{_libdir}/python%{pybasever}/config/Makefile
+%dir %{pylibdir}/config
+%{pylibdir}/config/Makefile
 %dir %{_includedir}/python%{pybasever}
 %{_includedir}/python%{pybasever}/%{_pyconfig_h}
 
@@ -542,22 +611,22 @@ rm -fr $RPM_BUILD_ROOT
 
 %files devel
 %defattr(-,root,root)
-%{_libdir}/python%{pybasever}/config/*
-%exclude %{_libdir}/python%{pybasever}/config/Makefile
+%{pylibdir}/config/*
+%exclude %{pylibdir}/config/Makefile
 %{_includedir}/python%{pybasever}/*.h
 %exclude %{_includedir}/python%{pybasever}/%{_pyconfig_h}
 %doc Misc/README.valgrind Misc/valgrind-python.supp Misc/gdbinit
 %{_bindir}/python-config
 %{_bindir}/python%{pybasever}-config
-%{_libdir}/python%{pybasever}/config/*
+%{pylibdir}/config/*
 %{_libdir}/libpython%{pybasever}.so
 
 %files tools
 %defattr(-,root,root,755)
 %doc Tools/modulator/README.modulator
 %doc Tools/pynche/README.pynche
-%{_libdir}/python%{pybasever}/site-packages/modulator
-%{_libdir}/python%{pybasever}/site-packages/pynche
+%{site_packages}/modulator
+%{site_packages}/pynche
 %{_bindir}/smtpd*.py*
 %{_bindir}/2to3*
 %{_bindir}/idle*
@@ -567,26 +636,34 @@ rm -fr $RPM_BUILD_ROOT
 %{_bindir}/msgfmt*.py*
 %{tools_dir}
 %{demo_dir}
-%{_libdir}/python%{pybasever}/Doc
+%{pylibdir}/Doc
 
 %files -n %{tkinter}
 %defattr(-,root,root,755)
-%{_libdir}/python%{pybasever}/lib-tk
-%{_libdir}/python%{pybasever}/lib-dynload/_tkinter.so
+%{pylibdir}/lib-tk
+%{dynload_dir}/_tkinter.so
 
 %files test
 %defattr(-, root, root)
-%{_libdir}/python%{pybasever}/bsddb/test
-%{_libdir}/python%{pybasever}/ctypes/test
-%{_libdir}/python%{pybasever}/distutils/tests
-%{_libdir}/python%{pybasever}/email/test
-%{_libdir}/python%{pybasever}/json/tests
-%{_libdir}/python%{pybasever}/sqlite3/test
-%{_libdir}/python%{pybasever}/test
-%{_libdir}/python%{pybasever}/lib-dynload/_ctypes_test.so
-%{_libdir}/python%{pybasever}/lib-dynload/_testcapimodule.so
+%{pylibdir}/bsddb/test
+%{pylibdir}/ctypes/test
+%{pylibdir}/distutils/tests
+%{pylibdir}/email/test
+%{pylibdir}/json/tests
+%{pylibdir}/sqlite3/test
+%{pylibdir}/test
+%{dynload_dir}/_ctypes_test.so
+%{dynload_dir}/_testcapimodule.so
 
 %changelog
+* Mon Jan 25 2010 David Malcolm <dmalcolm@redhat.com> - 2.6.4-10
+- introduce macros for 3 directories, replacing expanded references throughout:
+%%{pylibdir}, %%{dynload_dir}, %%{site_packages}
+- explicitly list all lib-dynload files, rather than dynamically gathering the
+payload into a temporary text file, so that we can be sure what we are
+shipping; remove now-redundant testing for presence of certain .so files
+- remove embedded copy of zlib from source tree before building
+
 * Mon Jan 25 2010 David Malcolm <dmalcolm@redhat.com> - 2.6.4-9
 - change python-2.6.2-config.patch to remove our downstream change to curses
 configuration in Modules/Setup.dist, so that the curses modules are built using
