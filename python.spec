@@ -25,7 +25,7 @@
 Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 Version: 2.6.4
-Release: 11%{?dist}
+Release: 12%{?dist}
 License: Python
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -113,7 +113,7 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires: readline-devel, openssl-devel, gmp-devel
 BuildRequires: ncurses-devel, gdbm-devel, zlib-devel, expat-devel
 BuildRequires: libGL-devel tk tix gcc-c++ libX11-devel glibc-devel
-BuildRequires: bzip2 tar /usr/bin/find pkgconfig tcl-devel tk-devel
+BuildRequires: bzip2 tar findutils pkgconfig tcl-devel tk-devel
 BuildRequires: tix-devel bzip2-devel sqlite-devel
 BuildRequires: autoconf
 BuildRequires: db4-devel >= 4.8
@@ -142,7 +142,7 @@ package.
 %package libs
 Summary: The libraries for python runtime
 Group: Applications/System
-Requires: %{python} = %{version}-%{release}
+Requires: %{name} = %{version}-%{release}
 # Needed for ctypes, to load libraries, worked around for Live CDs size
 # Requires: binutils
 
@@ -152,7 +152,7 @@ use python as an embedded scripting language.  The python-libs package
 provides the libraries needed for this.
 
 %package devel
-Summary: The libraries and header files needed for Python development.
+Summary: The libraries and header files needed for Python development
 Group: Development/Libraries
 Requires: %{python}%{?_isa} = %{version}-%{release}
 # Needed here because of the migration of Makefile from -devel to the main
@@ -175,7 +175,7 @@ want to install the python-docs package, which contains Python
 documentation.
 
 %package tools
-Summary: A collection of development tools included with Python.
+Summary: A collection of development tools included with Python
 Group: Development/Tools
 Requires: %{name} = %{version}-%{release}
 Requires: %{tkinter} = %{version}-%{release}
@@ -214,7 +214,7 @@ Requires: %{name} = %{version}-%{release}
 
 %description test
 
-The test modules from the main python pacakge: %{name}
+The test modules from the main python package: %{name}
 These have been removed to save space, as they are never or almost
 never used in production.
 
@@ -289,15 +289,15 @@ rm -r Modules/zlib || exit 1
 find -name "*~" |xargs rm -f
 
 %build
-topdir=`pwd`
+topdir=$(pwd)
 export CFLAGS="$RPM_OPT_FLAGS -D_GNU_SOURCE -fPIC"
 export CXXFLAGS="$RPM_OPT_FLAGS -D_GNU_SOURCE -fPIC"
-export CPPFLAGS="`pkg-config --cflags-only-I libffi`"
+export CPPFLAGS="$(pkg-config --cflags-only-I libffi)"
 export OPT="$RPM_OPT_FLAGS -D_GNU_SOURCE -fPIC"
 export LINKCC="gcc"
 if pkg-config openssl ; then
-  export CFLAGS="$CFLAGS `pkg-config --cflags openssl`"
-  export LDFLAGS="$LDFLAGS `pkg-config --libs-only-L openssl`"
+  export CFLAGS="$CFLAGS $(pkg-config --cflags openssl)"
+  export LDFLAGS="$LDFLAGS $(pkg-config --libs-only-L openssl)"
 fi
 # Force CC
 export CC=gcc
@@ -312,34 +312,34 @@ autoconf
   --with-valgrind
 
 make OPT="$CFLAGS" %{?_smp_mflags}
-LD_LIBRARY_PATH=$topdir $topdir/python Tools/scripts/pathfix.py -i "%{_bindir}/env python%{pybasever}" .
+LD_LIBRARY_PATH="$topdir" $topdir/python Tools/scripts/pathfix.py -i "%{_bindir}/env python%{pybasever}" .
 # Rebuild with new python
 # We need a link to a versioned python in the build directory
 ln -s python python%{pybasever}
-LD_LIBRARY_PATH=$topdir PATH=$PATH:$topdir make -s OPT="$CFLAGS" %{?_smp_mflags}
+LD_LIBRARY_PATH="$topdir" PATH=$PATH:$topdir make -s OPT="$CFLAGS" %{?_smp_mflags}
 
 
 
 %install
-[ -d $RPM_BUILD_ROOT ] && rm -fr $RPM_BUILD_ROOT
-mkdir -p $RPM_BUILD_ROOT/usr $RPM_BUILD_ROOT%{_mandir}
+rm -rf %{buildroot}
+mkdir -p %{buildroot}%{_prefix} %{buildroot}%{_mandir}
 
 # Clean up patched .py files that are saved as .lib64
 for f in distutils/command/install distutils/sysconfig; do
     rm -f Lib/$f.py.lib64
 done
 
-make install DESTDIR=$RPM_BUILD_ROOT
+make install DESTDIR=%{buildroot}
 # Fix the interpreter path in binaries installed by distutils 
 # (which changes them by itself)
 # Make sure we preserve the file permissions
-for fixed in $RPM_BUILD_ROOT%{_bindir}/pydoc; do
+for fixed in %{buildroot}%{_bindir}/pydoc; do
     sed 's,#!.*/python$,#!%{_bindir}/env python%{pybasever},' $fixed > $fixed- \
         && cat $fixed- > $fixed && rm -f $fixed-
 done
 
 # Junk, no point in putting in -test sub-pkg
-rm -f $RPM_BUILD_ROOT/%{pylibdir}/idlelib/testcode.py*
+rm -f %{buildroot}/%{pylibdir}/idlelib/testcode.py*
 
 # don't include tests that are run at build time in the package
 # This is documented, and used: rhbz#387401
@@ -347,18 +347,18 @@ if /bin/false; then
  # Move this to -test subpackage.
 mkdir save_bits_of_test
 for i in test_support.py __init__.py; do
-  cp -a $RPM_BUILD_ROOT/%{pylibdir}/test/$i save_bits_of_test
+  cp -a %{buildroot}/%{pylibdir}/test/$i save_bits_of_test
 done
-rm -rf $RPM_BUILD_ROOT/%{pylibdir}/test
-mkdir $RPM_BUILD_ROOT/%{pylibdir}/test
-cp -a save_bits_of_test/* $RPM_BUILD_ROOT/%{pylibdir}/test
+rm -rf %{buildroot}/%{pylibdir}/test
+mkdir %{buildroot}/%{pylibdir}/test
+cp -a save_bits_of_test/* %{buildroot}/%{pylibdir}/test
 fi
 
 %if %{main_python}
-ln -s python $RPM_BUILD_ROOT%{_bindir}/python2
+ln -s python %{buildroot}%{_bindir}/python2
 %else
-mv $RPM_BUILD_ROOT%{_bindir}/python $RPM_BUILD_ROOT%{_bindir}/%{python}
-mv $RPM_BUILD_ROOT/%{_mandir}/man1/python.1 $RPM_BUILD_ROOT/%{_mandir}/man1/python%{pybasever}.1
+mv %{buildroot}%{_bindir}/python %{buildroot}%{_bindir}/%{python}
+mv %{buildroot}/%{_mandir}/man1/python.1 %{buildroot}/%{_mandir}/man1/python%{pybasever}.1
 %endif
 
 # tools
@@ -388,36 +388,36 @@ mv Tools/modulator/README Tools/modulator/README.modulator
 mv Tools/pynche/README Tools/pynche/README.pynche
 
 #gettext
-install -m755  Tools/i18n/pygettext.py $RPM_BUILD_ROOT%{_bindir}/
-install -m755  Tools/i18n/msgfmt.py $RPM_BUILD_ROOT%{_bindir}/
+install -m755  Tools/i18n/pygettext.py %{buildroot}%{_bindir}/
+install -m755  Tools/i18n/msgfmt.py %{buildroot}%{_bindir}/
 
 # Useful development tools
-install -m755 -d $RPM_BUILD_ROOT%{tools_dir}/scripts
-install Tools/README $RPM_BUILD_ROOT%{tools_dir}/
-install Tools/scripts/*py $RPM_BUILD_ROOT%{tools_dir}/scripts/
+install -m755 -d %{buildroot}%{tools_dir}/scripts
+install Tools/README %{buildroot}%{tools_dir}/
+install Tools/scripts/*py %{buildroot}%{tools_dir}/scripts/
 
 # Documentation tools
-install -m755 -d $RPM_BUILD_ROOT%{doc_tools_dir}
-#install -m755 Doc/tools/mkhowto $RPM_BUILD_ROOT%{doc_tools_dir}
+install -m755 -d %{buildroot}%{doc_tools_dir}
+#install -m755 Doc/tools/mkhowto %{buildroot}%{doc_tools_dir}
 
 # Useful demo scripts
-install -m755 -d $RPM_BUILD_ROOT%{demo_dir}
-cp -ar Demo/* $RPM_BUILD_ROOT%{demo_dir}
+install -m755 -d %{buildroot}%{demo_dir}
+cp -ar Demo/* %{buildroot}%{demo_dir}
 
 # Get rid of crap
-find $RPM_BUILD_ROOT/ -name "*~"|xargs rm -f
-find $RPM_BUILD_ROOT/ -name ".cvsignore"|xargs rm -f
+find %{buildroot}/ -name "*~"|xargs rm -f
+find %{buildroot}/ -name ".cvsignore"|xargs rm -f
 find . -name "*~"|xargs rm -f
 find . -name ".cvsignore"|xargs rm -f
 #zero length
-rm -f $RPM_BUILD_ROOT%{site_packages}/modulator/Templates/copyright
+rm -f %{buildroot}%{site_packages}/modulator/Templates/copyright
 
-rm -f $RPM_BUILD_ROOT%{pylibdir}/LICENSE.txt
+rm -f %{buildroot}%{pylibdir}/LICENSE.txt
 
 
 #make the binaries install side by side with the main python
 %if !%{main_python}
-pushd $RPM_BUILD_ROOT%{_bindir}
+pushd %{buildroot}%{_bindir}
 mv idle idle%{__python_ver}
 mv modulator modulator%{__python_ver}
 mv pynche pynche%{__python_ver}
@@ -429,11 +429,11 @@ popd
 %endif
 
 # Fix for bug #136654
-rm -f $RPM_BUILD_ROOT%{pylibdir}/email/test/data/audiotest.au $RPM_BUILD_ROOT%{pylibdir}/test/audiotest.au
+rm -f %{buildroot}%{pylibdir}/email/test/data/audiotest.au %{buildroot}%{pylibdir}/test/audiotest.au
 
 # Fix bug #143667: python should own /usr/lib/python2.x on 64-bit machines
 %if "%{_lib}" == "lib64"
-install -d $RPM_BUILD_ROOT/usr/lib/python%{pybasever}/site-packages
+install -d %{buildroot}/usr/lib/python%{pybasever}/site-packages
 %endif
 
 # Make python-devel multilib-ready (bug #192747, #139911)
@@ -445,9 +445,9 @@ install -d $RPM_BUILD_ROOT/usr/lib/python%{pybasever}/site-packages
 %else
 %global _pyconfig_h %{_pyconfig32_h}
 %endif
-mv $RPM_BUILD_ROOT%{_includedir}/python%{pybasever}/pyconfig.h \
-   $RPM_BUILD_ROOT%{_includedir}/python%{pybasever}/%{_pyconfig_h}
-cat > $RPM_BUILD_ROOT%{_includedir}/python%{pybasever}/pyconfig.h << EOF
+mv %{buildroot}%{_includedir}/python%{pybasever}/pyconfig.h \
+   %{buildroot}%{_includedir}/python%{pybasever}/%{_pyconfig_h}
+cat > %{buildroot}%{_includedir}/python%{pybasever}/pyconfig.h << EOF
 #include <bits/wordsize.h>
 
 #if __WORDSIZE == 32
@@ -458,22 +458,22 @@ cat > $RPM_BUILD_ROOT%{_includedir}/python%{pybasever}/pyconfig.h << EOF
 #error "Unknown word size"
 #endif
 EOF
-ln -s ../../libpython%{pybasever}.so $RPM_BUILD_ROOT%{pylibdir}/config/libpython%{pybasever}.so
+ln -s ../../libpython%{pybasever}.so %{buildroot}%{pylibdir}/config/libpython%{pybasever}.so
 
 # Fix for bug 201434: make sure distutils looks at the right pyconfig.h file
-sed -i -e "s/'pyconfig.h'/'%{_pyconfig_h}'/" $RPM_BUILD_ROOT%{pylibdir}/distutils/sysconfig.py
+sed -i -e "s/'pyconfig.h'/'%{_pyconfig_h}'/" %{buildroot}%{pylibdir}/distutils/sysconfig.py
 
 # Get rid of egg-info files (core python modules are installed through rpms)
-rm $RPM_BUILD_ROOT%{pylibdir}/*.egg-info
+rm %{buildroot}%{pylibdir}/*.egg-info
 
 # Ensure that the curses module was linked against libncursesw.so, rather than
 # libncurses.so (bug 539917)
-ldd $RPM_BUILD_ROOT/%{dynload_dir}/_curses*.so \
+ldd %{buildroot}/%{dynload_dir}/_curses*.so \
     | grep curses \
     | grep libncurses.so && (echo "_curses.so linked against libncurses.so" ; exit 1)
 
 %clean
-rm -fr $RPM_BUILD_ROOT
+rm -fr %{buildroot}
 
 %post libs -p /sbin/ldconfig
 
@@ -481,7 +481,7 @@ rm -fr $RPM_BUILD_ROOT
 
 
 %files
-%defattr(-, root, root)
+%defattr(-, root, root, -)
 %doc LICENSE README
 %{_bindir}/pydoc*
 %{_bindir}/%{python}
@@ -615,12 +615,12 @@ rm -fr $RPM_BUILD_ROOT
 %{_includedir}/python%{pybasever}/%{_pyconfig_h}
 
 %files libs
-%defattr(-,root,root)
+%defattr(-,root,root,-)
 %doc LICENSE README
 %{_libdir}/libpython%{pybasever}.so.*
 
 %files devel
-%defattr(-,root,root)
+%defattr(-,root,root,-)
 %{pylibdir}/config/*
 %exclude %{pylibdir}/config/Makefile
 %{_includedir}/python%{pybasever}/*.h
@@ -654,7 +654,7 @@ rm -fr $RPM_BUILD_ROOT
 %{dynload_dir}/_tkinter.so
 
 %files test
-%defattr(-, root, root)
+%defattr(-, root, root, -)
 %{pylibdir}/bsddb/test
 %{pylibdir}/ctypes/test
 %{pylibdir}/distutils/tests
@@ -666,6 +666,19 @@ rm -fr $RPM_BUILD_ROOT
 %{dynload_dir}/_testcapimodule.so
 
 %changelog
+* Tue Jan 26 2010 David Malcolm <dmalcolm@redhat.com> - 2.6.4-12
+- Address some of the issues identified in package review (bug 226342):
+  - update libs requirement on base package to use %%{name} for consistency's
+sake
+  - convert from backticks to $() syntax throughout
+  - wrap value of LD_LIBRARY_PATH in quotes
+  - convert "/usr/bin/find" requirement to "findutils"
+  - remove trailing periods from summaries of -devel and -tools subpackages
+  - fix spelling mistake in description of -test subpackage
+  - convert usage of $$RPM_BUILD_ROOT to %%{buildroot} throughout, for
+stylistic consistency
+  - supply dirmode arguments to defattr directives
+
 * Mon Jan 25 2010 David Malcolm <dmalcolm@redhat.com> - 2.6.4-11
 - update python-2.6.2-config.patch to remove downstream customization of build
 of pyexpat and elementtree modules
