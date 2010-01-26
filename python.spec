@@ -25,7 +25,7 @@
 Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 Version: 2.6.4
-Release: 10%{?dist}
+Release: 11%{?dist}
 License: Python
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -35,6 +35,11 @@ Source: http://www.python.org/ftp/python/%{version}/Python-%{version}.tar.bz2
 Patch0: python-2.6.2-config.patch
 Patch1: Python-2.2.1-pydocnogui.patch
 #Patch2: python-2.3.4-pydocnodoc.patch
+
+# Fixup configure.in and setup.py to build against system expat library.
+# Adapted from http://svn.python.org/view?view=rev&revision=77169
+Patch3: python-2.6.2-with-system-expat.patch
+
 Patch4: python-2.5-cflags.patch
 #Patch5: python-2.5.1-ctypes-exec-stack.patch
 Patch6: python-2.5.1-plural-fix.patch
@@ -221,6 +226,9 @@ code that uses more than just unittest and/or test_support.py.
 
 # Ensure that we're using the system copy of various libraries, rather than
 # copies shipped by upstream in the tarball:
+#   Remove embedded copy of expat:
+rm -r Modules/expat || exit 1
+
 #   Remove embedded copy of libffi:
 for SUBDIR in darwin libffi libffi_arm_wince libffi_msvc libffi_osx ; do
   rm -r Modules/_ctypes/$SUBDIR || exit 1 ;
@@ -233,6 +241,7 @@ rm -r Modules/zlib || exit 1
 # Apply patches:
 #
 %patch0 -p1 -b .rhconfig
+%patch3 -p1 -b .expat
 %patch1 -p1 -b .no_gui
 #%%patch2 -p1 -b .no-doc
 %patch4 -p1 -b .cflags
@@ -299,6 +308,7 @@ autoconf
   --enable-unicode=%{unicode} \
   --enable-shared \
   --with-system-ffi \
+  --with-system-expat \
   --with-valgrind
 
 make OPT="$CFLAGS" %{?_smp_mflags}
@@ -656,6 +666,13 @@ rm -fr $RPM_BUILD_ROOT
 %{dynload_dir}/_testcapimodule.so
 
 %changelog
+* Mon Jan 25 2010 David Malcolm <dmalcolm@redhat.com> - 2.6.4-11
+- update python-2.6.2-config.patch to remove downstream customization of build
+of pyexpat and elementtree modules
+- add patch adapted from upstream (patch 3) to add support for building against
+system expat; add --with-system-expat to "configure" invocation
+- remove embedded copy of expat from source tree during "prep"
+
 * Mon Jan 25 2010 David Malcolm <dmalcolm@redhat.com> - 2.6.4-10
 - introduce macros for 3 directories, replacing expanded references throughout:
 %%{pylibdir}, %%{dynload_dir}, %%{site_packages}
