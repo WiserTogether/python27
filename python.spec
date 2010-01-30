@@ -25,33 +25,146 @@
 Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 Version: 2.6.4
-Release: 12%{?dist}
+Release: 13%{?dist}
 License: Python
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
 Provides: python(abi) = %{pybasever}
 Source: http://www.python.org/ftp/python/%{version}/Python-%{version}.tar.bz2
 
+# Modules/Setup.dist is ultimately used by the "makesetup" script to construct
+# the Makefile and config.c
+#
+# Upstream leaves many things disabled by default, to try to make it easy as
+# possible to build the code on as many platforms as possible.
+#
+# TODO: many modules can also now be built by setup.py after the python binary
+# has been built; need to assess if we should instead build things there
+#
+# We patch it downstream as follows:
+#   - various modules are built by default by upstream as static libraries;
+#   we built them as shared libraries
+#   - build the "readline" module (appears to also be handled by setup.py now)
+#   - enable the build of the following modules:
+#     - array arraymodule.c	# array objects
+#     - cmath cmathmodule.c # -lm # complex math library functions
+#     - math mathmodule.c # -lm # math library functions, e.g. sin()
+#     - _struct _struct.c	# binary structure packing/unpacking
+#     - time timemodule.c # -lm # time operations and variables
+#     - operator operator.c	# operator.add() and similar goodies
+#     - _weakref _weakref.c	# basic weak reference support
+#     - _testcapi _testcapimodule.c    # Python C API test module
+#     - _random _randommodule.c	# Random number generator
+#     - _collections _collectionsmodule.c # Container types
+#     - itertools itertoolsmodule.c
+#     - strop stropmodule.c
+#     - _functools _functoolsmodule.c
+#     - _bisect _bisectmodule.c	# Bisection algorithms
+#     - unicodedata unicodedata.c    # static Unicode character database
+#     - _locale _localemodule.c
+#     - fcntl fcntlmodule.c	# fcntl(2) and ioctl(2)
+#     - spwd spwdmodule.c		# spwd(3) 
+#     - grp grpmodule.c		# grp(3)
+#     - select selectmodule.c	# select(2); not on ancient System V
+#     - mmap mmapmodule.c  # Memory-mapped files
+#     - _csv _csv.c  # CSV file helper
+#     - _socket socketmodule.c  # Socket module helper for socket(2)
+#     - _ssl _ssl.c
+#     - crypt cryptmodule.c -lcrypt	# crypt(3)
+#     - nis nismodule.c -lnsl	# Sun yellow pages -- not everywhere
+#     - termios termios.c	# Steen Lumholt's termios module
+#     - resource resource.c	# Jeremy Hylton's rlimit interface
+#     - audioop audioop.c	# Operations on audio samples
+#     - imageop imageop.c	# Operations on images
+#     - _md5 md5module.c md5.c
+#     - _sha shamodule.c
+#     - _sha256 sha256module.c
+#     - _sha512 sha512module.c
+#     - linuxaudiodev linuxaudiodev.c
+#     - timing timingmodule.c
+#     - _tkinter _tkinter.c tkappinit.c
+#     - dl dlmodule.c
+#     - gdbm gdbmmodule.c
+#     - _bsddb _bsddb.c
+#     - binascii binascii.c
+#     - parser parsermodule.c
+#     - cStringIO cStringIO.c
+#     - cPickle cPickle.c
+#     - zlib zlibmodule.c
+#     - _multibytecodec cjkcodecs/multibytecodec.c
+#     - _codecs_cn cjkcodecs/_codecs_cn.c
+#     - _codecs_hk cjkcodecs/_codecs_hk.c
+#     - _codecs_iso2022 cjkcodecs/_codecs_iso2022.c
+#     - _codecs_jp cjkcodecs/_codecs_jp.c
+#     - _codecs_kr cjkcodecs/_codecs_kr.c
+#     - _codecs_tw cjkcodecs/_codecs_tw.c
 Patch0: python-2.6.2-config.patch
+
+# Removes the "-g" option from "pydoc", for some reason; I believe
+# (dmalcolm 2010-01-29) that this was introduced in this change:
+# - fix pydoc (#68082)
+# in 2.2.1-12 as a response to the -g option needing TkInter installed
+# (Red Hat Linux 8)
+# Not upstream
 Patch1: Python-2.2.1-pydocnogui.patch
-#Patch2: python-2.3.4-pydocnodoc.patch
 
 # Fixup configure.in and setup.py to build against system expat library.
 # Adapted from http://svn.python.org/view?view=rev&revision=77169
 Patch3: python-2.6.2-with-system-expat.patch
 
+# Add $(CFLAGS) to the linker arguments when linking the "python" binary
+# since some architectures (sparc64) need this (rhbz:199373).
+# Not yet filed upstream
 Patch4: python-2.5-cflags.patch
-#Patch5: python-2.5.1-ctypes-exec-stack.patch
+
+# Work around a bug in Python' gettext module relating to the "Plural-Forms"
+# header (rhbz:252136)
+# Related to upstream issues:
+#   http://bugs.python.org/issue1448060 and http://bugs.python.org/issue1475523
+# though the proposed upstream patches are, alas, different
 Patch6: python-2.5.1-plural-fix.patch
+
+# This patch was listed in the changelog as: 
+#  * Fri Sep 14 2007 Jeremy Katz <katzj@redhat.com> - 2.5.1-11
+#  - fix encoding of sqlite .py files to work around weird encoding problem 
+#  in Turkish (#283331)
+# A traceback attached to rhbz 244016 shows the problem most clearly: a
+# traceback on attempting to import the sqlite module, with:
+#   "SyntaxError: encoding problem: with BOM (__init__.py, line 1)"
+# This seems to come from Parser/tokenizer.c:check_coding_spec
+# Our patch changes two source files within sqlite3, removing the
+# "coding: ISO-8859-1" specs and character E4 = U+00E4 = 
+# LATIN SMALL LETTER A WITH DIAERESIS from in ghaering's surname. 
+#
+# It may be that the conversion of "ISO-8859-1" to "iso-8859-1" is thwarted
+# by the implementation of "tolower" in the Turkish locale; see:
+#   https://bugzilla.redhat.com/show_bug.cgi?id=191096#c9
+# 
+# TODO: Not yet sent upstream, and appears to me (dmalcolm 2010-01-29) that
+# it may be papering over a symptom
 Patch7: python-2.5.1-sqlite-encoding.patch
-#Patch8: python-2.5-xmlrpclib-marshal-objects.patch
-#Patch9: python-2.5-tkinter.patch
+
+# FIXME: Lib/ctypes/util.py posix implementation defines a function
+# _get_soname(f).  Upstreams's implementation of this uses objdump to read the
+# SONAME from a library; we avoid this, apparently to minimize space
+# requirements on the live CD:
+# (rhbz:307221)
 Patch10: python-2.6.2-binutils-no-dep.patch
+
+# FIXME: appears to relate to:
+#* Tue Oct 30 2007 James Antill <jantill@redhat.com> - 2.5.1-15
+#- Do codec lowercase in C Locale.
+#- Resolves: 207134 191096
 Patch11: python-2.5.1-codec-ascii-tolower.patch
-#Patch12: python-2.5.1-pysqlite.patch
+
+# Add various constants to the socketmodule (rhbz#436560):
+# TODO: these patches were added in 2.5.1-22 and 2.5.1-24 but appear not to
+# have been sent upstream yet:
 Patch13: python-2.5.1-socketmodule-constants.patch
 Patch14: python-2.5.1-socketmodule-constants2.patch
-#Patch15: python-2.5.1-listdir.patch
+
+# Remove an "-rpath $(LIBDIR)" argument from the linkage args in configure.in:
+# FIXME: is this for OSF, not Linux?
 Patch16: python-2.6-rpath.patch
 
 # Fix distutils to follow the Fedora/RHEL/CentOS policies of having .pyo files
@@ -71,26 +184,38 @@ Patch53: python-2.6-update-bsddb3-4.8.patch
 # ...and a further patch to setup.py so that it searches for 4.8:
 Patch54: python-2.6.4-setup-db48.patch
 
-# upstreamed
-
-#Patch50: python-2.5-disable-egginfo.patch
-
-# lib64 patches
+# "lib64 patches"
+# This patch seems to be associated with bug 122304, which was
+#  http://sourceforge.net/tracker/?func=detail&atid=105470&aid=931848&group_id=5470
+# and is now
+#  http://bugs.python.org/issue931848
+# However, as it stands this patch is merely a copy of:
+#  http://svn.python.org/view/python/trunk/Lib/test/test_re.py?r1=35825&r2=35824&pathrev=35825
+# which is already upstream
 Patch101: python-2.3.4-lib64-regex.patch
+
+# Only used when "%{_lib}" == "lib64"
+# Fixup various paths throughout the build and in distutils from "lib" to "lib64",
+# and add the /usr/lib64/pythonMAJOR.MINOR/site-packages to sitedirs, in front of
+# /usr/lib/pythonMAJOR.MINOR/site-packages
+# Not upstream
 Patch102: python-2.6-lib64.patch
 
-# SELinux patches
+# rhbz#488396: rework the ctypes module to use ffi_closure_alloc and
+# ffi_closure_free, rather than malloc_closure.c, since the latter tries to
+# mmap pages with PROT_READ | PROT_WRITE | PROT_EXEC, which SELinux frowns upon.
+# 
+# Patch sent upstream as http://bugs.python.org/issue5504 which also contains
+# a rebasing of the upstream copy of libffi to one containing the
+# memory-management hooks. 
+#
+# This appears to be the same as that patch, but without the rebasing of libffi
+# (since we use the system copy of libffi):
 Patch110: python-2.6-ctypes-noexecmem.patch
 
 # Patch the Makefile.pre.in so that the generated Makefile doesn't try to build
 # a libpythonMAJOR.MINOR.a (bug 550692):
 Patch111: python-2.6.4-no-static-lib.patch
-
-# New API from 2.6
-#Patch260: python-2.5.2-set_wakeup_fd4.patch
-
-#Patch999: python-2.5.CVE-2007-4965-int-overflow.patch
-#Patch998: python-2.5-CVE-2008-2316.patch
 
 
 %if %{main_python}
@@ -243,12 +368,9 @@ rm -r Modules/zlib || exit 1
 %patch0 -p1 -b .rhconfig
 %patch3 -p1 -b .expat
 %patch1 -p1 -b .no_gui
-#%%patch2 -p1 -b .no-doc
 %patch4 -p1 -b .cflags
-#%%patch5 -p1 -b .ctypesexec
 %patch6 -p1 -b .plural
 %patch7 -p1
-#%%patch8 -p1 -b .xmlrpc
 
 # Try not disabling egg-infos, bz#414711
 #patch50 -p1 -b .egginfo
@@ -260,10 +382,8 @@ rm -r Modules/zlib || exit 1
 
 %patch10 -p1 -b .binutils-no-dep
 %patch11 -p1 -b .ascii-tolower
-#%%patch12 -p1 -b .pysqlite-2.3.3-minimal
 %patch13 -p1 -b .socketmodule
 %patch14 -p1 -b .socketmodule2
-#%%patch15 -p1 -b .listdir
 %patch16 -p1 -b .rpath
 
 %patch51 -p1 -b .brprpm
@@ -279,11 +399,6 @@ rm -r Modules/zlib || exit 1
 %patch110 -p1 -b .selinux
 
 %patch111 -p1 -b .no-static-lib
-
-#%%patch260 -p1 -b .set_wakeup_fd
-
-#%%patch999 -p1 -b .cve2007-4965
-#%%patch998 -p0 -b .cve2008-2316
 
 # This shouldn't be necesarry, but is right now (2.2a3)
 find -name "*~" |xargs rm -f
@@ -666,6 +781,9 @@ rm -fr %{buildroot}
 %{dynload_dir}/_testcapimodule.so
 
 %changelog
+* Fri Jan 29 2010 David Malcolm <dmalcolm@redhat.com> - 2.6.4-13
+- document all patches, and remove the commented-out ones
+
 * Tue Jan 26 2010 David Malcolm <dmalcolm@redhat.com> - 2.6.4-12
 - Address some of the issues identified in package review (bug 226342):
   - update libs requirement on base package to use %%{name} for consistency's
