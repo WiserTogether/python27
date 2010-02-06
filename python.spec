@@ -22,15 +22,39 @@
 %global dynload_dir %{pylibdir}/lib-dynload
 %global site_packages %{pylibdir}/site-packages
 
+%global with_gdb_hooks 1
+
 Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 Version: 2.6.4
-Release: 13%{?dist}
+Release: 14%{?dist}
 License: Python
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
 Provides: python(abi) = %{pybasever}
 Source: http://www.python.org/ftp/python/%{version}/Python-%{version}.tar.bz2
+
+
+# We install a collection of hooks for gdb that make it easier to debug
+# executables linked against libpython (such as /usr/lib/python itself)
+#
+# These hooks are implemented in Python itself
+#
+# We'll install them into the same path as the library, with a -gdb.py suffix
+# e.g.
+#  /usr/lib/libpython2.6.so.1.0-gdb.py
+#
+# It would be better to put them in the -debuginfo subpackage e.g. here:
+#  /usr/lib/debug/usr/lib/libpython2.6.so.1.0.debug-gdb.py
+# but unfortunately it's hard to add custom content to a debuginfo subpackage
+#
+# See https://fedoraproject.org/wiki/Features/EasierPythonDebugging for more
+# information
+#
+# Downloaded from:
+# http://fedorapeople.org/gitweb?p=dmalcolm/public_git/libpython.git;a=snapshot;h=36a517ef7848cbd0b3dcc7371f32e47ac4c87eba;sf=tgz
+Source1: libpython-36a517ef7848cbd0b3dcc7371f32e47ac4c87eba.tar.gz
+
 
 # Modules/Setup.dist is ultimately used by the "makesetup" script to construct
 # the Makefile and config.c
@@ -349,6 +373,12 @@ code that uses more than just unittest and/or test_support.py.
 %prep
 %setup -q -n Python-%{version}
 
+# Unpack source archive 1 into this same dir without deleting (-D; -T suppress
+# trying to unpack source 0 again):
+%if 0%{?with_gdb_hooks}
+%setup -q -n Python-%{version} -T -D -a 1
+%endif # with_gdb_hooks
+
 # Ensure that we're using the system copy of various libraries, rather than
 # copies shipped by upstream in the tarball:
 #   Remove embedded copy of expat:
@@ -587,6 +617,23 @@ ldd %{buildroot}/%{dynload_dir}/_curses*.so \
     | grep curses \
     | grep libncurses.so && (echo "_curses.so linked against libncurses.so" ; exit 1)
 
+
+# Copy up the gdb hooks into place; the python file will be autoloaded by gdb
+# when visiting libpython.so, provided that the python file is installed to the
+# same path as the library (or its .debug file) plus a "-gdb.py" suffix, e.g:
+#  /usr/lib/libpython2.6.so.1.0-gdb.py
+#
+# Long term, this should probably go in the debuginfo subpackage, e.g:
+#  /usr/lib/debug/usr/lib/libpython2.6.so.1.0.debug-gdb.py
+#
+# We use a for loop here to avoid having the RHS of the cp command be quoted,
+# leading to a filename with a "*" character embedded in it
+%if 0%{?with_gdb_hooks}
+for lib in %{buildroot}%{_libdir}/libpython%{pybasever}.so.* ; do
+    cp libpython/libpython.py ${lib}-gdb.py
+done
+%endif # with_gdb_hooks
+
 %clean
 rm -fr %{buildroot}
 
@@ -733,6 +780,10 @@ rm -fr %{buildroot}
 %defattr(-,root,root,-)
 %doc LICENSE README
 %{_libdir}/libpython%{pybasever}.so.*
+%if 0%{?with_gdb_hooks}
+%{_libdir}/libpython%{pybasever}.so.*-gdb.py*
+%endif # with_gdb_hooks
+
 
 %files devel
 %defattr(-,root,root,-)
@@ -781,6 +832,9 @@ rm -fr %{buildroot}
 %{dynload_dir}/_testcapimodule.so
 
 %changelog
+* Fri Feb  5 2010 David Malcolm <dmalcolm@redhat.com> - 2.6.4-14
+- add gdb hooks for easier debugging
+
 * Fri Jan 29 2010 David Malcolm <dmalcolm@redhat.com> - 2.6.4-13
 - document all patches, and remove the commented-out ones
 
