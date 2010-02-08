@@ -24,10 +24,24 @@
 
 %global with_gdb_hooks 1
 
+
+# Some of the files below /usr/lib/pythonMAJOR.MINOR/test  (e.g. bad_coding.py)
+# are deliberately invalid, leading to SyntaxError exceptions if they get
+# byte-compiled.
+#
+# These errors are ignored by the normal python build, and aren't normally a
+# problem in the buildroots since /usr/bin/python isn't present.
+# 
+# However, for the case where we're rebuilding the python srpm on a machine
+# that does have python installed we need to set this to avoid
+# brp-python-bytecompile treating these as fatal errors:
+#
+%global _python_bytecompile_errors_terminate_build 0
+
 Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 Version: 2.6.4
-Release: 14%{?dist}
+Release: 15%{?dist}
 License: Python
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -54,6 +68,12 @@ Source: http://www.python.org/ftp/python/%{version}/Python-%{version}.tar.bz2
 # Downloaded from:
 # http://fedorapeople.org/gitweb?p=dmalcolm/public_git/libpython.git;a=snapshot;h=36a517ef7848cbd0b3dcc7371f32e47ac4c87eba;sf=tgz
 Source1: libpython-36a517ef7848cbd0b3dcc7371f32e47ac4c87eba.tar.gz
+
+
+# Work around bug 562906 until it's fixed in rpm-build by providing a fixed
+# version of pythondeps.sh:
+Source2: pythondeps.sh
+%global __python_requires %{SOURCE2}
 
 
 # Modules/Setup.dist is ultimately used by the "makesetup" script to construct
@@ -832,6 +852,11 @@ rm -fr %{buildroot}
 %{dynload_dir}/_testcapimodule.so
 
 %changelog
+* Mon Feb  8 2010 David Malcolm <dmalcolm@redhat.com> - 2.6.4-15
+- work around bug 562906 by supplying a fixed version of pythondeps.sh
+- set %%{_python_bytecompile_errors_terminate_build} to 0 to prevent the broken
+test files from killing the build on buildroots where python is installed
+
 * Fri Feb  5 2010 David Malcolm <dmalcolm@redhat.com> - 2.6.4-14
 - add gdb hooks for easier debugging
 
