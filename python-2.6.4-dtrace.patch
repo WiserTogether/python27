@@ -1,0 +1,543 @@
+diff -up Python-2.6.4/configure.in.systemtap Python-2.6.4/configure.in
+--- Python-2.6.4/configure.in.systemtap	2009-12-18 15:37:15.632242686 -0500
++++ Python-2.6.4/configure.in	2009-12-18 15:37:15.713244483 -0500
+@@ -2481,6 +2481,38 @@ if test "$with_valgrind" != no; then
+     )
+ fi
+ 
++# Check for dtrace support
++AC_MSG_CHECKING(for --with-dtrace)
++AC_ARG_WITH(dtrace,
++            AC_HELP_STRING(--with(out)-dtrace, disable/enable dtrace support))
++
++if test ! -z "$with_dtrace"
++then
++    if dtrace -G -o /dev/null -s $srcdir/Include/pydtrace.d 2>/dev/null
++    then
++	AC_DEFINE(WITH_DTRACE, 1, 
++	 [Define if you want to compile in Dtrace support])
++	with_dtrace="Sun"
++	DTRACEOBJS="Python/phelper.o Python/dtrace.o"
++	DTRADEHDRS=""
++    elif dtrace -h -o /dev/null -s $srcdir/Include/pydtrace.d
++    then
++	AC_DEFINE(WITH_DTRACE, 1, 
++	 [Define if you want to compile in Dtrace support])
++	with_dtrace="Apple"
++	DTRACEOBJS=""
++	DTRADEHDRS="phelper.h pydtrace.h"
++    else
++	with_dtrace="no"
++    fi
++else
++    with_dtrace="no"
++fi
++
++AC_MSG_RESULT($with_dtrace)
++AC_SUBST(DTRACEOBJS)
++AC_SUBST(DTRACEHDRS)
++
+ # Check for --with-wctype-functions
+ AC_MSG_CHECKING(for --with-wctype-functions)
+ AC_ARG_WITH(wctype-functions, 
+diff -up Python-2.6.4/Include/frameobject.h.systemtap Python-2.6.4/Include/frameobject.h
+--- Python-2.6.4/Include/frameobject.h.systemtap	2008-02-14 07:47:33.000000000 -0500
++++ Python-2.6.4/Include/frameobject.h	2009-12-18 15:37:15.714243772 -0500
+@@ -41,6 +41,9 @@ typedef struct _frame {
+     /* As of 2.3 f_lineno is only valid when tracing is active (i.e. when
+        f_trace is set) -- at other times use PyCode_Addr2Line instead. */
+     int f_lineno;		/* Current line number */
++#ifdef WITH_DTRACE
++    int f_calllineno;		/* line number of call site */
++#endif
+     int f_iblock;		/* index in f_blockstack */
+     PyTryBlock f_blockstack[CO_MAXBLOCKS]; /* for try and loop blocks */
+     PyObject *f_localsplus[1];	/* locals+stack, dynamically sized */
+diff -up Python-2.6.4/Include/phelper.d.systemtap Python-2.6.4/Include/phelper.d
+--- Python-2.6.4/Include/phelper.d.systemtap	2009-12-18 15:37:15.698243410 -0500
++++ Python-2.6.4/Include/phelper.d	2009-12-18 15:37:15.697243772 -0500
+@@ -0,0 +1,139 @@
++
++/*
++ * Python ustack helper.  This relies on the first argument (PyFrame *) being
++ * on the stack; see Python/ceval.c for the contortions we go through to ensure
++ * this is the case.
++ *
++ * On x86, the PyFrame * is two slots up from the frame pointer; on SPARC, it's
++ * eight.
++ */
++
++/*
++ * Yes, this is as gross as it looks. DTrace cannot handle static functions,
++ * and our stat_impl.h has them in ILP32.
++ */
++#define _SYS_STAT_H
++
++#include <stdio.h>
++#include <sys/types.h>
++
++#include "pyport.h"
++#include "object.h"
++#include "pystate.h"
++#include "pyarena.h"
++#include "pythonrun.h"
++#include "compile.h"
++#include "frameobject.h"
++#include "stringobject.h"
++
++#if defined(__i386)
++#define	startframe PyEval_EvalFrameEx
++#define	endframe PyEval_EvalCodeEx
++#elif defined(__amd64)
++#define	PyEval_EvalFrameEx PyEval_EvalFrameExReal
++#define	startframe PyEval_EvalFrameExReal
++#define	endframe PyEval_EvalCodeEx
++#elif defined(__sparc)
++#define	PyEval_EvalFrameEx PyEval_EvalFrameExReal
++#define	startframe PyEval_EvalFrameEx
++#define	endframe PyEval_EvalFrameExReal
++#endif
++
++#ifdef __sparcv9
++#define	STACK_BIAS (2048-1)
++#else
++#define	STACK_BIAS 0
++#endif
++
++/*
++ * Not defining PHELPER lets us test this code as a normal D script.
++ */
++#ifdef PHELPER
++
++#define	at_evalframe(addr) \
++    ((uintptr_t)addr >= ((uintptr_t)&``startframe) && \
++     (uintptr_t)addr < ((uintptr_t)&``endframe))
++#define	probe dtrace:helper:ustack:
++#define	print_result(r) (r)
++
++#if defined(__i386) || defined(__amd64)
++#define	frame_ptr_addr ((uintptr_t)arg1 + sizeof(uintptr_t) * 2)
++#elif defined(__sparc)
++#define	frame_ptr_addr ((uintptr_t)arg1 + STACK_BIAS + sizeof(uintptr_t) * 8)
++#else
++#error unknown architecture
++#endif
++
++#else /* PHELPER */
++
++#define	at_evalframe(addr) (1)
++#define	probe pid$target::PyEval_EvalFrame:entry
++#define print_result(r) (trace(r))
++
++#if defined(__i386) || defined(__amd64)
++#define	frame_ptr_addr ((uintptr_t)uregs[R_SP] + sizeof(uintptr_t))
++#elif defined(__sparc)
++/*
++ * Not implemented: we could just use R_I0, but what's the point?
++ */
++#else
++#error unknown architecture
++#endif
++
++#endif /* PHELPER */
++
++extern uintptr_t PyEval_EvalFrameEx;
++extern uintptr_t PyEval_EvalCodeEx;
++
++#define	copyin_obj(addr, obj) ((obj *)copyin((uintptr_t)addr, sizeof(obj)))
++#define	pystr_addr(addr) ((char *)addr + offsetof(PyStringObject, ob_sval))
++#define	copyin_str(dest, addr, obj) \
++    (copyinto((uintptr_t)pystr_addr(addr), obj->ob_size, (dest)))
++#define	add_str(addr, obj) \
++    copyin_str(this->result + this->pos, addr, obj); \
++    this->pos += obj->ob_size; \
++    this->result[this->pos] = '\0';
++#define	add_digit(nr, div) ((nr / div) ? \
++    (this->result[this->pos++] = '0' + ((nr / div) % 10)) : \
++    (this->result[this->pos] = '\0'))
++#define	add_char(c) (this->result[this->pos++] = c)
++
++probe /at_evalframe(arg0)/ 
++{
++	this->framep = *(uintptr_t *)copyin(frame_ptr_addr, sizeof(uintptr_t));
++	this->frameo = copyin_obj(this->framep, PyFrameObject);
++	this->codep = this->frameo->f_code;
++	this->lineno = this->frameo->f_calllineno;
++	this->codeo = copyin_obj(this->codep, PyCodeObject);
++	this->filenamep = this->codeo->co_filename;
++	this->fnamep = this->codeo->co_name;
++	this->filenameo = copyin_obj(this->filenamep, PyStringObject);
++	this->fnameo = copyin_obj(this->fnamep, PyStringObject);
++
++	this->len = 1 + this->filenameo->ob_size + 1 + 5 + 2 +
++	    this->fnameo->ob_size + 1 + 1;
++
++	this->result = (char *)alloca(this->len);
++	this->pos = 0;
++
++	add_char('@');
++	add_str(this->filenamep, this->filenameo);
++	add_char(':');
++	add_digit(this->lineno, 10000);
++	add_digit(this->lineno, 1000);
++	add_digit(this->lineno, 100);
++	add_digit(this->lineno, 10);
++	add_digit(this->lineno, 1);
++	add_char(' ');
++	add_char('(');
++	add_str(this->fnamep, this->fnameo);
++	add_char(')');
++	this->result[this->pos] = '\0';
++
++	print_result(stringof(this->result));
++}
++
++probe /!at_evalframe(arg0)/
++{
++	NULL;
++}
+diff -up Python-2.6.4/Include/pydtrace.d.systemtap Python-2.6.4/Include/pydtrace.d
+--- Python-2.6.4/Include/pydtrace.d.systemtap	2009-12-18 15:37:15.697243772 -0500
++++ Python-2.6.4/Include/pydtrace.d	2009-12-18 15:37:15.697243772 -0500
+@@ -0,0 +1,10 @@
++provider python {
++	probe function__entry(const char *, const char *, int);
++	probe function__return(const char *, const char *, int);
++};
++
++#pragma D attributes Evolving/Evolving/Common provider python provider
++#pragma D attributes Private/Private/Common provider python module
++#pragma D attributes Private/Private/Common provider python function
++#pragma D attributes Evolving/Evolving/Common provider python name
++#pragma D attributes Evolving/Evolving/Common provider python args
+diff -up Python-2.6.4/Makefile.pre.in.systemtap Python-2.6.4/Makefile.pre.in
+--- Python-2.6.4/Makefile.pre.in.systemtap	2009-12-18 15:37:15.399242581 -0500
++++ Python-2.6.4/Makefile.pre.in	2009-12-18 15:37:15.715242573 -0500
+@@ -290,6 +290,7 @@ PYTHON_OBJS=	\
+ 		Python/formatter_unicode.o \
+ 		Python/formatter_string.o \
+ 		Python/$(DYNLOADFILE) \
++		@DTRACEOBJS@ \
+ 		$(LIBOBJS) \
+ 		$(MACHDEP_OBJS) \
+ 		$(THREADOBJ)
+@@ -577,6 +578,23 @@ Python/formatter_unicode.o: $(srcdir)/Py
+ Python/formatter_string.o: $(srcdir)/Python/formatter_string.c \
+ 				$(STRINGLIB_HEADERS)
+ 
++# Only needed with --with-dtrace
++buildinclude:
++	mkdir -p Include
++Python/phelper.o: buildinclude $(srcdir)/Include/phelper.d
++	dtrace -o $@ -DPHELPER $(DFLAGS) $(CPPFLAGS) -C -G -s $(srcdir)/Include/phelper.d
++
++Include/pydtrace.h: buildinclude $(srcdir)/Include/pydtrace.d
++	dtrace -o $@ $(DFLAGS) -C -h -s $(srcdir)/Include/pydtrace.d
++
++Include/phelper.h: buildinclude $(srcdir)/Include/phelper.d
++	dtrace -o $@ $(DFLAGS) -C -h -s $(srcdir)/Python/python.d
++
++Python/ceval.o: Include/pydtrace.h
++
++Python/dtrace.o: buildinclude $(srcdir)/Include/pydtrace.d Python/ceval.o
++	dtrace -o $@ $(DFLAGS) -C -G -s $(srcdir)/Include/pydtrace.d Python/ceval.o
++
+ ############################################################################
+ # Header files
+ 
+@@ -1213,6 +1231,6 @@ Python/thread.o: @THREADHEADERS@
+ .PHONY: frameworkinstall frameworkinstallframework frameworkinstallstructure
+ .PHONY: frameworkinstallmaclib frameworkinstallapps frameworkinstallunixtools
+ .PHONY: frameworkaltinstallunixtools recheck autoconf clean clobber distclean 
+-.PHONY: smelly funny patchcheck
++.PHONY: smelly funny patchcheck buildinclude
+ 
+ # IF YOU PUT ANYTHING HERE IT WILL GO AWAY
+diff -up Python-2.6.4/Objects/frameobject.c.systemtap Python-2.6.4/Objects/frameobject.c
+--- Python-2.6.4/Objects/frameobject.c.systemtap	2009-06-01 19:27:15.000000000 -0400
++++ Python-2.6.4/Objects/frameobject.c	2009-12-18 15:37:15.715242573 -0500
+@@ -698,6 +698,9 @@ PyFrame_New(PyThreadState *tstate, PyCod
+ 	f->f_tstate = tstate;
+ 
+ 	f->f_lasti = -1;
++#ifdef WITH_DTRACE
++ 	f->f_calllineno = code->co_firstlineno;
++#endif
+ 	f->f_lineno = code->co_firstlineno;
+ 	f->f_iblock = 0;
+ 
+diff -up Python-2.6.4/pyconfig.h.in.systemtap Python-2.6.4/pyconfig.h.in
+--- Python-2.6.4/pyconfig.h.in.systemtap	2009-12-18 15:37:15.649243175 -0500
++++ Python-2.6.4/pyconfig.h.in	2009-12-18 15:37:15.719242803 -0500
+@@ -5,6 +5,9 @@
+ #define Py_PYCONFIG_H
+ 
+ 
++/* Define if building universal (internal helper macro) */
++#undef AC_APPLE_UNIVERSAL_BUILD
++
+ /* Define for AIX if your compiler is a genuine IBM xlC/xlC_r and you want
+    support for AIX C++ shared extension modules. */
+ #undef AIX_GENUINE_CPLUSPLUS
+@@ -945,6 +948,28 @@
+ /* Define to 1 if your <sys/time.h> declares `struct tm'. */
+ #undef TM_IN_SYS_TIME
+ 
++/* Enable extensions on AIX 3, Interix.  */
++#ifndef _ALL_SOURCE
++# undef _ALL_SOURCE
++#endif
++/* Enable GNU extensions on systems that have them.  */
++#ifndef _GNU_SOURCE
++# undef _GNU_SOURCE
++#endif
++/* Enable threading extensions on Solaris.  */
++#ifndef _POSIX_PTHREAD_SEMANTICS
++# undef _POSIX_PTHREAD_SEMANTICS
++#endif
++/* Enable extensions on HP NonStop.  */
++#ifndef _TANDEM_SOURCE
++# undef _TANDEM_SOURCE
++#endif
++/* Enable general extensions on Solaris.  */
++#ifndef __EXTENSIONS__
++# undef __EXTENSIONS__
++#endif
++
++
+ /* Define if you want to use MacPython modules on MacOSX in unix-Python. */
+ #undef USE_TOOLBOX_OBJECT_GLUE
+ 
+@@ -964,6 +989,9 @@
+ /* Define if you want documentation strings in extension modules */
+ #undef WITH_DOC_STRINGS
+ 
++/* Define if you want to compile in Dtrace support */
++#undef WITH_DTRACE
++
+ /* Define if you want to use the new-style (Openstep, Rhapsody, MacOS) dynamic
+    linker (dyld) instead of the old-style (NextStep) dynamic linker (rld).
+    Dyld is necessary to support frameworks. */
+@@ -1017,15 +1045,25 @@
+ /* This must be defined on some systems to enable large file support. */
+ #undef _LARGEFILE_SOURCE
+ 
++/* Define to 1 if on MINIX. */
++#undef _MINIX
++
+ /* Define on NetBSD to activate all library features */
+ #undef _NETBSD_SOURCE
+ 
+ /* Define _OSF_SOURCE to get the makedev macro. */
+ #undef _OSF_SOURCE
+ 
++/* Define to 2 if the system does not provide POSIX.1 features except with
++   this defined. */
++#undef _POSIX_1_SOURCE
++
+ /* Define to activate features from IEEE Stds 1003.1-2001 */
+ #undef _POSIX_C_SOURCE
+ 
++/* Define to 1 if you need to in order for `stat' and other things to work. */
++#undef _POSIX_SOURCE
++
+ /* Define if you have POSIX threads, and your system does not define that. */
+ #undef _POSIX_THREADS
+ 
+diff -up Python-2.6.4/Python/ceval.c.systemtap Python-2.6.4/Python/ceval.c
+--- Python-2.6.4/Python/ceval.c.systemtap	2009-05-30 17:43:48.000000000 -0400
++++ Python-2.6.4/Python/ceval.c	2009-12-18 15:37:15.723242474 -0500
+@@ -19,6 +19,10 @@
+ 
+ #include <ctype.h>
+ 
++#ifdef WITH_DTRACE
++#include "pydtrace.h"
++#endif
++
+ #ifndef WITH_TSC
+ 
+ #define READ_TIMESTAMP(var)
+@@ -527,6 +531,55 @@ PyEval_EvalCode(PyCodeObject *co, PyObje
+ 			  NULL);
+ }
+ 
++#ifdef WITH_DTRACE
++static void
++dtrace_entry(PyFrameObject *f)
++{
++	const char *filename;
++	const char *fname;
++	int lineno;
++	
++	filename = PyString_AsString(f->f_code->co_filename);
++	fname = PyString_AsString(f->f_code->co_name);
++	lineno = PyCode_Addr2Line(f->f_code, f->f_lasti);
++
++	PYTHON_FUNCTION_ENTRY((char *)filename, (char *)fname, lineno);
++
++	/*
++	 * Currently a USDT tail-call will not receive the correct arguments.
++	 * Disable the tail call here.
++	 */
++#if defined(__sparc)
++	asm("nop");
++#endif
++}
++
++static void
++dtrace_return(PyFrameObject *f)
++{
++	const char *filename;
++	const char *fname;
++	int lineno;
++	
++	filename = PyString_AsString(f->f_code->co_filename);
++	fname = PyString_AsString(f->f_code->co_name);
++	lineno = PyCode_Addr2Line(f->f_code, f->f_lasti);
++	PYTHON_FUNCTION_RETURN((char *)filename, (char *)fname, lineno);
++
++	/*
++	 * Currently a USDT tail-call will not receive the correct arguments.
++	 * Disable the tail call here.
++	 */
++#if defined(__sparc)
++	asm("nop");
++#endif
++}
++#else
++#define	PYTHON_FUNCTION_ENTRY_ENABLED() 0
++#define	PYTHON_FUNCTION_RETURN_ENABLED() 0
++#define	dtrace_entry(f)
++#define	dtrace_return(f)
++#endif
+ 
+ /* Interpreter main loop */
+ 
+@@ -538,9 +591,84 @@ PyEval_EvalFrame(PyFrameObject *f) {
+ 	return PyEval_EvalFrameEx(f, 0);
+ }
+ 
++/*
++ * These shenanigans look like utter madness, but what we're actually doing is
++ * making sure that the ustack helper will see the PyFrameObject pointer on the
++ * stack. We have two tricky cases:
++ *
++ * amd64
++ *
++ * We use up the six registers for passing arguments, meaning the call can't
++ * use a register for passing 'f', and has to push it onto the stack in a known
++ * location.
++ *
++ * And how does "throwflag" figure in to this? -PN
++ *
++ * SPARC
++ *
++ * Here the problem is that (on 32-bit) the compiler is re-using %i0 before
++ * some calls inside PyEval_EvalFrameReal(), which means that when it's saved,
++ * it's just some junk value rather than the real first argument. So, instead,
++ * we trace our proxy PyEval_EvalFrame(), where we 'know' the compiler won't
++ * decide to re-use %i0. We also need to defeat optimization of our proxy.
++ */
++
++#if defined(WITH_DTRACE)
++
++#if defined(__amd64)
++PyObject *PyEval_EvalFrameExReal(long, long, long, long, long, long,
++    PyFrameObject *, int throwflag);
++
++
++
+ PyObject *
+ PyEval_EvalFrameEx(PyFrameObject *f, int throwflag)
+ {
++	volatile PyObject *f2;
++	f2 = PyEval_EvalFrameExReal(0, 0, 0, 0, 0, 0, f, throwflag);
++	return (PyObject *)f2;
++}
++
++PyObject *
++PyEval_EvalFrameExReal(long a1, long a2, long a3, long a4, long a5, long a6,
++    PyFrameObject *f, int throwflag)
++{
++
++#elif defined(__sparc)
++
++PyObject *PyEval_EvalFrameExReal(PyFrameObject *f, int throwflag);
++
++volatile int dummy;
++
++PyObject *
++PyEval_EvalFrameEx(PyFrameObject *f, int throwflag)
++{
++	volatile PyObject *f2;
++	f2 = PyEval_EvalFrameExReal(f, throwflag);
++	dummy = f->ob_refcnt;
++	return (PyObject *)f2;
++}
++
++PyObject *
++PyEval_EvalFrameExReal(PyFrameObject *f, int throwflag)
++{
++
++#else /* __amd64 || __sparc */
++
++PyObject *
++PyEval_EvalFrameEx(PyFrameObject *f, int throwflag)
++{
++
++#endif /* __amd64 || __sparc */
++
++#else /* WITH_DTRACE not defined */
++
++PyObject *
++PyEval_EvalFrameEx(PyFrameObject *f, int throwflag)
++{
++
++#endif /* WITH_DTRACE */
++
+ #ifdef DXPAIRS
+ 	int lastopcode = 0;
+ #endif
+@@ -763,6 +891,9 @@ PyEval_EvalFrameEx(PyFrameObject *f, int
+ 		}
+ 	}
+ 
++        if (PYTHON_FUNCTION_ENTRY_ENABLED())
++                dtrace_entry(f);
++
+ 	co = f->f_code;
+ 	names = co->co_names;
+ 	consts = co->co_consts;
+@@ -2383,6 +2514,10 @@ PyEval_EvalFrameEx(PyFrameObject *f, int
+ 			PyObject **sp;
+ 			PCALL(PCALL_ALL);
+ 			sp = stack_pointer;
++#ifdef WITH_DTRACE
++			f->f_calllineno = PyCode_Addr2Line(f->f_code,
++							   f->f_lasti);
++#endif
+ #ifdef WITH_TSC
+ 			x = call_function(&sp, oparg, &intr0, &intr1);
+ #else
+@@ -2425,6 +2560,11 @@ PyEval_EvalFrameEx(PyFrameObject *f, int
+ 		    } else
+ 			    Py_INCREF(func);
+ 		    sp = stack_pointer;
++#ifdef WITH_DTRACE
++		    f->f_calllineno = PyCode_Addr2Line(f->f_code,
++		                                       f->f_lasti);
++#endif
++
+ 		    READ_TIMESTAMP(intr0);
+ 		    x = ext_do_call(func, &sp, flags, na, nk);
+ 		    READ_TIMESTAMP(intr1);
+@@ -2723,6 +2863,8 @@ fast_yield:
+ 
+ 	/* pop frame */
+ exit_eval_frame:
++	if (PYTHON_FUNCTION_RETURN_ENABLED())
++		dtrace_return(f);
+ 	Py_LeaveRecursiveCall();
+ 	tstate->frame = f->f_back;
+ 

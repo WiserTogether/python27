@@ -34,6 +34,7 @@
 
 %global with_gdb_hooks 1
 
+%global with_systemtap 1
 
 # Some of the files below /usr/lib/pythonMAJOR.MINOR/test  (e.g. bad_coding.py)
 # are deliberately invalid, leading to SyntaxError exceptions if they get
@@ -51,7 +52,7 @@
 Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 Version: 2.6.4
-Release: 16%{?dist}
+Release: 17%{?dist}
 License: Python
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -64,13 +65,9 @@ Source: http://www.python.org/ftp/python/%{version}/Python-%{version}.tar.bz2
 #
 # These hooks are implemented in Python itself
 #
-# We'll install them into the same path as the library, with a -gdb.py suffix
-# e.g.
-#  /usr/lib/libpython2.6.so.1.0-gdb.py
-#
-# It would be better to put them in the -debuginfo subpackage e.g. here:
+# gdb-archer looks for them in the same path as the ELF file, with a -gdb.py suffix.
+# We put them in the debuginfo package by installing them to e.g.:
 #  /usr/lib/debug/usr/lib/libpython2.6.so.1.0.debug-gdb.py
-# but unfortunately it's hard to add custom content to a debuginfo subpackage
 #
 # See https://fedoraproject.org/wiki/Features/EasierPythonDebugging for more
 # information
@@ -238,6 +235,11 @@ Patch53: python-2.6-update-bsddb3-4.8.patch
 # ...and a further patch to setup.py so that it searches for 4.8:
 Patch54: python-2.6.4-setup-db48.patch
 
+# Systemtap support: add statically-defined probe points
+# Patch based on upstream bug: http://bugs.python.org/issue4111
+# fixed up by mjw and mcohen for 2.6.2, then fixed up by dmalcolm for 2.6.4
+Patch55: python-2.6.4-dtrace.patch
+
 # "lib64 patches"
 # This patch seems to be associated with bug 122304, which was
 #  http://sourceforge.net/tracker/?func=detail&atid=105470&aid=931848&group_id=5470
@@ -298,6 +300,11 @@ BuildRequires: autoconf
 BuildRequires: db4-devel >= 4.8
 BuildRequires: libffi-devel
 BuildRequires: valgrind-devel
+
+%if 0%{?with_systemtap}
+BuildRequires: systemtap-sdt-devel
+%global tapsetdir      /usr/share/systemtap/tapset
+%endif
 
 URL: http://www.python.org/
 
@@ -450,6 +457,7 @@ rm -r Modules/zlib || exit 1
 %patch52 -p0 -b .valgrind
 %patch53 -p1 -b .db48
 %patch54 -p1 -b .setup-db48
+%patch55 -p1 -b .systemtap
 
 %ifarch alpha ia64
 # 64bit, but not lib64 arches need this too...
@@ -476,14 +484,29 @@ if pkg-config openssl ; then
 fi
 # Force CC
 export CC=gcc
-# For patches 4 and 52, need to get a newer configure generated out of configure.in
+
+# We need to get a newer configure generated out of configure.in for the following
+# patches:
+#   patch 4 (CFLAGS)
+#   patch 52 (valgrind)
+#   patch 55 (systemtap)
+# Rerun autoconf:
 autoconf
+
+# For patch 55 (systemtap), we need to get a new header for configure to use:
+autoheader
+
+# Use the freshly created "configure" script:
 %configure \
   --enable-ipv6 \
   --enable-unicode=%{unicode} \
   --enable-shared \
   --with-system-ffi \
   --with-system-expat \
+%if 0%{?with_systemtap}
+  --with-dtrace \
+  --with-tapset-install-dir=%{tapsetdir} \
+%endif
   --with-valgrind
 
 make OPT="$CFLAGS" %{?_smp_mflags}
@@ -659,8 +682,18 @@ ldd %{buildroot}/%{dynload_dir}/_curses*.so \
 # but doing so generated noise when ldconfig was rerun (rhbz:562980)
 #
 %if 0%{?with_gdb_hooks}
-mkdir -p %{buildroot}%{_prefix}/lib/debug/%{_libdir}
-cp libpython/libpython.py %{buildroot}%{_prefix}/lib/debug/%{_libdir}/%{py_INSTSONAME}.debug-gdb.py
+%global dir_holding_gdb_py %{_prefix}/lib/debug/%{_libdir}
+%global path_of_gdb_py %{dir_holding_gdb_py}/%{py_INSTSONAME}.debug-gdb.py
+
+mkdir -p %{buildroot}%{dir_holding_gdb_py}
+cp libpython/libpython.py %{buildroot}%{path_of_gdb_py}
+
+# Manually byte-compile the file, in case find-debuginfo.sh is run before
+# brp-python-bytecompile, so that the .pyc/.pyo files are properly listed in
+# the debuginfo manifest:
+LD_LIBRARY_PATH=. ./python -c "import compileall; import sys; compileall.compile_dir('%{buildroot}%{dir_holding_gdb_py}', ddir='%{dir_holding_gdb_py}')"
+
+LD_LIBRARY_PATH=. ./python -O -c "import compileall; import sys; compileall.compile_dir('%{buildroot}%{dir_holding_gdb_py}', ddir='%{dir_holding_gdb_py}')"
 %endif # with_gdb_hooks
 
 %clean
@@ -870,6 +903,13 @@ rm -fr %{buildroot}
 # payload file would be unpackaged)
 
 %changelog
+* Tue Feb  9 2010 David Malcolm <dmalcolm@redhat.com> - 2.6.4-17
+- add systemtap static probes (wcohen; patch 55; rh bug #545179)
+- update some comments in specfile relating to gdb work
+- manually byte-compile the gdb.py file with the freshly-built python to ensure
+that .pyx and .pyo files make it into the debuginfo manifest if they are later
+byte-compiled after find-debuginfo.sh is run
+
 * Mon Feb  8 2010 David Malcolm <dmalcolm@redhat.com> - 2.6.4-16
 - move the -gdb.py file from %%{_libdir}/INSTSONAME-gdb.py to
 %%{_prefix}/lib/debug/%%{_libdir}/INSTSONAME.debug-gdb.py to avoid noise from
