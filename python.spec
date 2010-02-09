@@ -22,6 +22,16 @@
 %global dynload_dir %{pylibdir}/lib-dynload
 %global site_packages %{pylibdir}/site-packages
 
+# Python's configure script defines SOVERSION, and this is used in the Makefile
+# to determine INSTSONAME, the name of the libpython DSO:
+#   LDLIBRARY='libpython$(VERSION).so'
+#   INSTSONAME="$LDLIBRARY".$SOVERSION
+# We mirror this here in order to make it easier to add the -gdb.py hooks.
+# (if these get out of sync, the payload of the libs subpackage will fail
+# and halt the build)
+%global py_SOVERSION 1.0
+%global py_INSTSONAME libpython%{pybasever}.so.%{py_SOVERSION}
+
 %global with_gdb_hooks 1
 
 
@@ -41,7 +51,7 @@
 Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 Version: 2.6.4
-Release: 15%{?dist}
+Release: 16%{?dist}
 License: Python
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -641,17 +651,16 @@ ldd %{buildroot}/%{dynload_dir}/_curses*.so \
 # Copy up the gdb hooks into place; the python file will be autoloaded by gdb
 # when visiting libpython.so, provided that the python file is installed to the
 # same path as the library (or its .debug file) plus a "-gdb.py" suffix, e.g:
+#  /usr/lib/debug/usr/lib64/libpython2.6.so.1.0.debug-gdb.py
+# (note that the debug path is /usr/lib/debug for both 32/64 bit)
+# 
+# Initially I tried:
 #  /usr/lib/libpython2.6.so.1.0-gdb.py
+# but doing so generated noise when ldconfig was rerun (rhbz:562980)
 #
-# Long term, this should probably go in the debuginfo subpackage, e.g:
-#  /usr/lib/debug/usr/lib/libpython2.6.so.1.0.debug-gdb.py
-#
-# We use a for loop here to avoid having the RHS of the cp command be quoted,
-# leading to a filename with a "*" character embedded in it
 %if 0%{?with_gdb_hooks}
-for lib in %{buildroot}%{_libdir}/libpython%{pybasever}.so.* ; do
-    cp libpython/libpython.py ${lib}-gdb.py
-done
+mkdir -p %{buildroot}%{_prefix}/lib/debug/%{_libdir}
+cp libpython/libpython.py %{buildroot}%{_prefix}/lib/debug/%{_libdir}/%{py_INSTSONAME}.debug-gdb.py
 %endif # with_gdb_hooks
 
 %clean
@@ -799,11 +808,7 @@ rm -fr %{buildroot}
 %files libs
 %defattr(-,root,root,-)
 %doc LICENSE README
-%{_libdir}/libpython%{pybasever}.so.*
-%if 0%{?with_gdb_hooks}
-%{_libdir}/libpython%{pybasever}.so.*-gdb.py*
-%endif # with_gdb_hooks
-
+%{_libdir}/%{py_INSTSONAME}
 
 %files devel
 %defattr(-,root,root,-)
@@ -851,7 +856,29 @@ rm -fr %{buildroot}
 %{dynload_dir}/_ctypes_test.so
 %{dynload_dir}/_testcapimodule.so
 
+# We put the debug-gdb.py file inside /usr/lib/debug to avoid noise from
+# ldconfig (rhbz:562980).
+# 
+# The /usr/lib/rpm/redhat/macros defines %__debug_package to use
+# debugfiles.list, and it appears that everything below /usr/lib/debug and
+# (/usr/src/debug) gets added to this file (via LISTFILES) in
+# /usr/lib/rpm/find-debuginfo.sh
+# 
+# Hence by installing it below /usr/lib/debug we ensure it is added to the
+# -debuginfo subpackage
+# (if it doesn't, then the rpmbuild ought to fail since the debug-gdb.py 
+# payload file would be unpackaged)
+
 %changelog
+* Mon Feb  8 2010 David Malcolm <dmalcolm@redhat.com> - 2.6.4-16
+- move the -gdb.py file from %%{_libdir}/INSTSONAME-gdb.py to
+%%{_prefix}/lib/debug/%%{_libdir}/INSTSONAME.debug-gdb.py to avoid noise from
+ldconfig (bug 562980), and which should also ensure it becomes part of the
+debuginfo subpackage, rather than the libs subpackage
+- introduce %%{py_SOVERSION} and %%{py_INSTSONAME} to reflect the upstream
+configure script, and to avoid fragile scripts that try to figure this out
+dynamically (e.g. for the -gdb.py change)
+
 * Mon Feb  8 2010 David Malcolm <dmalcolm@redhat.com> - 2.6.4-15
 - work around bug 562906 by supplying a fixed version of pythondeps.sh
 - set %%{_python_bytecompile_errors_terminate_build} to 0 to prevent the broken
