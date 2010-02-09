@@ -52,7 +52,7 @@
 Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 Version: 2.6.4
-Release: 17%{?dist}
+Release: 18%{?dist}
 License: Python
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -81,6 +81,16 @@ Source1: libpython-36a517ef7848cbd0b3dcc7371f32e47ac4c87eba.tar.gz
 # version of pythondeps.sh:
 Source2: pythondeps.sh
 %global __python_requires %{SOURCE2}
+
+# Systemtap tapset to make it easier to use the systemtap static probes
+# (actually a template; LIBRARY_PATH will get fixed up during install)
+# Written by dmalcolm; not yet sent upstream
+Source3: libpython.stp
+
+
+# Example systemtap script using the tapset
+# Written by wcohen, mjw, dmalcolm; not yet sent upstream
+Source4: systemtap-example.stp
 
 
 # Modules/Setup.dist is ultimately used by the "makesetup" script to construct
@@ -416,6 +426,11 @@ code that uses more than just unittest and/or test_support.py.
 %setup -q -n Python-%{version} -T -D -a 1
 %endif # with_gdb_hooks
 
+%if 0%{?with_systemtap}
+# Provide an example of usage of the tapset:
+cp -a %{SOURCE4} .
+%endif # with_systemtap
+
 # Ensure that we're using the system copy of various libraries, rather than
 # copies shipped by upstream in the tarball:
 #   Remove embedded copy of expat:
@@ -696,6 +711,25 @@ LD_LIBRARY_PATH=. ./python -c "import compileall; import sys; compileall.compile
 LD_LIBRARY_PATH=. ./python -O -c "import compileall; import sys; compileall.compile_dir('%{buildroot}%{dir_holding_gdb_py}', ddir='%{dir_holding_gdb_py}')"
 %endif # with_gdb_hooks
 
+#
+# Systemtap hooks:
+#
+%if 0%{?with_systemtap}
+# Install a tapset for this libpython into tapsetdir, fixing up the path to the
+# library:
+mkdir -p %{buildroot}%{tapsetdir}
+%ifarch ppc64 s390x x86_64 ia64 alpha sparc64
+%global libpython_stp libpython%{pybasever}-64.stp
+%else
+%global libpython_stp libpython%{pybasever}-32.stp
+%endif
+
+sed \
+   -e "s|LIBRARY_PATH|%{_libdir}/%{py_INSTSONAME}|" \
+   %{SOURCE3} \
+   > %{buildroot}%{tapsetdir}/%{libpython_stp}
+%endif # with_systemtap
+
 %clean
 rm -fr %{buildroot}
 
@@ -842,6 +876,10 @@ rm -fr %{buildroot}
 %defattr(-,root,root,-)
 %doc LICENSE README
 %{_libdir}/%{py_INSTSONAME}
+%if 0%{?with_systemtap}
+%{tapsetdir}/%{libpython_stp}
+%doc systemtap-example.stp
+%endif
 
 %files devel
 %defattr(-,root,root,-)
@@ -903,6 +941,11 @@ rm -fr %{buildroot}
 # payload file would be unpackaged)
 
 %changelog
+* Tue Feb  9 2010 David Malcolm <dmalcolm@redhat.com> - 2.6.4-18
+- add a systemtap tapset defining "python.function.entry" and
+"python.function.return" to make it easy to use the static probepoint within
+Python; add an example of using the tapset to the docs
+
 * Tue Feb  9 2010 David Malcolm <dmalcolm@redhat.com> - 2.6.4-17
 - add systemtap static probes (wcohen; patch 55; rh bug #545179)
 - update some comments in specfile relating to gdb work
