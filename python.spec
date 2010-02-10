@@ -52,7 +52,7 @@
 Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 Version: 2.6.4
-Release: 18%{?dist}
+Release: 19%{?dist}
 License: Python
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -248,6 +248,7 @@ Patch54: python-2.6.4-setup-db48.patch
 # Systemtap support: add statically-defined probe points
 # Patch based on upstream bug: http://bugs.python.org/issue4111
 # fixed up by mjw and mcohen for 2.6.2, then fixed up by dmalcolm for 2.6.4
+# then rewritten by mjw (attachment 390110 of rhbz 545179)
 Patch55: python-2.6.4-dtrace.patch
 
 # "lib64 patches"
@@ -941,6 +942,13 @@ rm -fr %{buildroot}
 # payload file would be unpackaged)
 
 %changelog
+* Wed Feb 10 2010 David Malcolm <dmalcolm@redhat.com> - 2.6.4-19
+- revise the systemtap patch (patch 55:python-2.6.4-dtrace.patch) to the
+new version by mjw in attachment 390110 of rhbz:545179, as this should
+eliminate the performance penalty for the case where the probes aren't in
+use, and eliminate all architecture-specific code (rhbz:563541; except on
+sparc)
+
 * Tue Feb  9 2010 David Malcolm <dmalcolm@redhat.com> - 2.6.4-18
 - add a systemtap tapset defining "python.function.entry" and
 "python.function.return" to make it easy to use the static probepoint within
