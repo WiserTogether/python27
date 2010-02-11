@@ -52,7 +52,7 @@
 Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 Version: 2.6.4
-Release: 19%{?dist}
+Release: 20%{?dist}
 License: Python
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -924,7 +924,10 @@ rm -fr %{buildroot}
 %{pylibdir}/email/test
 %{pylibdir}/json/tests
 %{pylibdir}/sqlite3/test
-%{pylibdir}/test
+%{pylibdir}/test/*
+# These two are shipped in the main subpackage:
+%exclude %{pylibdir}/test/test_support.py*
+%exclude %{pylibdir}/test/__init__.py*
 %{dynload_dir}/_ctypes_test.so
 %{dynload_dir}/_testcapimodule.so
 
@@ -942,6 +945,10 @@ rm -fr %{buildroot}
 # payload file would be unpackaged)
 
 %changelog
+* Thu Feb 11 2010 David Malcolm <dmalcolm@redhat.com> - 2.6.4-20
+- avoid having the "test" subdirectory and the files within it that are in the
+core subpackage also be owned by the test subpackage (rhbz:467588)
+
 * Wed Feb 10 2010 David Malcolm <dmalcolm@redhat.com> - 2.6.4-19
 - revise the systemtap patch (patch 55:python-2.6.4-dtrace.patch) to the
 new version by mjw in attachment 390110 of rhbz:545179, as this should
