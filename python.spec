@@ -52,7 +52,7 @@
 Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 Version: 2.6.4
-Release: 20%{?dist}
+Release: 21%{?dist}
 License: Python
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -945,6 +945,9 @@ rm -fr %{buildroot}
 # payload file would be unpackaged)
 
 %changelog
+* Thu Mar 11 2010 Marcela Mašláňová <mmaslano@redhat.com> - 2.6.4-21
+- rebuild with new gdbm
+
 * Thu Feb 11 2010 David Malcolm <dmalcolm@redhat.com> - 2.6.4-20
 - avoid having the "test" subdirectory and the files within it that are in the
 core subpackage also be owned by the test subpackage (rhbz:467588)
