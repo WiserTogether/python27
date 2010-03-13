@@ -52,7 +52,7 @@
 Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 Version: 2.6.4
-Release: 21%{?dist}
+Release: 22%{?dist}
 License: Python
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -92,6 +92,9 @@ Source3: libpython.stp
 # Written by wcohen, mjw, dmalcolm; not yet sent upstream
 Source4: systemtap-example.stp
 
+# Another example systemtap script that uses the tapset
+# Written by dmalcolm; not yet sent upstream
+Source5: pyfuntop.stp
 
 # Modules/Setup.dist is ultimately used by the "makesetup" script to construct
 # the Makefile and config.c
@@ -247,7 +250,7 @@ Patch54: python-2.6.4-setup-db48.patch
 
 # Systemtap support: add statically-defined probe points
 # Patch based on upstream bug: http://bugs.python.org/issue4111
-# fixed up by mjw and mcohen for 2.6.2, then fixed up by dmalcolm for 2.6.4
+# fixed up by mjw and wcohen for 2.6.2, then fixed up by dmalcolm for 2.6.4
 # then rewritten by mjw (attachment 390110 of rhbz 545179)
 Patch55: python-2.6.4-dtrace.patch
 
@@ -387,7 +390,7 @@ programs, including IDLE (an IDE with editing and debugging facilities), a
 color editor (pynche), and a python gettext program (pygettext.py).  
 
 %package -n %{tkinter}
-Summary: A graphical user interface for the Python scripting language.
+Summary: A graphical user interface for the Python scripting language
 Group: Development/Languages
 BuildRequires:  tcl, tk
 Requires: %{name} = %{version}-%{release}
@@ -430,6 +433,7 @@ code that uses more than just unittest and/or test_support.py.
 %if 0%{?with_systemtap}
 # Provide an example of usage of the tapset:
 cp -a %{SOURCE4} .
+cp -a %{SOURCE5} .
 %endif # with_systemtap
 
 # Ensure that we're using the system copy of various libraries, rather than
@@ -473,7 +477,9 @@ rm -r Modules/zlib || exit 1
 %patch52 -p0 -b .valgrind
 %patch53 -p1 -b .db48
 %patch54 -p1 -b .setup-db48
+%if 0%{?with_systemtap}
 %patch55 -p1 -b .systemtap
+%endif
 
 %ifarch alpha ia64
 # 64bit, but not lib64 arches need this too...
@@ -879,7 +885,7 @@ rm -fr %{buildroot}
 %{_libdir}/%{py_INSTSONAME}
 %if 0%{?with_systemtap}
 %{tapsetdir}/%{libpython_stp}
-%doc systemtap-example.stp
+%doc systemtap-example.stp pyfuntop.stp
 %endif
 
 %files devel
@@ -889,7 +895,9 @@ rm -fr %{buildroot}
 %{_includedir}/python%{pybasever}/*.h
 %exclude %{_includedir}/python%{pybasever}/%{_pyconfig_h}
 %doc Misc/README.valgrind Misc/valgrind-python.supp Misc/gdbinit
+%if %{main_python}
 %{_bindir}/python-config
+%endif
 %{_bindir}/python%{pybasever}-config
 %{pylibdir}/config/*
 %{_libdir}/libpython%{pybasever}.so
@@ -945,6 +953,11 @@ rm -fr %{buildroot}
 # payload file would be unpackaged)
 
 %changelog
+* Fri Mar 12 2010 David Malcolm <dmalcolm@redhat.com> - 2.6.4-22
+- add pyfuntop.stp; allow systemtap support to be disabled
+- remove trailing period from tkinter summary
+- don't own /usr/bin/python-config if you're not the main python
+
 * Thu Mar 11 2010 Marcela Mašláňová <mmaslano@redhat.com> - 2.6.4-21
 - rebuild with new gdbm
 
