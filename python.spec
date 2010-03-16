@@ -52,7 +52,7 @@
 Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 Version: 2.6.4
-Release: 22%{?dist}
+Release: 23%{?dist}
 License: Python
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -230,6 +230,11 @@ Patch14: python-2.5.1-socketmodule-constants2.patch
 # Remove an "-rpath $(LIBDIR)" argument from the linkage args in configure.in:
 # FIXME: is this for OSF, not Linux?
 Patch16: python-2.6-rpath.patch
+
+# Fixup distutils/unixccompiler.py to remove standard library path from rpath:
+# Adapted from Patch0 in ivazquez' python3000 specfile, removing usage of
+# super() as it's an old-style class
+Patch17: python-2.6.4-distutils-rpath.patch
 
 # Fix distutils to follow the Fedora/RHEL/CentOS policies of having .pyo files
 Patch51: python-2.6-distutils_rpm.patch
@@ -472,6 +477,7 @@ rm -r Modules/zlib || exit 1
 %patch13 -p1 -b .socketmodule
 %patch14 -p1 -b .socketmodule2
 %patch16 -p1 -b .rpath
+%patch17 -p1 -b .distutils-rpath
 
 %patch51 -p1 -b .brprpm
 %patch52 -p0 -b .valgrind
@@ -627,6 +633,7 @@ cp -ar Demo/* %{buildroot}%{demo_dir}
 # Get rid of crap
 find %{buildroot}/ -name "*~"|xargs rm -f
 find %{buildroot}/ -name ".cvsignore"|xargs rm -f
+find %{buildroot}/ -name "*.bat"|xargs rm -f
 find . -name "*~"|xargs rm -f
 find . -name ".cvsignore"|xargs rm -f
 #zero length
@@ -953,6 +960,11 @@ rm -fr %{buildroot}
 # payload file would be unpackaged)
 
 %changelog
+* Tue Mar 16 2010 David Malcolm <dmalcolm@redhat.com> - 2.6.4-23
+- fixup distutils/unixccompiler.py to remove standard library path from
+rpath (patch 17)
+- delete DOS batch files
+
 * Fri Mar 12 2010 David Malcolm <dmalcolm@redhat.com> - 2.6.4-22
 - add pyfuntop.stp; allow systemtap support to be disabled
 - remove trailing period from tkinter summary
