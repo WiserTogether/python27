@@ -9,7 +9,7 @@ diff -ur Python-2.6~/Modules/_ctypes/callbacks.c Python-2.6/Modules/_ctypes/call
 -		FreeClosure(self->pcl);
 +	if (self->pcl_write)
 +		ffi_closure_free(self->pcl_write);
- 	PyObject_Del(self);
+ 	PyObject_GC_Del(self);
  }
  
 @@ -373,7 +373,8 @@
