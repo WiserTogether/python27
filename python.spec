@@ -51,6 +51,7 @@
 
 Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
+# Remember to also rebase python-docs when changing this:
 Version: 2.6.5
 Release: 1%{?dist}
 License: Python
