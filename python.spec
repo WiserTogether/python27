@@ -53,7 +53,7 @@ Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 # Remember to also rebase python-docs when changing this:
 Version: 2.6.5
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: Python
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -268,6 +268,10 @@ Patch55: python-2.6.4-dtrace.patch
 # However, as it stands this patch is merely a copy of:
 #  http://svn.python.org/view/python/trunk/Lib/test/test_re.py?r1=35825&r2=35824&pathrev=35825
 # which is already upstream
+# Earlier versions of the patch (from the "dist-pkgs" CVS repo within RH)
+# contained additional changes that applied fixes to the internals of the regex
+# module, but these appear to have all been applied as part of 
+#  http://bugs.python.org/issue931848
 Patch101: python-2.3.4-lib64-regex.patch
 
 # Only used when "%{_lib}" == "lib64"
@@ -468,8 +472,8 @@ rm -r Modules/zlib || exit 1
 # Try not disabling egg-infos, bz#414711
 #patch50 -p1 -b .egginfo
 
-%if "%{_lib}" == "lib64"
 %patch101 -p1 -b .lib64-regex
+%if "%{_lib}" == "lib64"
 %patch102 -p1 -b .lib64
 %endif
 
@@ -486,11 +490,6 @@ rm -r Modules/zlib || exit 1
 %patch54 -p1 -b .setup-db48
 %if 0%{?with_systemtap}
 %patch55 -p1 -b .systemtap
-%endif
-
-%ifarch alpha ia64
-# 64bit, but not lib64 arches need this too...
-%patch101 -p1 -b .lib64-regex
 %endif
 
 %patch110 -p1 -b .selinux
@@ -961,6 +960,9 @@ rm -fr %{buildroot}
 # payload file would be unpackaged)
 
 %changelog
+* Mon Mar 22 2010 David Malcolm <dmalcolm@redhat.com> - 2.6.5-2
+- remove unnecessary arch-conditionality for patch 101
+
 * Fri Mar 19 2010 David Malcolm <dmalcolm@redhat.com> - 2.6.5-1
 - update to 2.6.5: http://www.python.org/download/releases/2.6.5/
 - replace our patch to compile against db4.8 with a patch from
