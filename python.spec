@@ -53,7 +53,7 @@ Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 # Remember to also rebase python-docs when changing this:
 Version: 2.6.5
-Release: 2%{?dist}
+Release: 3%{?dist}
 License: Python
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -74,9 +74,9 @@ Source: http://www.python.org/ftp/python/%{version}/Python-%{version}.tar.bz2
 # information
 #
 # Downloaded from:
-# http://fedorapeople.org/gitweb?p=dmalcolm/public_git/libpython.git;a=snapshot;h=36a517ef7848cbd0b3dcc7371f32e47ac4c87eba;sf=tgz
-Source1: libpython-36a517ef7848cbd0b3dcc7371f32e47ac4c87eba.tar.gz
-
+#  http://bugs.python.org/issue8032
+# This is Tools/gdb/libpython.py from v3 of the patch
+Source1: python-gdb.py
 
 # Work around bug 562906 until it's fixed in rpm-build by providing a fixed
 # version of pythondeps.sh:
@@ -434,12 +434,6 @@ code that uses more than just unittest and/or test_support.py.
 %prep
 %setup -q -n Python-%{version}
 
-# Unpack source archive 1 into this same dir without deleting (-D; -T suppress
-# trying to unpack source 0 again):
-%if 0%{?with_gdb_hooks}
-%setup -q -n Python-%{version} -T -D -a 1
-%endif # with_gdb_hooks
-
 %if 0%{?with_systemtap}
 # Provide an example of usage of the tapset:
 cp -a %{SOURCE4} .
@@ -715,7 +709,7 @@ ldd %{buildroot}/%{dynload_dir}/_curses*.so \
 %global path_of_gdb_py %{dir_holding_gdb_py}/%{py_INSTSONAME}.debug-gdb.py
 
 mkdir -p %{buildroot}%{dir_holding_gdb_py}
-cp libpython/libpython.py %{buildroot}%{path_of_gdb_py}
+cp %{SOURCE1} %{buildroot}%{path_of_gdb_py}
 
 # Manually byte-compile the file, in case find-debuginfo.sh is run before
 # brp-python-bytecompile, so that the .pyc/.pyo files are properly listed in
@@ -960,6 +954,9 @@ rm -fr %{buildroot}
 # payload file would be unpackaged)
 
 %changelog
+* Wed Mar 24 2010 David Malcolm <dmalcolm@redhat.com> - 2.6.5-3
+- refresh gdb hooks to v3 (reworking how they are packaged)
+
 * Mon Mar 22 2010 David Malcolm <dmalcolm@redhat.com> - 2.6.5-2
 - remove unnecessary arch-conditionality for patch 101
 
