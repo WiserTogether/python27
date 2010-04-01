@@ -53,7 +53,7 @@ Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 # Remember to also rebase python-docs when changing this:
 Version: 2.6.5
-Release: 4%{?dist}
+Release: 5%{?dist}
 License: Python
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -75,7 +75,7 @@ Source: http://www.python.org/ftp/python/%{version}/Python-%{version}.tar.bz2
 #
 # Downloaded from:
 #  http://bugs.python.org/issue8032
-# This is Tools/gdb/libpython.py from v4 of the patch
+# This is Tools/gdb/libpython.py from v5 of the patch
 Source1: python-gdb.py
 
 # Work around bug 562906 until it's fixed in rpm-build by providing a fixed
@@ -954,6 +954,10 @@ rm -fr %{buildroot}
 # payload file would be unpackaged)
 
 %changelog
+* Wed Mar 31 2010 David Malcolm <dmalcolm@redhat.com> - 2.6.5-5
+- update python-gdb.py from v4 to v5 (improving performance and stability,
+adding commands)
+
 * Thu Mar 25 2010 David Malcolm <dmalcolm@redhat.com> - 2.6.5-4
 - update python-gdb.py from v3 to v4 (fixing infinite recursion on reference
 cycles and tracebacks on bytes 0x80-0xff in strings, adding handlers for sets
