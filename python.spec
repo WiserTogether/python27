@@ -53,7 +53,7 @@ Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 # Remember to also rebase python-docs when changing this:
 Version: 2.6.5
-Release: 5%{?dist}
+Release: 6%{?dist}
 License: Python
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -848,6 +848,7 @@ rm -fr %{buildroot}
 %{pylibdir}/distutils/*.py*
 %{pylibdir}/distutils/README
 %{pylibdir}/distutils/command
+%exclude %{pylibdir}/distutils/command/wininst-*.exe
 %dir %{pylibdir}/email
 %{pylibdir}/email/*.py*
 %{pylibdir}/email/mime
@@ -893,6 +894,7 @@ rm -fr %{buildroot}
 %defattr(-,root,root,-)
 %{pylibdir}/config/*
 %exclude %{pylibdir}/config/Makefile
+%{pylibdir}/distutils/command/wininst-*.exe
 %{_includedir}/python%{pybasever}/*.h
 %exclude %{_includedir}/python%{pybasever}/%{_pyconfig_h}
 %doc Misc/README.valgrind Misc/valgrind-python.supp Misc/gdbinit
@@ -900,7 +902,6 @@ rm -fr %{buildroot}
 %{_bindir}/python-config
 %endif
 %{_bindir}/python%{pybasever}-config
-%{pylibdir}/config/*
 %{_libdir}/libpython%{pybasever}.so
 
 %files tools
@@ -954,6 +955,11 @@ rm -fr %{buildroot}
 # payload file would be unpackaged)
 
 %changelog
+* Mon Apr 12 2010 David Malcolm <dmalcolm@redhat.com> - 2.6.5-6
+- move the "bdist_wininst" command's template .exe files from the core package
+to the devel subpackage, to save space (rhbz:525469)
+- fix stray doublelisting of config directory wildcard in devel subpackage
+
 * Wed Mar 31 2010 David Malcolm <dmalcolm@redhat.com> - 2.6.5-5
 - update python-gdb.py from v4 to v5 (improving performance and stability,
 adding commands)
