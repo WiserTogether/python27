@@ -36,6 +36,13 @@
 
 %global with_systemtap 1
 
+# sparc arches dont have valgrind so we need to disable its support on them
+%ifarch %{sparc}
+%global with_valgrind 0
+%else
+%global with_valgrind 1
+%endif
+
 # Some of the files below /usr/lib/pythonMAJOR.MINOR/test  (e.g. bad_coding.py)
 # are deliberately invalid, leading to SyntaxError exceptions if they get
 # byte-compiled.
@@ -53,7 +60,7 @@ Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 # Remember to also rebase python-docs when changing this:
 Version: 2.6.5
-Release: 6%{?dist}
+Release: 7%{?dist}
 License: Python
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -323,7 +330,9 @@ BuildRequires: tix-devel bzip2-devel sqlite-devel
 BuildRequires: autoconf
 BuildRequires: db4-devel >= 4.8
 BuildRequires: libffi-devel
+%if 0%{?with_valgrind}
 BuildRequires: valgrind-devel
+%endif
 
 %if 0%{?with_systemtap}
 BuildRequires: systemtap-sdt-devel
@@ -524,12 +533,14 @@ autoheader
   --enable-unicode=%{unicode} \
   --enable-shared \
   --with-system-ffi \
-  --with-system-expat \
+%if 0%{?with_valgrind}
+  --with-valgrind \
+%endif
 %if 0%{?with_systemtap}
   --with-dtrace \
   --with-tapset-install-dir=%{tapsetdir} \
 %endif
-  --with-valgrind
+  --with-system-expat
 
 make OPT="$CFLAGS" %{?_smp_mflags}
 LD_LIBRARY_PATH="$topdir" $topdir/python Tools/scripts/pathfix.py -i "%{_bindir}/env python%{pybasever}" .
@@ -955,6 +966,9 @@ rm -fr %{buildroot}
 # payload file would be unpackaged)
 
 %changelog
+* Mon Apr 26 2010 David Malcolm <dmalcolm@redhat.com> - 2.6.5-7
+- disable --with-valgrind on sparc arches
+
 * Mon Apr 12 2010 David Malcolm <dmalcolm@redhat.com> - 2.6.5-6
 - move the "bdist_wininst" command's template .exe files from the core package
 to the devel subpackage, to save space (rhbz:525469)
