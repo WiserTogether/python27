@@ -60,7 +60,7 @@ Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 # Remember to also rebase python-docs when changing this:
 Version: 2.6.5
-Release: 7%{?dist}
+Release: 8%{?dist}
 License: Python
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -695,9 +695,6 @@ ln -s ../../libpython%{pybasever}.so %{buildroot}%{pylibdir}/config/libpython%{p
 # Fix for bug 201434: make sure distutils looks at the right pyconfig.h file
 sed -i -e "s/'pyconfig.h'/'%{_pyconfig_h}'/" %{buildroot}%{pylibdir}/distutils/sysconfig.py
 
-# Get rid of egg-info files (core python modules are installed through rpms)
-rm %{buildroot}%{pylibdir}/*.egg-info
-
 # Ensure that the curses module was linked against libncursesw.so, rather than
 # libncurses.so (bug 539917)
 ldd %{buildroot}/%{dynload_dir}/_curses*.so \
@@ -848,6 +845,7 @@ rm -fr %{buildroot}
 %{site_packages}/README
 %{pylibdir}/*.py*
 %{pylibdir}/*.doc
+%{pylibdir}/wsgiref.egg-info
 %dir %{pylibdir}/bsddb
 %{pylibdir}/bsddb/*.py*
 %{pylibdir}/compiler
@@ -966,6 +964,9 @@ rm -fr %{buildroot}
 # payload file would be unpackaged)
 
 %changelog
+* Tue May  4 2010 David Malcolm <dmalcolm@redhat.com> - 2.6.5-8
+- don't delete wsgiref.egg-info (rhbz:588426)
+
 * Mon Apr 26 2010 David Malcolm <dmalcolm@redhat.com> - 2.6.5-7
 - disable --with-valgrind on sparc arches
 
