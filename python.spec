@@ -30,7 +30,8 @@
 # (if these get out of sync, the payload of the libs subpackage will fail
 # and halt the build)
 %global py_SOVERSION 1.0
-%global py_INSTSONAME libpython%{pybasever}.so.%{py_SOVERSION}
+%global py_INSTSONAME_optimized libpython%{pybasever}.so.%{py_SOVERSION}
+%global py_INSTSONAME_debug     libpython%{pybasever}_d.so.%{py_SOVERSION}
 
 %global with_gdb_hooks 1
 
@@ -60,7 +61,7 @@ Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 # Remember to also rebase python-docs when changing this:
 Version: 2.6.5
-Release: 8%{?dist}
+Release: 9%{?dist}
 License: Python
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -304,6 +305,66 @@ Patch110: python-2.6-ctypes-noexecmem.patch
 # a libpythonMAJOR.MINOR.a (bug 550692):
 Patch111: python-2.6.4-no-static-lib.patch
 
+# Patch to support building both optimized vs debug stacks DSO ABIs, sharing
+# the same .py and .pyc files, using "_d.so" to signify a debug build of an
+# extension module.
+#
+# Based on Debian's patch for the same, 
+#  http://patch-tracker.debian.org/patch/series/view/python2.6/2.6.5-2/debug-build.dpatch
+# 
+# (which was itself based on the upstream Windows build), but with some
+# changes:
+#
+#   * Debian's patch to dynload_shlib.c looks for module_d.so, then module.so,
+# but this can potentially find a module built against the wrong DSO ABI.  We
+# instead search for just module_d.so in a debug build
+#
+#   * We remove this change from configure.in's build of the Makefile:
+#   SO=$DEBUG_EXT.so
+# so that sysconfig.py:customize_compiler stays with shared_lib_extension='.so'
+# on debug builds, so that UnixCCompiler.find_library_file can find system
+# libraries (otherwise "make sharedlibs" fails to find system libraries,
+# erroneously looking e.g. for "libffi_d.so" rather than "libffi.so")
+#
+#   * We change Lib/distutils/command/build_ext.py:build_ext.get_ext_filename
+# to add the _d there, when building an extension.  This way, "make sharedlibs"
+# can build ctypes, by finding the sysmtem libffi.so (rather than failing to
+# find "libffi_d.so"), and builds the module as _ctypes_d.so
+#   
+#   * Similarly, update build_ext:get_libraries handling of Py_ENABLE_SHARED by
+# appending "_d" to the python library's name for the debug configuration
+#
+#   * We modify Modules/makesetup to add the "_d" to the generated Makefile
+# rules for the various Modules/*.so targets
+#
+# This may introduce issues when building an extension that links directly
+# against another extension (e.g. users of NumPy?), but seems more robust when
+# searching for external libraries
+#
+#   * We don't change Lib/distutils/command/build.py: build.build_purelib to
+# embed plat_specifier, leaving it as is, as pure python builds should be
+# unaffected by these differences (we'll be sharing the .py and .pyc files)
+#
+#   * We introduce DEBUG_SUFFIX as well as DEBUG_EXT:
+#     - DEBUG_EXT is used by ELF files (names and SONAMEs); it will be "_d" for
+# a debug build
+#     - DEBUG_SUFFIX is used by filesystem paths; it will be "-debug" for a
+# debug build
+#
+#   Both will be empty in an optimized build.  "_d" contains characters that
+# are valid ELF metadata, but this leads to various ugly filesystem paths (such
+# as the include path), and DEBUG_SUFFIX allows these paths to have more natural
+# names.  Changing this requires changes elsewhere in the distutils code.
+#
+#   * We add DEBUG_SUFFIX to PYTHON in the Makefile, so that the two
+# configurations build parallel-installable binaries with different names
+# ("python-debug" vs "python").
+#
+#   * Similarly, we add DEBUG_SUFFIX within python-config and
+#  python$(VERSION)-config, so that the two configuration get different paths
+#  for these.
+
+Patch112: python-2.6.5-debug-build.patch
 
 %if %{main_python}
 Obsoletes: Distutils
@@ -440,6 +501,37 @@ never used in production.
 You might want to install the python-test package if you're developing python
 code that uses more than just unittest and/or test_support.py.
 
+%package debug
+Summary: Debug version of the Python runtime
+Group: Applications/System
+
+# The debug build is an all-in-one package version of the regular build, and
+# shares the same .py/.pyc files and directories as the regular build.  Hence
+# we depend on all of the subpackages of the regular build:
+Requires: %{name}%{?_isa} = %{version}-%{release}
+Requires: %{name}-libs%{?_isa} = %{version}-%{release}
+Requires: %{name}-devel%{?_isa} = %{version}-%{release}
+Requires: %{name}-test%{?_isa} = %{version}-%{release}
+Requires: tkinter%{?_isa} = %{version}-%{release}
+Requires: %{name}-tools%{?_isa} = %{version}-%{release}
+
+%description debug
+python-debug provides a version of the Python runtime with numerous debugging
+features enabled, aimed at advanced Python users, such as developers of Python
+extension modules.
+
+This version uses more memory and will be slower than the regular Python build,
+but is useful for tracking down reference-counting issues, and other bugs.
+
+The bytecodes are unchanged, so that .pyc files are compatible between the two
+version of Python, but the debugging features mean that C/C++ extension modules
+are ABI-incompatible with those built for the standard runtime.
+
+It shares installation directories with the standard Python runtime, so that
+.py and .pyc files can be shared.  All compiled extension modules gain a "_d"
+suffix ("foo_d.so" rather than "foo.so") so that each Python implementation can
+load its own extensions.
+
 %prep
 %setup -q -n Python-%{version}
 
@@ -499,6 +591,8 @@ rm -r Modules/zlib || exit 1
 
 %patch111 -p1 -b .no-static-lib
 
+%patch112 -p1 -b .debug-build
+
 # This shouldn't be necesarry, but is right now (2.2a3)
 find -name "*~" |xargs rm -f
 
@@ -527,7 +621,25 @@ autoconf
 # For patch 55 (systemtap), we need to get a new header for configure to use:
 autoheader
 
-# Use the freshly created "configure" script:
+# Define a function, for how to perform a "build" of python for a given
+# configuration:
+BuildPython() {
+  ConfName=$1	      
+  BinaryName=$2
+  SymlinkName=$3
+  ExtraConfigArgs=$4
+  PathFixWithThisBinary=$5
+
+  ConfDir=build/$ConfName
+
+  echo STARTING: BUILD OF PYTHON FOR CONFIGURATION: $ConfName - %{_bindir}/$BinaryName
+  mkdir -p $ConfDir
+
+  pushd $ConfDir
+
+  # Use the freshly created "configure" script, but in the directory two above:
+  %global _configure $topdir/configure
+
 %configure \
   --enable-ipv6 \
   --enable-unicode=%{unicode} \
@@ -540,18 +652,52 @@ autoheader
   --with-dtrace \
   --with-tapset-install-dir=%{tapsetdir} \
 %endif
-  --with-system-expat
+  --with-system-expat \
+  $ExtraConfigArgs \
+  %{nil}
 
 make OPT="$CFLAGS" %{?_smp_mflags}
-LD_LIBRARY_PATH="$topdir" $topdir/python Tools/scripts/pathfix.py -i "%{_bindir}/env python%{pybasever}" .
+
+# We need to fix shebang lines across the full source tree.
+#
+# We do this using the pathfix.py script, which requires one of the
+# freshly-built Python binaries.
+#
+# We use the optimized python binary, and make the shebangs point at that same
+# optimized python binary:
+if $PathFixWithThisBinary
+then
+  LD_LIBRARY_PATH="$topdir/$ConfDir" $BinaryName \
+    $topdir/Tools/scripts/pathfix.py \
+      -i "%{_bindir}/env $BinaryName" \
+      $topdir
+fi
+
 # Rebuild with new python
 # We need a link to a versioned python in the build directory
-ln -s python python%{pybasever}
-LD_LIBRARY_PATH="$topdir" PATH=$PATH:$topdir make -s OPT="$CFLAGS" %{?_smp_mflags}
+ln -s $BinaryName $SymlinkName
+LD_LIBRARY_PATH="$topdir/$ConfDir" PATH=$PATH:$topdir/$ConfDir make -s OPT="$CFLAGS" %{?_smp_mflags}
 
+  popd
+  echo FINISHED: BUILD OF PYTHON FOR CONFIGURATION: $ConfDir
+}
 
+# Use "BuildPython" to support building with different configurations:
+
+BuildPython debug \
+  python-debug \
+  python%{pybasever}-debug \
+  "--with-pydebug" \
+  false
+
+BuildPython optimized \
+  python \
+  python%{pybasever} \
+  "" \
+  true
 
 %install
+topdir=$(pwd)
 rm -rf %{buildroot}
 mkdir -p %{buildroot}%{_prefix} %{buildroot}%{_mandir}
 
@@ -560,7 +706,66 @@ for f in distutils/command/install distutils/sysconfig; do
     rm -f Lib/$f.py.lib64
 done
 
+InstallPython() {
+
+  ConfName=$1	      
+  BinaryName=$2
+  PyInstSoName=$3
+
+  ConfDir=build/$ConfName
+
+  echo STARTING: INSTALL OF PYTHON FOR CONFIGURATION: $ConfName - %{_bindir}/$BinaryName
+  mkdir -p $ConfDir
+
+  pushd $ConfDir
+
 make install DESTDIR=%{buildroot}
+
+# Copy up the gdb hooks into place; the python file will be autoloaded by gdb
+# when visiting libpython.so, provided that the python file is installed to the
+# same path as the library (or its .debug file) plus a "-gdb.py" suffix, e.g:
+#  /usr/lib/debug/usr/lib64/libpython2.6.so.1.0.debug-gdb.py
+# (note that the debug path is /usr/lib/debug for both 32/64 bit)
+# 
+# Initially I tried:
+#  /usr/lib/libpython2.6.so.1.0-gdb.py
+# but doing so generated noise when ldconfig was rerun (rhbz:562980)
+#
+%if 0%{?with_gdb_hooks}
+DirHoldingGdbPy=%{_prefix}/lib/debug/%{_libdir}
+PathOfGdbPy=$DirHoldingGdbPy/$PyInstSoName.debug-gdb.py
+
+mkdir -p %{buildroot}$DirHoldingGdbPy
+cp %{SOURCE1} %{buildroot}$PathOfGdbPy
+
+# Manually byte-compile the file, in case find-debuginfo.sh is run before
+# brp-python-bytecompile, so that the .pyc/.pyo files are properly listed in
+# the debuginfo manifest:
+LD_LIBRARY_PATH="$topdir/$ConfDir" $topdir/$ConfDir/$BinaryName \
+  -c "import compileall; import sys; compileall.compile_dir('%{buildroot}$DirHoldingGdbPy', ddir='$DirHoldingGdbPy')"
+
+LD_LIBRARY_PATH="$topdir/$ConfDir" $topdir/$ConfDir/$BinaryName -O \
+  -c "import compileall; import sys; compileall.compile_dir('%{buildroot}$DirHoldingGdbPy', ddir='$DirHoldingGdbPy')"
+%endif # with_gdb_hooks
+
+  popd
+
+  echo FINISHED: INSTALL OF PYTHON FOR CONFIGURATION: $ConfName
+}
+
+# Use "InstallPython" to support building with different configurations:
+
+# Install the "debug" build first, so that we can move some files aside
+InstallPython debug \
+  python%{pybasever}-debug \
+  %{py_INSTSONAME_debug}
+
+# Now the optimized build:
+InstallPython optimized \
+  python%{pybasever} \
+  %{py_INSTSONAME_optimized}
+
+
 # Fix the interpreter path in binaries installed by distutils 
 # (which changes them by itself)
 # Make sure we preserve the file permissions
@@ -587,8 +792,10 @@ fi
 
 %if %{main_python}
 ln -s python %{buildroot}%{_bindir}/python2
+ln -s python-debug %{buildroot}%{_bindir}/python2-debug
 %else
 mv %{buildroot}%{_bindir}/python %{buildroot}%{_bindir}/%{python}
+mv %{buildroot}%{_bindir}/python-debug %{buildroot}%{_bindir}/%{python}-debug
 mv %{buildroot}/%{_mandir}/man1/python.1 %{buildroot}/%{_mandir}/man1/python%{pybasever}.1
 %endif
 
@@ -677,9 +884,10 @@ install -d %{buildroot}/usr/lib/python%{pybasever}/site-packages
 %else
 %global _pyconfig_h %{_pyconfig32_h}
 %endif
-mv %{buildroot}%{_includedir}/python%{pybasever}/pyconfig.h \
-   %{buildroot}%{_includedir}/python%{pybasever}/%{_pyconfig_h}
-cat > %{buildroot}%{_includedir}/python%{pybasever}/pyconfig.h << EOF
+for PyIncludeDir in python%{pybasever} python%{pybasever}-debug ; do
+  mv %{buildroot}%{_includedir}/$PyIncludeDir/pyconfig.h \
+     %{buildroot}%{_includedir}/$PyIncludeDir/%{_pyconfig_h}
+  cat > %{buildroot}%{_includedir}/$PyIncludeDir/pyconfig.h << EOF
 #include <bits/wordsize.h>
 
 #if __WORDSIZE == 32
@@ -690,6 +898,7 @@ cat > %{buildroot}%{_includedir}/python%{pybasever}/pyconfig.h << EOF
 #error "Unknown word size"
 #endif
 EOF
+done
 ln -s ../../libpython%{pybasever}.so %{buildroot}%{pylibdir}/config/libpython%{pybasever}.so
 
 # Fix for bug 201434: make sure distutils looks at the right pyconfig.h file
@@ -701,31 +910,21 @@ ldd %{buildroot}/%{dynload_dir}/_curses*.so \
     | grep curses \
     | grep libncurses.so && (echo "_curses.so linked against libncurses.so" ; exit 1)
 
-
-# Copy up the gdb hooks into place; the python file will be autoloaded by gdb
-# when visiting libpython.so, provided that the python file is installed to the
-# same path as the library (or its .debug file) plus a "-gdb.py" suffix, e.g:
-#  /usr/lib/debug/usr/lib64/libpython2.6.so.1.0.debug-gdb.py
-# (note that the debug path is /usr/lib/debug for both 32/64 bit)
-# 
-# Initially I tried:
-#  /usr/lib/libpython2.6.so.1.0-gdb.py
-# but doing so generated noise when ldconfig was rerun (rhbz:562980)
-#
-%if 0%{?with_gdb_hooks}
-%global dir_holding_gdb_py %{_prefix}/lib/debug/%{_libdir}
-%global path_of_gdb_py %{dir_holding_gdb_py}/%{py_INSTSONAME}.debug-gdb.py
-
-mkdir -p %{buildroot}%{dir_holding_gdb_py}
-cp %{SOURCE1} %{buildroot}%{path_of_gdb_py}
-
-# Manually byte-compile the file, in case find-debuginfo.sh is run before
-# brp-python-bytecompile, so that the .pyc/.pyo files are properly listed in
-# the debuginfo manifest:
-LD_LIBRARY_PATH=. ./python -c "import compileall; import sys; compileall.compile_dir('%{buildroot}%{dir_holding_gdb_py}', ddir='%{dir_holding_gdb_py}')"
-
-LD_LIBRARY_PATH=. ./python -O -c "import compileall; import sys; compileall.compile_dir('%{buildroot}%{dir_holding_gdb_py}', ddir='%{dir_holding_gdb_py}')"
-%endif # with_gdb_hooks
+# Ensure that the debug modules are linked against the debug libpython, and
+# likewise for the optimized modules and libpython:
+for Module in %{buildroot}/%{dynload_dir}/*.so ; do
+    case $Module in
+    *_d.so)
+        ldd $Module | grep %{py_INSTSONAME_optimized} &&
+            (echo Debug module $Module linked against optimized %{py_INSTSONAME_optimized} ; exit 1)
+            
+        ;;
+    *)
+        ldd $Module | grep %{py_INSTSONAME_debug} &&
+            (echo Optimized module $Module linked against debug %{py_INSTSONAME_optimized} ; exit 1)
+        ;;
+    esac
+done
 
 #
 # Systemtap hooks:
@@ -735,15 +934,22 @@ LD_LIBRARY_PATH=. ./python -O -c "import compileall; import sys; compileall.comp
 # library:
 mkdir -p %{buildroot}%{tapsetdir}
 %ifarch ppc64 s390x x86_64 ia64 alpha sparc64
-%global libpython_stp libpython%{pybasever}-64.stp
+%global libpython_stp_optimized libpython%{pybasever}-64.stp
+%global libpython_stp_debug     libpython%{pybasever}-debug-64.stp
 %else
-%global libpython_stp libpython%{pybasever}-32.stp
+%global libpython_stp_optimized libpython%{pybasever}-32.stp
+%global libpython_stp_debug     libpython%{pybasever}-debug-32.stp
 %endif
 
 sed \
-   -e "s|LIBRARY_PATH|%{_libdir}/%{py_INSTSONAME}|" \
+   -e "s|LIBRARY_PATH|%{_libdir}/%{py_INSTSONAME_optimized}|" \
    %{SOURCE3} \
-   > %{buildroot}%{tapsetdir}/%{libpython_stp}
+   > %{buildroot}%{tapsetdir}/%{libpython_stp_optimized}
+
+sed \
+   -e "s|LIBRARY_PATH|%{_libdir}/%{py_INSTSONAME_debug}|" \
+   %{SOURCE3} \
+   > %{buildroot}%{tapsetdir}/%{libpython_stp_debug}
 %endif # with_systemtap
 
 %clean
@@ -752,7 +958,6 @@ rm -fr %{buildroot}
 %post libs -p /sbin/ldconfig
 
 %postun libs -p /sbin/ldconfig
-
 
 %files
 %defattr(-, root, root, -)
@@ -893,9 +1098,9 @@ rm -fr %{buildroot}
 %files libs
 %defattr(-,root,root,-)
 %doc LICENSE README
-%{_libdir}/%{py_INSTSONAME}
+%{_libdir}/%{py_INSTSONAME_optimized}
 %if 0%{?with_systemtap}
-%{tapsetdir}/%{libpython_stp}
+%{tapsetdir}/%{libpython_stp_optimized}
 %doc systemtap-example.stp pyfuntop.stp
 %endif
 
@@ -950,6 +1155,128 @@ rm -fr %{buildroot}
 %{dynload_dir}/_ctypes_test.so
 %{dynload_dir}/_testcapimodule.so
 
+
+# We don't bother splitting the debug build out into further subpackages:
+# if you need it, you're probably a developer.
+
+# Hence the manifest is the combination of analogous files in the manifests of
+# all of the other subpackages
+
+%files debug
+%defattr(-,root,root,-)
+
+# Analog of the core subpackage's files:
+%{_bindir}/%{python}-debug
+%if %{main_python}
+%{_bindir}/python2-debug
+%endif
+%{_bindir}/python%{pybasever}-debug
+
+# ...with debug builds of the built-in "extension" modules:
+%{dynload_dir}/_bisectmodule_d.so
+%{dynload_dir}/_bsddb_d.so
+%{dynload_dir}/_bytesio_d.so
+%{dynload_dir}/_codecs_cn_d.so
+%{dynload_dir}/_codecs_hk_d.so
+%{dynload_dir}/_codecs_iso2022_d.so
+%{dynload_dir}/_codecs_jp_d.so
+%{dynload_dir}/_codecs_kr_d.so
+%{dynload_dir}/_codecs_tw_d.so
+%{dynload_dir}/_collectionsmodule_d.so
+%{dynload_dir}/_csv_d.so
+%{dynload_dir}/_ctypes_d.so
+%{dynload_dir}/_curses_d.so
+%{dynload_dir}/_curses_panel_d.so
+%{dynload_dir}/_elementtree_d.so
+%{dynload_dir}/_fileio_d.so
+%{dynload_dir}/_functoolsmodule_d.so
+%{dynload_dir}/_hashlib_d.so
+%{dynload_dir}/_heapq_d.so
+%{dynload_dir}/_hotshot_d.so
+%{dynload_dir}/_json_d.so
+%{dynload_dir}/_localemodule_d.so
+%{dynload_dir}/_lsprof_d.so
+%{dynload_dir}/_md5module_d.so
+%{dynload_dir}/_multibytecodecmodule_d.so
+%{dynload_dir}/_multiprocessing_d.so
+%{dynload_dir}/_randommodule_d.so
+%{dynload_dir}/_sha256module_d.so
+%{dynload_dir}/_sha512module_d.so
+%{dynload_dir}/_shamodule_d.so
+%{dynload_dir}/_socketmodule_d.so
+%{dynload_dir}/_sqlite3_d.so
+%{dynload_dir}/_ssl_d.so
+%{dynload_dir}/_struct_d.so
+%{dynload_dir}/_weakref_d.so
+%{dynload_dir}/arraymodule_d.so
+%{dynload_dir}/audioop_d.so
+%{dynload_dir}/binascii_d.so
+%{dynload_dir}/bz2_d.so
+%{dynload_dir}/cPickle_d.so
+%{dynload_dir}/cStringIO_d.so
+%{dynload_dir}/cmathmodule_d.so
+%{dynload_dir}/cryptmodule_d.so
+%{dynload_dir}/datetime_d.so
+%{dynload_dir}/dbm_d.so
+%{dynload_dir}/dlmodule_d.so
+%{dynload_dir}/fcntlmodule_d.so
+%{dynload_dir}/future_builtins_d.so
+%{dynload_dir}/gdbmmodule_d.so
+%{dynload_dir}/grpmodule_d.so
+%{dynload_dir}/imageop_d.so
+%{dynload_dir}/itertoolsmodule_d.so
+%{dynload_dir}/linuxaudiodev_d.so
+%{dynload_dir}/mathmodule_d.so
+%{dynload_dir}/mmapmodule_d.so
+%{dynload_dir}/nismodule_d.so
+%{dynload_dir}/operator_d.so
+%{dynload_dir}/ossaudiodev_d.so
+%{dynload_dir}/parsermodule_d.so
+%{dynload_dir}/pyexpat_d.so
+%{dynload_dir}/readline_d.so
+%{dynload_dir}/resource_d.so
+%{dynload_dir}/selectmodule_d.so
+%{dynload_dir}/spwdmodule_d.so
+%{dynload_dir}/stropmodule_d.so
+%{dynload_dir}/syslog_d.so
+%{dynload_dir}/termios_d.so
+%{dynload_dir}/timemodule_d.so
+%{dynload_dir}/timingmodule_d.so
+%{dynload_dir}/unicodedata_d.so
+%{dynload_dir}/xxsubtype_d.so
+%{dynload_dir}/zlibmodule_d.so
+
+# No need to split things out the "Makefile" and the config-32/64.h file as we
+# do for the regular build above (bug 531901), since they're all in one package
+# now; they're listed below, under "-devel":
+
+# Analog of the -libs subpackage's files:
+%{_libdir}/%{py_INSTSONAME_debug}
+%if 0%{?with_systemtap}
+%{tapsetdir}/%{libpython_stp_debug}
+%endif
+
+# Analog of the -devel subpackage's files:
+%dir %{pylibdir}/config-debug
+%{pylibdir}/config-debug/*
+%{_includedir}/python%{pybasever}-debug/*.h
+%if %{main_python}
+%{_bindir}/python-debug-config
+%endif
+%{_bindir}/python%{pybasever}-debug-config
+%{_libdir}/libpython%{pybasever}_d.so
+
+# Analog of the -tools subpackage's files:
+#  None for now; we could build precanned versions that have the appropriate
+# shebang if needed
+
+# Analog  of the tkinter subpackage's files:
+%{dynload_dir}/_tkinter_d.so
+
+# Analog  of the -test subpackage's files:
+%{dynload_dir}/_ctypes_test_d.so
+%{dynload_dir}/_testcapimodule_d.so
+
 # We put the debug-gdb.py file inside /usr/lib/debug to avoid noise from
 # ldconfig (rhbz:562980).
 # 
@@ -964,6 +1291,10 @@ rm -fr %{buildroot}
 # payload file would be unpackaged)
 
 %changelog
+* Tue May 18 2010 David Malcolm <dmalcolm@redhat.com> - 2.6.5-9
+- build and install two different configurations of Python: debug and standard,
+packaging the debug build in a new "python-debug" subpackage (patch 112)
+
 * Tue May  4 2010 David Malcolm <dmalcolm@redhat.com> - 2.6.5-8
 - don't delete wsgiref.egg-info (rhbz:588426)
 
