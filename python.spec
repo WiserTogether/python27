@@ -61,7 +61,7 @@ Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 # Remember to also rebase python-docs when changing this:
 Version: 2.6.5
-Release: 9%{?dist}
+Release: 10%{?dist}
 License: Python
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -366,6 +366,13 @@ Patch111: python-2.6.4-no-static-lib.patch
 
 Patch112: python-2.6.5-debug-build.patch
 
+
+# Add configure-time support for the COUNT_ALLOCS and CALL_PROFILE options
+# described at http://svn.python.org/projects/python/trunk/Misc/SpecialBuilds.txt
+# so that if they are enabled, they will be in that build's pyconfig.h, so that
+# extension modules will reliably use them
+Patch113: python-2.6.5-more-configuration-flags.patch
+
 %if %{main_python}
 Obsoletes: Distutils
 Provides: Distutils
@@ -593,6 +600,8 @@ rm -r Modules/zlib || exit 1
 
 %patch112 -p1 -b .debug-build
 
+%patch113 -p1 -b .more-configuration-flags
+
 # This shouldn't be necesarry, but is right now (2.2a3)
 find -name "*~" |xargs rm -f
 
@@ -687,7 +696,7 @@ LD_LIBRARY_PATH="$topdir/$ConfDir" PATH=$PATH:$topdir/$ConfDir make -s OPT="$CFL
 BuildPython debug \
   python-debug \
   python%{pybasever}-debug \
-  "--with-pydebug" \
+  "--with-pydebug --with-tsc --with-count-allocs --with-call-profile" \
   false
 
 BuildPython optimized \
@@ -1291,6 +1300,10 @@ rm -fr %{buildroot}
 # payload file would be unpackaged)
 
 %changelog
+* Tue May 25 2010 David Malcolm <dmalcolm@redhat.com> - 2.6.5-10
+- add configure-time support for COUNT_ALLOCS and CALL_PROFILE debug options
+(patch 113); enable them and the WITH_TSC option within the debug build
+
 * Tue May 18 2010 David Malcolm <dmalcolm@redhat.com> - 2.6.5-9
 - build and install two different configurations of Python: debug and standard,
 packaging the debug build in a new "python-debug" subpackage (patch 112)
