@@ -61,7 +61,7 @@ Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 # Remember to also rebase python-docs when changing this:
 Version: 2.6.5
-Release: 10%{?dist}
+Release: 11%{?dist}
 License: Python
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -373,6 +373,10 @@ Patch112: python-2.6.5-debug-build.patch
 # extension modules will reliably use them
 Patch113: python-2.6.5-more-configuration-flags.patch
 
+# Add flags for statvfs.f_flag to the constant list in posixmodule (i.e. "os")
+# (rhbz:553020); partially upstream as http://bugs.python.org/issue7647
+Patch114: python-2.6.5-statvfs-f_flag-constants.patch
+
 %if %{main_python}
 Obsoletes: Distutils
 Provides: Distutils
@@ -601,6 +605,8 @@ rm -r Modules/zlib || exit 1
 %patch112 -p1 -b .debug-build
 
 %patch113 -p1 -b .more-configuration-flags
+
+%patch114 -p1 -b .statvfs-f-flag-constants
 
 # This shouldn't be necesarry, but is right now (2.2a3)
 find -name "*~" |xargs rm -f
@@ -1300,6 +1306,10 @@ rm -fr %{buildroot}
 # payload file would be unpackaged)
 
 %changelog
+* Wed May 26 2010 David Malcolm <dmalcolm@redhat.com> - 2.6.5-11
+- add flags for statvfs.f_flag to the constant list in posixmodule (i.e. "os")
+(patch 114)
+
 * Tue May 25 2010 David Malcolm <dmalcolm@redhat.com> - 2.6.5-10
 - add configure-time support for COUNT_ALLOCS and CALL_PROFILE debug options
 (patch 113); enable them and the WITH_TSC option within the debug build
