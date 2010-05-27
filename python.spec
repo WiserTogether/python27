@@ -61,7 +61,7 @@ Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 # Remember to also rebase python-docs when changing this:
 Version: 2.6.5
-Release: 11%{?dist}
+Release: 12%{?dist}
 License: Python
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -377,6 +377,10 @@ Patch113: python-2.6.5-more-configuration-flags.patch
 # (rhbz:553020); partially upstream as http://bugs.python.org/issue7647
 Patch114: python-2.6.5-statvfs-f_flag-constants.patch
 
+# Make "pydoc -k" more robust in the face of broken modules
+# (rhbz:461419; patch sent upstream as http://bugs.python.org/issue7425 )
+Patch115: make-pydoc-more-robust-001.patch
+
 %if %{main_python}
 Obsoletes: Distutils
 Provides: Distutils
@@ -607,6 +611,8 @@ rm -r Modules/zlib || exit 1
 %patch113 -p1 -b .more-configuration-flags
 
 %patch114 -p1 -b .statvfs-f-flag-constants
+
+%patch115 -p0
 
 # This shouldn't be necesarry, but is right now (2.2a3)
 find -name "*~" |xargs rm -f
@@ -1306,6 +1312,9 @@ rm -fr %{buildroot}
 # payload file would be unpackaged)
 
 %changelog
+* Thu May 27 2010 David Malcolm <dmalcolm@redhat.com> - 2.6.5-12
+- make "pydoc -k" more robust in the face of broken modules (rhbz:461419, patch115)
+
 * Wed May 26 2010 David Malcolm <dmalcolm@redhat.com> - 2.6.5-11
 - add flags for statvfs.f_flag to the constant list in posixmodule (i.e. "os")
 (patch 114)
