@@ -1333,9 +1333,9 @@ rm -fr %{buildroot}
 * Fri Jun  4 2010 David Malcolm <dmalcolm@redhat.com> - 2.6.5-13
 - ensure that the compiler is invoked with "-fwrapv" (rhbz#594819)
 - CVE-2010-1634: fix various integer overflow checks in the audioop
-module (patch 113)
-- CVE-2010-2089: further checks within the audioop module (patch 114)
-- CVE-2008-5983: the new PySys_SetArgvEx entry point from r81399 (patch 115)
+module (patch 116)
+- CVE-2010-2089: further checks within the audioop module (patch 117)
+- CVE-2008-5983: the new PySys_SetArgvEx entry point from r81399 (patch 118)
 
 * Thu May 27 2010 David Malcolm <dmalcolm@redhat.com> - 2.6.5-12
 - make "pydoc -k" more robust in the face of broken modules (rhbz:461419, patch115)
