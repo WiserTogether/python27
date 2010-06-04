@@ -61,7 +61,7 @@ Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 # Remember to also rebase python-docs when changing this:
 Version: 2.6.5
-Release: 12%{?dist}
+Release: 13%{?dist}
 License: Python
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -381,6 +381,20 @@ Patch114: python-2.6.5-statvfs-f_flag-constants.patch
 # (rhbz:461419; patch sent upstream as http://bugs.python.org/issue7425 )
 Patch115: make-pydoc-more-robust-001.patch
 
+# CVE-2010-1634: fix various integer overflow checks in the audioop module
+# This is the difference from r81031 to r81080 (i.e r81046 and r81080), but
+# backported to the old layout before the whitespeace cleanup to
+# release26-maint (in r81031):
+Patch116: python-2.6.2-CVE-2010-1634.patch
+
+# CVE-2010-2089: verify sizes/lengths within audioop module:
+Patch117: python-2.6.2-CVE-2010-2089.patch
+
+# CVE-2008-5983: the new PySys_SetArgvEx entry point from r81399 (backported to
+# the old layout before the whitespeace cleanup of release26-maint in r81031):
+Patch118: python-2.6.2-CVE-2008-5983.patch
+
+
 %if %{main_python}
 Obsoletes: Distutils
 Provides: Distutils
@@ -614,15 +628,19 @@ rm -r Modules/zlib || exit 1
 
 %patch115 -p0
 
+%patch116 -p1 -b .CVE-2010-1634
+%patch117 -p1 -b .CVE-2010-2089
+%patch118 -p1 -b .CVE-2008-5983
+
 # This shouldn't be necesarry, but is right now (2.2a3)
 find -name "*~" |xargs rm -f
 
 %build
 topdir=$(pwd)
-export CFLAGS="$RPM_OPT_FLAGS -D_GNU_SOURCE -fPIC"
-export CXXFLAGS="$RPM_OPT_FLAGS -D_GNU_SOURCE -fPIC"
+export CFLAGS="$RPM_OPT_FLAGS -D_GNU_SOURCE -fPIC -fwrapv"
+export CXXFLAGS="$RPM_OPT_FLAGS -D_GNU_SOURCE -fPIC -fwrapv"
 export CPPFLAGS="$(pkg-config --cflags-only-I libffi)"
-export OPT="$RPM_OPT_FLAGS -D_GNU_SOURCE -fPIC"
+export OPT="$RPM_OPT_FLAGS -D_GNU_SOURCE -fPIC -fwrapv"
 export LINKCC="gcc"
 if pkg-config openssl ; then
   export CFLAGS="$CFLAGS $(pkg-config --cflags openssl)"
@@ -1312,6 +1330,13 @@ rm -fr %{buildroot}
 # payload file would be unpackaged)
 
 %changelog
+* Fri Jun  4 2010 David Malcolm <dmalcolm@redhat.com> - 2.6.5-13
+- ensure that the compiler is invoked with "-fwrapv" (rhbz#594819)
+- CVE-2010-1634: fix various integer overflow checks in the audioop
+module (patch 113)
+- CVE-2010-2089: further checks within the audioop module (patch 114)
+- CVE-2008-5983: the new PySys_SetArgvEx entry point from r81399 (patch 115)
+
 * Thu May 27 2010 David Malcolm <dmalcolm@redhat.com> - 2.6.5-12
 - make "pydoc -k" more robust in the face of broken modules (rhbz:461419, patch115)
 
