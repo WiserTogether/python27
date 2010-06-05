@@ -37,8 +37,8 @@
 
 %global with_systemtap 1
 
-# sparc arches dont have valgrind so we need to disable its support on them
-%ifarch %{sparc}
+# some arches dont have valgrind so we need to disable its support on them
+%ifarch %{sparc} s390 s390x
 %global with_valgrind 0
 %else
 %global with_valgrind 1
@@ -61,7 +61,7 @@ Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 # Remember to also rebase python-docs when changing this:
 Version: 2.6.5
-Release: 13%{?dist}
+Release: 14%{?dist}
 License: Python
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -726,7 +726,11 @@ LD_LIBRARY_PATH="$topdir/$ConfDir" PATH=$PATH:$topdir/$ConfDir make -s OPT="$CFL
 BuildPython debug \
   python-debug \
   python%{pybasever}-debug \
+%ifarch %{ix86} x86_64 ppc ppc64
   "--with-pydebug --with-tsc --with-count-allocs --with-call-profile" \
+%else
+  "--with-pydebug --with-count-allocs --with-call-profile" \
+%endif
   false
 
 BuildPython optimized \
@@ -1330,6 +1334,10 @@ rm -fr %{buildroot}
 # payload file would be unpackaged)
 
 %changelog
+* Sat Jun  5 2010 Dan Horák <dan[at]danny.cz> - 2.6.5-14
+- reading the timestamp counter is available only on some arches (see Python/ceval.c)
+- disable --with-valgrind on s390(x) arches
+
 * Fri Jun  4 2010 David Malcolm <dmalcolm@redhat.com> - 2.6.5-13
 - ensure that the compiler is invoked with "-fwrapv" (rhbz#594819)
 - CVE-2010-1634: fix various integer overflow checks in the audioop
