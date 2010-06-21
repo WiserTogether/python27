@@ -63,7 +63,7 @@ Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 # Remember to also rebase python-docs when changing this:
 Version: 2.6.5
-Release: 15%{?dist}
+Release: 16%{?dist}
 License: Python
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -396,6 +396,10 @@ Patch117: python-2.6.2-CVE-2010-2089.patch
 # the old layout before the whitespeace cleanup of release26-maint in r81031):
 Patch118: python-2.6.2-CVE-2008-5983.patch
 
+# Fix an incompatibility between pyexpat and the system expat-2.0.1 that led to
+# a segfault running test_pyexpat.py (rhbz:583931)
+# Sent upstream as http://bugs.python.org/issue9054
+Patch119: python-2.6.5-fix-expat-issue9054.patch
 
 %if %{main_python}
 Obsoletes: Distutils
@@ -635,6 +639,7 @@ rm -r Modules/zlib || exit 1
 %patch116 -p1 -b .CVE-2010-1634
 %patch117 -p1 -b .CVE-2010-2089
 %patch118 -p1 -b .CVE-2008-5983
+%patch119 -p0 -b .fix-expat-issue9054
 
 # This shouldn't be necesarry, but is right now (2.2a3)
 find -name "*~" |xargs rm -f
@@ -1359,6 +1364,10 @@ rm -fr %{buildroot}
 # payload file would be unpackaged)
 
 %changelog
+* Mon Jun 21 2010 David Malcolm <dmalcolm@redhat.com> - 2.6.5-16
+- Fix an incompatibility between pyexpat and the system expat-2.0.1 that led to
+a segfault running test_pyexpat.py (patch 119; upstream issue 9054)
+
 * Tue Jun  8 2010 David Malcolm <dmalcolm@redhat.com> - 2.6.5-15
 - add a flag to make it easy to turn off the debug build when troubleshooting
 the rpm build
