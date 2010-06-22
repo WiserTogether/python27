@@ -2,24 +2,13 @@ Index: Objects/exceptions.c
 ===================================================================
 --- Objects/exceptions.c	(revision 82153)
 +++ Objects/exceptions.c	(working copy)
-@@ -1784,11 +1784,15 @@
+@@ -1784,9 +1784,6 @@
      const char *encoding, const char *object, Py_ssize_t length,
      Py_ssize_t start, Py_ssize_t end, const char *reason)
  {
 -    assert(length < INT_MAX);
 -    assert(start < INT_MAX);
 -    assert(end < INT_MAX);
--    return PyObject_CallFunction(PyExc_UnicodeDecodeError, "ss#nns",
--                                 encoding, object, length, start, end, reason);
-+    PyObject *str;
-+
-+    str = PyString_FromStringAndSize(object, length);
-+
-+    if (!str)
-+        return NULL;
-+
-+    return PyObject_CallFunction(PyExc_UnicodeDecodeError, "sNnns",
-+				 encoding, str, start, end, reason);
+     return PyObject_CallFunction(PyExc_UnicodeDecodeError, "ss#nns",
+                                  encoding, object, length, start, end, reason);
  }
- 
- 
