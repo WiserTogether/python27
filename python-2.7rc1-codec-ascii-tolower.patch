@@ -1,6 +1,6 @@
-diff -rup Python-2.5.1-orig/Python/codecs.c Python-2.5.1/Python/codecs.c
---- Python-2.5.1-orig/Python/codecs.c	2006-06-23 17:16:18.000000000 -0400
-+++ Python-2.5.1/Python/codecs.c	2007-10-30 12:51:10.000000000 -0400
+diff -up Python-2.7rc1/Python/codecs.c.ascii-tolower Python-2.7rc1/Python/codecs.c
+--- Python-2.7rc1/Python/codecs.c.ascii-tolower	2010-05-09 10:46:46.000000000 -0400
++++ Python-2.7rc1/Python/codecs.c	2010-06-06 05:06:15.373100357 -0400
 @@ -45,6 +45,11 @@ int PyCodec_Register(PyObject *search_fu
      return -1;
  }
@@ -19,7 +19,6 @@ diff -rup Python-2.5.1-orig/Python/codecs.c Python-2.5.1/Python/codecs.c
          else
 -            ch = tolower(Py_CHARMASK(ch));
 +            ch = ascii_tolower(Py_CHARMASK(ch));
- 	p[i] = ch;
+         p[i] = ch;
      }
      return v;
-Only in Python-2.5.1/Python: codecs.c~

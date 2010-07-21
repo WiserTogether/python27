@@ -1,5 +1,5 @@
 %{!?__python_ver:%global __python_ver EMPTY}
-#global __python_ver 26
+#global __python_ver 27
 %global unicode ucs4
 
 %global _default_patch_fuzz 2
@@ -14,7 +14,7 @@
 %global tkinter tkinter
 %endif
 
-%global pybasever 2.6
+%global pybasever 2.7
 %global pylibdir %{_libdir}/python%{pybasever}
 %global tools_dir %{pylibdir}/Tools
 %global demo_dir %{pylibdir}/Demo
@@ -59,34 +59,45 @@
 #
 %global _python_bytecompile_errors_terminate_build 0
 
+# We need to get a newer configure generated out of configure.in for the following
+# patches:
+#   patch 4 (CFLAGS)
+#   patch 52 (valgrind)
+#   patch 55 (systemtap)
+# 
+# For patch 55 (systemtap), we need to get a new header for configure to use
+#
+# configure.in requires autoconf-2.65, but the version in Fedora is currently
+# autoconf-2.66
+#
+# For now, we'll generate a patch to the generated configure script and
+# pyconfig.h.in on a machine that has a local copy of autoconf 2.65
+#
+# Instructions on obtaining such a copy can be seen at
+#   http://bugs.python.org/issue7997
+#
+# To make it easy to regenerate the patch, this specfile can be run in two
+# ways:
+# (i) regenerate_autotooling_patch  0 : the normal approach: prep the
+# source tree using a pre-generated patch to the "configure" script, and do a
+# full build
+# (ii) regenerate_autotooling_patch 1 : intended to be run on a developer's
+# workstation: prep the source tree without patching configure, then rerun a
+# local copy of autoconf-2.65, regenerate the patch, then exit, without doing
+# the rest of the build
+%global regenerate_autotooling_patch 0
+
 Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 # Remember to also rebase python-docs when changing this:
-Version: 2.6.5
-Release: 17%{?dist}
+Version: 2.7
+Release: 3%{?dist}
 License: Python
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
 Provides: python(abi) = %{pybasever}
 Source: http://www.python.org/ftp/python/%{version}/Python-%{version}.tar.bz2
 
-
-# We install a collection of hooks for gdb that make it easier to debug
-# executables linked against libpython (such as /usr/lib/python itself)
-#
-# These hooks are implemented in Python itself
-#
-# gdb-archer looks for them in the same path as the ELF file, with a -gdb.py suffix.
-# We put them in the debuginfo package by installing them to e.g.:
-#  /usr/lib/debug/usr/lib/libpython2.6.so.1.0.debug-gdb.py
-#
-# See https://fedoraproject.org/wiki/Features/EasierPythonDebugging for more
-# information
-#
-# Downloaded from:
-#  http://bugs.python.org/issue8032
-# This is Tools/gdb/libpython.py from v5 of the patch
-Source1: python-gdb.py
 
 # Work around bug 562906 until it's fixed in rpm-build by providing a fixed
 # version of pythondeps.sh:
@@ -173,7 +184,7 @@ Source5: pyfuntop.stp
 #     - _codecs_jp cjkcodecs/_codecs_jp.c
 #     - _codecs_kr cjkcodecs/_codecs_kr.c
 #     - _codecs_tw cjkcodecs/_codecs_tw.c
-Patch0: python-2.6.2-config.patch
+Patch0: python-2.7rc1-config.patch
 
 # Removes the "-g" option from "pydoc", for some reason; I believe
 # (dmalcolm 2010-01-29) that this was introduced in this change:
@@ -182,10 +193,6 @@ Patch0: python-2.6.2-config.patch
 # (Red Hat Linux 8)
 # Not upstream
 Patch1: Python-2.2.1-pydocnogui.patch
-
-# Fixup configure.in and setup.py to build against system expat library.
-# Adapted from http://svn.python.org/view?view=rev&revision=77169
-Patch3: python-2.6.2-with-system-expat.patch
 
 # Add $(CFLAGS) to the linker arguments when linking the "python" binary
 # since some architectures (sparc64) need this (rhbz:199373).
@@ -224,19 +231,19 @@ Patch7: python-2.5.1-sqlite-encoding.patch
 # SONAME from a library; we avoid this, apparently to minimize space
 # requirements on the live CD:
 # (rhbz:307221)
-Patch10: python-2.6.2-binutils-no-dep.patch
+Patch10: python-2.7rc1-binutils-no-dep.patch
 
 # FIXME: appears to relate to:
 #* Tue Oct 30 2007 James Antill <jantill@redhat.com> - 2.5.1-15
 #- Do codec lowercase in C Locale.
 #- Resolves: 207134 191096
-Patch11: python-2.5.1-codec-ascii-tolower.patch
+Patch11: python-2.7rc1-codec-ascii-tolower.patch
 
 # Add various constants to the socketmodule (rhbz#436560):
 # TODO: these patches were added in 2.5.1-22 and 2.5.1-24 but appear not to
 # have been sent upstream yet:
-Patch13: python-2.5.1-socketmodule-constants.patch
-Patch14: python-2.5.1-socketmodule-constants2.patch
+Patch13: python-2.7rc1-socketmodule-constants.patch
+Patch14: python-2.7rc1-socketmodule-constants2.patch
 
 # Remove an "-rpath $(LIBDIR)" argument from the linkage args in configure.in:
 # FIXME: is this for OSF, not Linux?
@@ -247,28 +254,15 @@ Patch16: python-2.6-rpath.patch
 # super() as it's an old-style class
 Patch17: python-2.6.4-distutils-rpath.patch
 
-# Fix distutils to follow the Fedora/RHEL/CentOS policies of having .pyo files
-Patch51: python-2.6-distutils_rpm.patch
-
-# Automatically disable arena allocator when run under valgrind:
-# From http://bugs.python.org/issue2422
-#   http://bugs.python.org/file9872/disable-pymalloc-on-valgrind-py26.patch
-# with the "configure" part removed; appears to be identical to the version committed to 2.7
-Patch52: disable-pymalloc-on-valgrind-py26.patch
-
-
-# Upstream patch to compile against db-4.8
-# http://bugs.python.org/issue6949
-# Based on http://svn.python.org/view?view=rev&revision=78974
-Patch53: python-2.6.5-db48.patch
-# ...and a further patch to setup.py so that it links against 4.8:
+# Patch setup.py so that it links against db-4.8:
 Patch54: python-2.6.4-setup-db48.patch
 
 # Systemtap support: add statically-defined probe points
 # Patch based on upstream bug: http://bugs.python.org/issue4111
 # fixed up by mjw and wcohen for 2.6.2, then fixed up by dmalcolm for 2.6.4
-# then rewritten by mjw (attachment 390110 of rhbz 545179)
-Patch55: python-2.6.4-dtrace.patch
+# then rewritten by mjw (attachment 390110 of rhbz 545179), then reformatted
+# for 2.7rc1 by dmalcolm:
+Patch55: python-2.7rc1-dtrace.patch
 
 # "lib64 patches"
 # This patch seems to be associated with bug 122304, which was
@@ -289,7 +283,13 @@ Patch101: python-2.3.4-lib64-regex.patch
 # and add the /usr/lib64/pythonMAJOR.MINOR/site-packages to sitedirs, in front of
 # /usr/lib/pythonMAJOR.MINOR/site-packages
 # Not upstream
-Patch102: python-2.6-lib64.patch
+Patch102: python-2.7rc1-lib64.patch
+
+# Python 2.7 split out much of the path-handling from distutils/sysconfig.py to
+# a new sysconfig.py (in r77704).
+# We need to make equivalent changes to that new file to ensure that the stdlib
+# and platform-specific code go to /usr/lib64 not /usr/lib, on 64-bit archs:
+Patch103: python-2.7-lib64-sysconfig.patch
 
 # rhbz#488396: rework the ctypes module to use ffi_closure_alloc and
 # ffi_closure_free, rather than malloc_closure.c, since the latter tries to
@@ -299,13 +299,14 @@ Patch102: python-2.6-lib64.patch
 # a rebasing of the upstream copy of libffi to one containing the
 # memory-management hooks. 
 #
-# This appears to be the same as that patch, but without the rebasing of libffi
-# (since we use the system copy of libffi):
-Patch110: python-2.6-ctypes-noexecmem.patch
+# This is the same as that patch, but without the rebasing of libffi
+# (since we use the system copy of libffi), and rebased against 2.7 (which
+# has had a whitespace cleanup):
+Patch110: python-2.7rc1-ctypes-noexecmem.patch
 
 # Patch the Makefile.pre.in so that the generated Makefile doesn't try to build
 # a libpythonMAJOR.MINOR.a (bug 550692):
-Patch111: python-2.6.4-no-static-lib.patch
+Patch111: python-2.7rc1-no-static-lib.patch
 
 # Patch to support building both optimized vs debug stacks DSO ABIs, sharing
 # the same .py and .pyc files, using "_d.so" to signify a debug build of an
@@ -366,7 +367,7 @@ Patch111: python-2.6.4-no-static-lib.patch
 #  python$(VERSION)-config, so that the two configuration get different paths
 #  for these.
 
-Patch112: python-2.6.5-debug-build.patch
+Patch112: python-2.7rc1-debug-build.patch
 
 
 # Add configure-time support for the COUNT_ALLOCS and CALL_PROFILE options
@@ -377,34 +378,37 @@ Patch113: python-2.6.5-more-configuration-flags.patch
 
 # Add flags for statvfs.f_flag to the constant list in posixmodule (i.e. "os")
 # (rhbz:553020); partially upstream as http://bugs.python.org/issue7647
-Patch114: python-2.6.5-statvfs-f_flag-constants.patch
+Patch114: python-2.7rc1-statvfs-f_flag-constants.patch
 
 # Make "pydoc -k" more robust in the face of broken modules
 # (rhbz:461419; patch sent upstream as http://bugs.python.org/issue7425 )
 Patch115: make-pydoc-more-robust-001.patch
-
-# CVE-2010-1634: fix various integer overflow checks in the audioop module
-# This is the difference from r81031 to r81080 (i.e r81046 and r81080), but
-# backported to the old layout before the whitespeace cleanup to
-# release26-maint (in r81031):
-Patch116: python-2.6.2-CVE-2010-1634.patch
-
-# CVE-2010-2089: verify sizes/lengths within audioop module:
-Patch117: python-2.6.2-CVE-2010-2089.patch
-
-# CVE-2008-5983: the new PySys_SetArgvEx entry point from r81399 (backported to
-# the old layout before the whitespeace cleanup of release26-maint in r81031):
-Patch118: python-2.6.2-CVE-2008-5983.patch
 
 # Fix an incompatibility between pyexpat and the system expat-2.0.1 that led to
 # a segfault running test_pyexpat.py (rhbz:583931)
 # Sent upstream as http://bugs.python.org/issue9054
 Patch119: python-2.6.5-fix-expat-issue9054.patch
 
-# Stop python bailing out with an assertion failure when UnicodeDecodeErrors
-# occur on very large buffers (rhbz:540518)
-# Sent upstream as http://bugs.python.org/issue9058
-Patch120: python-2.6.5-remove-PyUnicodeDecodeError_Create-assertions-issue9058.patch
+# Upstream r79310 removed the "Modules" directory from sys.path when Python is
+# running from the build directory on POSIX to fix a unit test (issue #8205).
+# This seems to have broken the compileall.py done in "make install": it cannot
+# find shared library extension modules at this point in the build (sys.path
+# does not contain DESTDIR/usr/lib(64)/python-2.7/lib-dynload for some reason),
+# leading to the build failing with:
+# Traceback (most recent call last):
+#   File "/home/david/rpmbuild/BUILDROOT/python-2.7-0.1.rc2.fc14.x86_64/usr/lib64/python2.7/compileall.py", line 17, in <module>
+#     import struct
+#   File "/home/david/rpmbuild/BUILDROOT/python-2.7-0.1.rc2.fc14.x86_64/usr/lib64/python2.7/struct.py", line 1, in <module>
+#    from _struct import *
+# ImportError: No module named _struct
+#
+# For now, revert this patch:
+Patch121: python-2.7rc2-r79310.patch
+
+# This is the generated patch to "configure"; see the description of
+#   %{regenerate_autotooling_patch}
+# above:
+Patch300: python-2.7-autotool-intermediates.patch
 
 %if %{main_python}
 Obsoletes: Distutils
@@ -475,6 +479,7 @@ provides the libraries needed for this.
 Summary: The libraries and header files needed for Python development
 Group: Development/Libraries
 Requires: %{python}%{?_isa} = %{version}-%{release}
+Requires: pkgconfig
 # Needed here because of the migration of Makefile from -devel to the main
 # package
 Conflicts: %{python} < %{version}-%{release}
@@ -600,7 +605,6 @@ rm -r Modules/zlib || exit 1
 # Apply patches:
 #
 %patch0 -p1 -b .rhconfig
-%patch3 -p1 -b .expat
 %patch1 -p1 -b .no_gui
 %patch4 -p1 -b .cflags
 %patch6 -p1 -b .plural
@@ -612,6 +616,7 @@ rm -r Modules/zlib || exit 1
 %patch101 -p1 -b .lib64-regex
 %if "%{_lib}" == "lib64"
 %patch102 -p1 -b .lib64
+%patch103 -p1 -b .lib64-sysconfig
 %endif
 
 %patch10 -p1 -b .binutils-no-dep
@@ -621,9 +626,6 @@ rm -r Modules/zlib || exit 1
 %patch16 -p1 -b .rpath
 %patch17 -p1 -b .distutils-rpath
 
-%patch51 -p1 -b .brprpm
-%patch52 -p0 -b .valgrind
-%patch53 -p0 -b .db48
 %patch54 -p1 -b .setup-db48
 %if 0%{?with_systemtap}
 %patch55 -p1 -b .systemtap
@@ -641,14 +643,17 @@ rm -r Modules/zlib || exit 1
 
 %patch115 -p0
 
-%patch116 -p1 -b .CVE-2010-1634
-%patch117 -p1 -b .CVE-2010-2089
-%patch118 -p1 -b .CVE-2008-5983
 %patch119 -p0 -b .fix-expat-issue9054
-%patch120 -p0 -b .remove-unicode-decode-error-assertions-issue9058
+%patch121 -p0 -R
 
 # This shouldn't be necesarry, but is right now (2.2a3)
 find -name "*~" |xargs rm -f
+
+%if ! 0%{regenerate_autotooling_patch}
+# Normally we apply the patch to "configure"
+# We don't apply the patch if we're working towards regenerating it
+%patch300 -p0 -b .autotool-intermediates
+%endif
 
 %build
 topdir=$(pwd)
@@ -664,16 +669,29 @@ fi
 # Force CC
 export CC=gcc
 
-# We need to get a newer configure generated out of configure.in for the following
-# patches:
-#   patch 4 (CFLAGS)
-#   patch 52 (valgrind)
-#   patch 55 (systemtap)
-# Rerun autoconf:
-autoconf
+%if 0%{regenerate_autotooling_patch}
+# If enabled, this code regenerates the patch to "configure", using a
+# local copy of autoconf-2.65, then exits the build
+#
+# The following assumes that the copy is installed to ~/autoconf-2.65/bin
+# as per these instructions:
+#   http://bugs.python.org/issue7997
 
-# For patch 55 (systemtap), we need to get a new header for configure to use:
+for f in pyconfig.h.in configure ; do
+    cp $f $f.autotool-intermediates ;
+done
+
+# Rerun the autotools:
+PATH=~/autoconf-2.65/bin:$PATH autoconf
 autoheader
+
+# Regenerate the patch:
+gendiff . .autotool-intermediates > %{PATCH300}
+
+
+# Exit the build
+exit 1
+%endif
 
 # Define a function, for how to perform a "build" of python for a given
 # configuration:
@@ -781,11 +799,18 @@ InstallPython() {
 
 make install DESTDIR=%{buildroot}
 
-# Copy up the gdb hooks into place; the python file will be autoloaded by gdb
-# when visiting libpython.so, provided that the python file is installed to the
-# same path as the library (or its .debug file) plus a "-gdb.py" suffix, e.g:
-#  /usr/lib/debug/usr/lib64/libpython2.6.so.1.0.debug-gdb.py
+# We install a collection of hooks for gdb that make it easier to debug
+# executables linked against libpython (such as /usr/lib/python itself)
+#
+# These hooks are implemented in Python itself
+#
+# gdb-archer looks for them in the same path as the ELF file, with a -gdb.py suffix.
+# We put them in the debuginfo package by installing them to e.g.:
+#  /usr/lib/debug/usr/lib/libpython2.6.so.1.0.debug-gdb.py
 # (note that the debug path is /usr/lib/debug for both 32/64 bit)
+#
+# See https://fedoraproject.org/wiki/Features/EasierPythonDebugging for more
+# information
 # 
 # Initially I tried:
 #  /usr/lib/libpython2.6.so.1.0-gdb.py
@@ -796,7 +821,7 @@ DirHoldingGdbPy=%{_prefix}/lib/debug/%{_libdir}
 PathOfGdbPy=$DirHoldingGdbPy/$PyInstSoName.debug-gdb.py
 
 mkdir -p %{buildroot}$DirHoldingGdbPy
-cp %{SOURCE1} %{buildroot}$PathOfGdbPy
+cp $topdir/Tools/gdb/libpython.py %{buildroot}$PathOfGdbPy
 
 # Manually byte-compile the file, in case find-debuginfo.sh is run before
 # brp-python-bytecompile, so that the .pyc/.pyo files are properly listed in
@@ -869,15 +894,6 @@ mv %{buildroot}/%{_mandir}/man1/python.1 %{buildroot}/%{_mandir}/man1/python%{py
 
 mkdir -p ${RPM_BUILD_ROOT}%{site_packages}
 
-#modulator
-cat > ${RPM_BUILD_ROOT}%{_bindir}/modulator << EOF
-#!/bin/bash
-exec %{site_packages}/modulator/modulator.py
-EOF
-chmod 755 ${RPM_BUILD_ROOT}%{_bindir}/modulator
-cp -r Tools/modulator \
-  ${RPM_BUILD_ROOT}%{site_packages}/
-
 #pynche
 cat > ${RPM_BUILD_ROOT}%{_bindir}/pynche << EOF
 #!/bin/bash
@@ -888,7 +904,6 @@ rm -f Tools/pynche/*.pyw
 cp -r Tools/pynche \
   ${RPM_BUILD_ROOT}%{site_packages}/
 
-mv Tools/modulator/README Tools/modulator/README.modulator
 mv Tools/pynche/README Tools/pynche/README.pynche
 
 #gettext
@@ -915,8 +930,6 @@ find %{buildroot}/ -name "*.bat"|xargs rm -f
 find . -name "*~"|xargs rm -f
 find . -name ".cvsignore"|xargs rm -f
 #zero length
-rm -f %{buildroot}%{site_packages}/modulator/Templates/copyright
-
 rm -f %{buildroot}%{pylibdir}/LICENSE.txt
 
 
@@ -924,7 +937,6 @@ rm -f %{buildroot}%{pylibdir}/LICENSE.txt
 %if !%{main_python}
 pushd %{buildroot}%{_bindir}
 mv idle idle%{__python_ver}
-mv modulator modulator%{__python_ver}
 mv pynche pynche%{__python_ver}
 mv pygettext.py pygettext%{__python_ver}.py
 mv msgfmt.py msgfmt%{__python_ver}.py
@@ -1050,7 +1062,6 @@ rm -fr %{buildroot}
 %{dynload_dir}/Python-%{version}-py%{pybasever}.egg-info
 %{dynload_dir}/_bisectmodule.so
 %{dynload_dir}/_bsddb.so
-%{dynload_dir}/_bytesio.so
 %{dynload_dir}/_codecs_cn.so
 %{dynload_dir}/_codecs_hk.so
 %{dynload_dir}/_codecs_iso2022.so
@@ -1063,11 +1074,11 @@ rm -fr %{buildroot}
 %{dynload_dir}/_curses.so
 %{dynload_dir}/_curses_panel.so
 %{dynload_dir}/_elementtree.so
-%{dynload_dir}/_fileio.so
 %{dynload_dir}/_functoolsmodule.so
 %{dynload_dir}/_hashlib.so
 %{dynload_dir}/_heapq.so
 %{dynload_dir}/_hotshot.so
+%{dynload_dir}/_io.so
 %{dynload_dir}/_json.so
 %{dynload_dir}/_localemodule.so
 %{dynload_dir}/_lsprof.so
@@ -1101,7 +1112,7 @@ rm -fr %{buildroot}
 %{dynload_dir}/imageop.so
 %{dynload_dir}/itertoolsmodule.so
 %{dynload_dir}/linuxaudiodev.so
-%{dynload_dir}/mathmodule.so
+%{dynload_dir}/math.so
 %{dynload_dir}/mmapmodule.so
 %{dynload_dir}/nismodule.so
 %{dynload_dir}/operator.so
@@ -1144,17 +1155,20 @@ rm -fr %{buildroot}
 %{pylibdir}/encodings
 %{pylibdir}/hotshot
 %{pylibdir}/idlelib
+%{pylibdir}/importlib
 %dir %{pylibdir}/json
 %{pylibdir}/json/*.py*
 %{pylibdir}/lib2to3
 %{pylibdir}/logging
 %{pylibdir}/multiprocessing
 %{pylibdir}/plat-linux2
+%{pylibdir}/pydoc_data
 %dir %{pylibdir}/sqlite3
 %{pylibdir}/sqlite3/*.py*
 %dir %{pylibdir}/test
 %{pylibdir}/test/test_support.py*
 %{pylibdir}/test/__init__.py*
+%{pylibdir}/unittest
 %{pylibdir}/wsgiref
 %{pylibdir}/xml
 %if "%{_lib}" == "lib64"
@@ -1181,6 +1195,8 @@ rm -fr %{buildroot}
 
 %files devel
 %defattr(-,root,root,-)
+%{_libdir}/pkgconfig/python-%{pybasever}.pc
+%{_libdir}/pkgconfig/python.pc
 %{pylibdir}/config/*
 %exclude %{pylibdir}/config/Makefile
 %{pylibdir}/distutils/command/wininst-*.exe
@@ -1195,14 +1211,11 @@ rm -fr %{buildroot}
 
 %files tools
 %defattr(-,root,root,755)
-%doc Tools/modulator/README.modulator
 %doc Tools/pynche/README.pynche
-%{site_packages}/modulator
 %{site_packages}/pynche
 %{_bindir}/smtpd*.py*
 %{_bindir}/2to3*
 %{_bindir}/idle*
-%{_bindir}/modulator*
 %{_bindir}/pynche*
 %{_bindir}/pygettext*.py*
 %{_bindir}/msgfmt*.py*
@@ -1251,7 +1264,6 @@ rm -fr %{buildroot}
 # ...with debug builds of the built-in "extension" modules:
 %{dynload_dir}/_bisectmodule_d.so
 %{dynload_dir}/_bsddb_d.so
-%{dynload_dir}/_bytesio_d.so
 %{dynload_dir}/_codecs_cn_d.so
 %{dynload_dir}/_codecs_hk_d.so
 %{dynload_dir}/_codecs_iso2022_d.so
@@ -1264,11 +1276,11 @@ rm -fr %{buildroot}
 %{dynload_dir}/_curses_d.so
 %{dynload_dir}/_curses_panel_d.so
 %{dynload_dir}/_elementtree_d.so
-%{dynload_dir}/_fileio_d.so
 %{dynload_dir}/_functoolsmodule_d.so
 %{dynload_dir}/_hashlib_d.so
 %{dynload_dir}/_heapq_d.so
 %{dynload_dir}/_hotshot_d.so
+%{dynload_dir}/_io_d.so
 %{dynload_dir}/_json_d.so
 %{dynload_dir}/_localemodule_d.so
 %{dynload_dir}/_lsprof_d.so
@@ -1302,7 +1314,7 @@ rm -fr %{buildroot}
 %{dynload_dir}/imageop_d.so
 %{dynload_dir}/itertoolsmodule_d.so
 %{dynload_dir}/linuxaudiodev_d.so
-%{dynload_dir}/mathmodule_d.so
+%{dynload_dir}/math_d.so
 %{dynload_dir}/mmapmodule_d.so
 %{dynload_dir}/nismodule_d.so
 %{dynload_dir}/operator_d.so
@@ -1370,6 +1382,43 @@ rm -fr %{buildroot}
 # payload file would be unpackaged)
 
 %changelog
+* Thu Jul  8 2010 David Malcolm <dmalcolm@redhat.com> - 2.7-3
+- add patch to fixup the new sysconfig.py for our multilib support on
+64-bit (patch 103)
+
+* Thu Jul  8 2010 David Malcolm <dmalcolm@redhat.com> - 2.7-2
+- add machinery for regenerating the "configure" script in the face of
+mismatching autoconf versions (patch 300)
+
+* Tue Jul  6 2010 David Malcolm <dmalcolm@redhat.com> - 2.7-1
+- 2.7 final; drop alphatag
+- drop patch 117 (upstream), patch 120 (upstreamed)
+- fix the commented-out __python_ver from 26 to 27
+
+* Tue Jun 22 2010 David Malcolm <dmalcolm@redhat.com> - 2.7-0.1.rc2
+- 2.7rc2
+- revert r79310 (patch 121)
+- remove modulator: upstream removed it in r78338
+- rename mathmodule(_d).so to math(_d).so in manifests (appears to be changed
+by r76861)
+- _bytesio(_d).so and _filesio(_d).so were consolidated into _io(_d).so in
+r73394 (upstream issue 6215)
+- use the gdb hooks from the upstream tarball, rather than keeping our own
+copy. The upstream version has some whitespace changes, a new write_repr for
+unicode objects, and various bulletproofings for being run on older gdbs
+
+* Tue Jun 22 2010 David Malcolm <dmalcolm@redhat.com> - 2.7-0.1.rc1
+- 2.7rc1:
+  - rework patches to apply against 2.7 (which among other changes has had a
+whitespace cleanup of the .c code): .rhconfig (patch0), .binutils-no-dep
+(patch10), .ascii-tolower (patch11), .socketmodule (patch13), .socketmodule2
+(patch14), .systemtap (patch55), .lib64 (patch102), .selinux (patch110),
+.no-static-lib (patch111), .debug-build (patch112), .statvfs-f-flag-constants
+(patch114), ..CVE-2010-2089 (patch117)
+  - drop upstream patches: .expat (patch3), .brprpm (patch51), .valgrind
+(patch52), .db48 (patch53), .CVE-2010-1634 (patch 116), .CVE-2008-5983 (patch
+118)
+
 * Tue Jun 22 2010 David Malcolm <dmalcolm@redhat.com> - 2.6.5-17
 - Stop python bailing out with an assertion failure when UnicodeDecodeErrors
 occur on very large buffers (patch 120, upstream issue 9058)

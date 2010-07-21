@@ -1,6 +1,6 @@
-diff -up Python-2.6.2/Modules/Setup.dist.rhconfig Python-2.6.2/Modules/Setup.dist
---- Python-2.6.2/Modules/Setup.dist.rhconfig	2008-11-27 05:15:12.000000000 -0500
-+++ Python-2.6.2/Modules/Setup.dist	2010-01-25 21:11:01.508867242 -0500
+diff -up Python-2.7rc1/Modules/Setup.dist.rhconfig Python-2.7rc1/Modules/Setup.dist
+--- Python-2.7rc1/Modules/Setup.dist.rhconfig	2009-12-21 10:22:00.000000000 -0500
++++ Python-2.7rc1/Modules/Setup.dist	2010-06-05 23:51:30.579225134 -0400
 @@ -152,7 +152,7 @@ GLHACK=-Dclear=__GLclear
  # modules are to be built as shared libraries (see above for more
  # detail; also note that *static* reverses this effect):
@@ -21,8 +21,8 @@ diff -up Python-2.6.2/Modules/Setup.dist.rhconfig Python-2.6.2/Modules/Setup.dis
  # Modules that should always be present (non UNIX dependent):
  
 -#array arraymodule.c	# array objects
--#cmath cmathmodule.c # -lm # complex math library functions
--#math mathmodule.c # -lm # math library functions, e.g. sin()
+-#cmath cmathmodule.c _math.c # -lm # complex math library functions
+-#math mathmodule.c _math.c # -lm # math library functions, e.g. sin()
 -#_struct _struct.c	# binary structure packing/unpacking
 -#time timemodule.c # -lm # time operations and variables
 -#operator operator.c	# operator.add() and similar goodies
@@ -34,8 +34,8 @@ diff -up Python-2.6.2/Modules/Setup.dist.rhconfig Python-2.6.2/Modules/Setup.dis
 -#strop stropmodule.c		# String manipulations
 -#_functools _functoolsmodule.c	# Tools for working with functions and callable objects
 +array arraymodule.c	# array objects
-+cmath cmathmodule.c # -lm # complex math library functions
-+math mathmodule.c # -lm # math library functions, e.g. sin()
++cmath cmathmodule.c _math.c # -lm # complex math library functions
++math mathmodule.c _math.c # -lm # math library functions, e.g. sin()
 +_struct _struct.c	# binary structure packing/unpacking
 +time timemodule.c # -lm # time operations and variables
 +operator operator.c	# operator.add() and similar goodies
@@ -101,7 +101,7 @@ diff -up Python-2.6.2/Modules/Setup.dist.rhconfig Python-2.6.2/Modules/Setup.dis
  # First, look at Setup.config; configure may have set this for you.
  
 -#crypt cryptmodule.c # -lcrypt	# crypt(3); needs -lcrypt on some systems
-+crypt cryptmodule.c -lcrypt	# crypt(3); needs -lcrypt on some systems
++crypt cryptmodule.c # -lcrypt	# crypt(3); needs -lcrypt on some systems
  
  
  # Some more UNIX dependent modules -- off by default, since these

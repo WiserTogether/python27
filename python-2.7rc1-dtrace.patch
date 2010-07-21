@@ -1,7 +1,7 @@
-diff -up Python-2.6.4/configure.in.systemtap Python-2.6.4/configure.in
---- Python-2.6.4/configure.in.systemtap	2009-12-18 15:37:15.632242686 -0500
-+++ Python-2.6.4/configure.in	2009-12-18 15:37:15.713244483 -0500
-@@ -2481,6 +2481,38 @@ if test "$with_valgrind" != no; then
+diff -up Python-2.7rc1/configure.in.systemtap Python-2.7rc1/configure.in
+--- Python-2.7rc1/configure.in.systemtap	2010-06-06 10:53:15.514975012 -0400
++++ Python-2.7rc1/configure.in	2010-06-06 10:53:15.520974361 -0400
+@@ -2616,6 +2616,38 @@ if test "$with_valgrind" != no; then
      )
  fi
  
@@ -40,9 +40,9 @@ diff -up Python-2.6.4/configure.in.systemtap Python-2.6.4/configure.in
  # Check for --with-wctype-functions
  AC_MSG_CHECKING(for --with-wctype-functions)
  AC_ARG_WITH(wctype-functions, 
-diff -up Python-2.6.4/Include/pydtrace.d.systemtap Python-2.6.4/Include/pydtrace.d
---- Python-2.6.4/Include/pydtrace.d.systemtap	2009-12-18 15:37:15.697243772 -0500
-+++ Python-2.6.4/Include/pydtrace.d	2009-12-18 15:37:15.697243772 -0500
+diff -up Python-2.7rc1/Include/pydtrace.d.systemtap Python-2.7rc1/Include/pydtrace.d
+--- Python-2.7rc1/Include/pydtrace.d.systemtap	2010-06-06 10:53:15.520974361 -0400
++++ Python-2.7rc1/Include/pydtrace.d	2010-06-06 10:53:15.520974361 -0400
 @@ -0,0 +1,10 @@
 +provider python {
 +	probe function__entry(const char *, const char *, int);
@@ -54,10 +54,10 @@ diff -up Python-2.6.4/Include/pydtrace.d.systemtap Python-2.6.4/Include/pydtrace
 +#pragma D attributes Private/Private/Common provider python function
 +#pragma D attributes Evolving/Evolving/Common provider python name
 +#pragma D attributes Evolving/Evolving/Common provider python args
-diff -up Python-2.6.4/Makefile.pre.in.systemtap Python-2.6.4/Makefile.pre.in
---- Python-2.6.4/Makefile.pre.in.systemtap	2009-12-18 15:37:15.399242581 -0500
-+++ Python-2.6.4/Makefile.pre.in	2009-12-18 15:37:15.715242573 -0500
-@@ -290,6 +290,7 @@ PYTHON_OBJS=	\
+diff -up Python-2.7rc1/Makefile.pre.in.systemtap Python-2.7rc1/Makefile.pre.in
+--- Python-2.7rc1/Makefile.pre.in.systemtap	2010-06-06 10:53:15.488978775 -0400
++++ Python-2.7rc1/Makefile.pre.in	2010-06-06 11:05:30.411100568 -0400
+@@ -298,6 +298,7 @@ PYTHON_OBJS=	\
  		Python/formatter_unicode.o \
  		Python/formatter_string.o \
  		Python/$(DYNLOADFILE) \
@@ -65,7 +65,7 @@ diff -up Python-2.6.4/Makefile.pre.in.systemtap Python-2.6.4/Makefile.pre.in
  		$(LIBOBJS) \
  		$(MACHDEP_OBJS) \
  		$(THREADOBJ)
-@@ -577,6 +578,18 @@ Python/formatter_unicode.o: $(srcdir)/Py
+@@ -599,6 +600,18 @@ Python/formatter_unicode.o: $(srcdir)/Py
  Python/formatter_string.o: $(srcdir)/Python/formatter_string.c \
  				$(STRINGLIB_HEADERS)
  
@@ -84,18 +84,19 @@ diff -up Python-2.6.4/Makefile.pre.in.systemtap Python-2.6.4/Makefile.pre.in
  ############################################################################
  # Header files
  
-@@ -1213,6 +1231,6 @@ Python/thread.o: @THREADHEADERS@
+@@ -1251,7 +1264,7 @@ Python/thread.o: @THREADHEADERS@
  .PHONY: frameworkinstall frameworkinstallframework frameworkinstallstructure
  .PHONY: frameworkinstallmaclib frameworkinstallapps frameworkinstallunixtools
  .PHONY: frameworkaltinstallunixtools recheck autoconf clean clobber distclean 
 -.PHONY: smelly funny patchcheck
 +.PHONY: smelly funny patchcheck buildinclude
+ .PHONY: gdbhooks
  
  # IF YOU PUT ANYTHING HERE IT WILL GO AWAY
-diff -up Python-2.6.4/pyconfig.h.in.systemtap Python-2.6.4/pyconfig.h.in
---- Python-2.6.4/pyconfig.h.in.systemtap	2009-12-18 15:37:15.649243175 -0500
-+++ Python-2.6.4/pyconfig.h.in	2009-12-18 15:37:15.719242803 -0500
-@@ -964,6 +989,9 @@
+diff -up Python-2.7rc1/pyconfig.h.in.systemtap Python-2.7rc1/pyconfig.h.in
+--- Python-2.7rc1/pyconfig.h.in.systemtap	2010-05-08 07:04:18.000000000 -0400
++++ Python-2.7rc1/pyconfig.h.in	2010-06-06 10:53:15.521974070 -0400
+@@ -1074,6 +1074,9 @@
  /* Define if you want documentation strings in extension modules */
  #undef WITH_DOC_STRINGS
  
@@ -105,9 +106,9 @@ diff -up Python-2.6.4/pyconfig.h.in.systemtap Python-2.6.4/pyconfig.h.in
  /* Define if you want to use the new-style (Openstep, Rhapsody, MacOS) dynamic
     linker (dyld) instead of the old-style (NextStep) dynamic linker (rld).
     Dyld is necessary to support frameworks. */
-diff -up Python-2.6.4/Python/ceval.c.systemtap Python-2.6.4/Python/ceval.c
---- Python-2.6.4/Python/ceval.c.systemtap	2009-05-30 17:43:48.000000000 -0400
-+++ Python-2.6.4/Python/ceval.c	2009-12-18 15:37:15.723242474 -0500
+diff -up Python-2.7rc1/Python/ceval.c.systemtap Python-2.7rc1/Python/ceval.c
+--- Python-2.7rc1/Python/ceval.c.systemtap	2010-05-09 10:46:46.000000000 -0400
++++ Python-2.7rc1/Python/ceval.c	2010-06-06 11:08:40.683100500 -0400
 @@ -19,6 +19,10 @@
  
  #include <ctype.h>
@@ -119,51 +120,51 @@ diff -up Python-2.6.4/Python/ceval.c.systemtap Python-2.6.4/Python/ceval.c
  #ifndef WITH_TSC
  
  #define READ_TIMESTAMP(var)
-@@ -527,6 +531,55 @@ PyEval_EvalCode(PyCodeObject *co, PyObje
- 			  NULL);
+@@ -671,6 +675,55 @@ PyEval_EvalCode(PyCodeObject *co, PyObje
+                       NULL);
  }
  
 +#ifdef WITH_DTRACE
 +static void
 +dtrace_entry(PyFrameObject *f)
 +{
-+	const char *filename;
-+	const char *fname;
-+	int lineno;
-+	
-+	filename = PyString_AsString(f->f_code->co_filename);
-+	fname = PyString_AsString(f->f_code->co_name);
-+	lineno = PyCode_Addr2Line(f->f_code, f->f_lasti);
++    const char *filename;
++    const char *fname;
++    int lineno;
 +
-+	PYTHON_FUNCTION_ENTRY((char *)filename, (char *)fname, lineno);
++    filename = PyString_AsString(f->f_code->co_filename);
++    fname = PyString_AsString(f->f_code->co_name);
++    lineno = PyCode_Addr2Line(f->f_code, f->f_lasti);
 +
-+	/*
-+	 * Currently a USDT tail-call will not receive the correct arguments.
-+	 * Disable the tail call here.
-+	 */
++    PYTHON_FUNCTION_ENTRY((char *)filename, (char *)fname, lineno);
++
++    /*
++     * Currently a USDT tail-call will not receive the correct arguments.
++     * Disable the tail call here.
++     */
 +#if defined(__sparc)
-+	asm("nop");
++    asm("nop");
 +#endif
 +}
 +
 +static void
 +dtrace_return(PyFrameObject *f)
 +{
-+	const char *filename;
-+	const char *fname;
-+	int lineno;
-+	
-+	filename = PyString_AsString(f->f_code->co_filename);
-+	fname = PyString_AsString(f->f_code->co_name);
-+	lineno = PyCode_Addr2Line(f->f_code, f->f_lasti);
-+	PYTHON_FUNCTION_RETURN((char *)filename, (char *)fname, lineno);
++    const char *filename;
++    const char *fname;
++    int lineno;
 +
-+	/*
-+	 * Currently a USDT tail-call will not receive the correct arguments.
-+	 * Disable the tail call here.
-+	 */
++    filename = PyString_AsString(f->f_code->co_filename);
++    fname = PyString_AsString(f->f_code->co_name);
++    lineno = PyCode_Addr2Line(f->f_code, f->f_lasti);
++    PYTHON_FUNCTION_RETURN((char *)filename, (char *)fname, lineno);
++
++    /*
++     * Currently a USDT tail-call will not receive the correct arguments.
++     * Disable the tail call here.
++     */
 +#if defined(__sparc)
-+	asm("nop");
++    asm("nop");
 +#endif
 +}
 +#else
@@ -175,22 +176,23 @@ diff -up Python-2.6.4/Python/ceval.c.systemtap Python-2.6.4/Python/ceval.c
  
  /* Interpreter main loop */
  
-@@ -763,6 +891,9 @@ PyEval_EvalFrameEx(PyFrameObject *f, int
- 		}
- 	}
+@@ -909,6 +962,9 @@ PyEval_EvalFrameEx(PyFrameObject *f, int
+         }
+     }
  
-+        if (PYTHON_FUNCTION_ENTRY_ENABLED())
-+                dtrace_entry(f);
++    if (PYTHON_FUNCTION_ENTRY_ENABLED())
++        dtrace_entry(f);
 +
- 	co = f->f_code;
- 	names = co->co_names;
- 	consts = co->co_consts;
-@@ -2723,6 +2863,8 @@ fast_yield:
+     co = f->f_code;
+     names = co->co_names;
+     consts = co->co_consts;
+@@ -3000,6 +3056,9 @@ fast_yield:
  
- 	/* pop frame */
+     /* pop frame */
  exit_eval_frame:
-+	if (PYTHON_FUNCTION_RETURN_ENABLED())
-+		dtrace_return(f);
- 	Py_LeaveRecursiveCall();
- 	tstate->frame = f->f_back;
++    if (PYTHON_FUNCTION_RETURN_ENABLED())
++        dtrace_return(f);
++
+     Py_LeaveRecursiveCall();
+     tstate->frame = f->f_back;
  
