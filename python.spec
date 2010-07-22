@@ -91,7 +91,7 @@ Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 # Remember to also rebase python-docs when changing this:
 Version: 2.7
-Release: 3%{?dist}
+Release: 4%{?dist}
 License: Python
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -987,7 +987,15 @@ done
 ln -s ../../libpython%{pybasever}.so %{buildroot}%{pylibdir}/config/libpython%{pybasever}.so
 
 # Fix for bug 201434: make sure distutils looks at the right pyconfig.h file
-sed -i -e "s/'pyconfig.h'/'%{_pyconfig_h}'/" %{buildroot}%{pylibdir}/distutils/sysconfig.py
+# Similar for sysconfig: sysconfig.get_config_h_filename tries to locate
+# pyconfig.h so it can be parsed, and needs to do this at runtime in site.py
+# when python starts up.
+#
+# Split this out so it goes directly to the pyconfig-32.h/pyconfig-64.h
+# variants:
+sed -i -e "s/'pyconfig.h'/'%{_pyconfig_h}'/" \
+  %{buildroot}%{pylibdir}/distutils/sysconfig.py \
+  %{buildroot}%{pylibdir}/sysconfig.py
 
 # Ensure that the curses module was linked against libncursesw.so, rather than
 # libncurses.so (bug 539917)
@@ -1382,6 +1390,10 @@ rm -fr %{buildroot}
 # payload file would be unpackaged)
 
 %changelog
+* Thu Jul 22 2010 David Malcolm <dmalcolm@redhat.com> - 2.7-4
+- fix reference to pyconfig.h in sysconfig that led to failure on startup if
+python-devel was not installed
+
 * Thu Jul  8 2010 David Malcolm <dmalcolm@redhat.com> - 2.7-3
 - add patch to fixup the new sysconfig.py for our multilib support on
 64-bit (patch 103)
