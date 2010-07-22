@@ -37,7 +37,7 @@
 
 %global with_gdb_hooks 1
 
-%global with_systemtap 1
+%global with_systemtap 0
 
 # some arches dont have valgrind so we need to disable its support on them
 %ifarch %{sparc} s390 s390x
@@ -91,7 +91,7 @@ Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 # Remember to also rebase python-docs when changing this:
 Version: 2.7
-Release: 4%{?dist}
+Release: 5%{?dist}
 License: Python
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -405,6 +405,12 @@ Patch119: python-2.6.5-fix-expat-issue9054.patch
 # For now, revert this patch:
 Patch121: python-2.7rc2-r79310.patch
 
+# Fix race condition in parallel make that could lead to graminit.c failing
+# to compile, or linker errors with "undefined reference to
+# `_PyParser_Grammar'":
+# Not yet sent upstream:
+Patch122: python-2.7-fix-parallel-make.patch
+
 # This is the generated patch to "configure"; see the description of
 #   %{regenerate_autotooling_patch}
 # above:
@@ -645,6 +651,7 @@ rm -r Modules/zlib || exit 1
 
 %patch119 -p0 -b .fix-expat-issue9054
 %patch121 -p0 -R
+%patch122 -p1 -b .fix-parallel-make
 
 # This shouldn't be necesarry, but is right now (2.2a3)
 find -name "*~" |xargs rm -f
@@ -739,7 +746,7 @@ make OPT="$CFLAGS" %{?_smp_mflags}
 # optimized python binary:
 if $PathFixWithThisBinary
 then
-  LD_LIBRARY_PATH="$topdir/$ConfDir" $BinaryName \
+  LD_LIBRARY_PATH="$topdir/$ConfDir" ./$BinaryName \
     $topdir/Tools/scripts/pathfix.py \
       -i "%{_bindir}/env $BinaryName" \
       $topdir
@@ -1390,6 +1397,12 @@ rm -fr %{buildroot}
 # payload file would be unpackaged)
 
 %changelog
+* Thu Jul 22 2010 David Malcolm <dmalcolm@redhat.com> - 2.7-5
+- disable systemtap for now (dtrace is failing on startup due to the bug
+mentioned in 2.7-4)
+- provide relative path to python binary when running pathfix.py
+- fix parallel make (patch 122)
+
 * Thu Jul 22 2010 David Malcolm <dmalcolm@redhat.com> - 2.7-4
 - fix reference to pyconfig.h in sysconfig that led to failure on startup if
 python-devel was not installed
