@@ -37,7 +37,7 @@
 
 %global with_gdb_hooks 1
 
-%global with_systemtap 0
+%global with_systemtap 1
 
 # some arches dont have valgrind so we need to disable its support on them
 %ifarch %{sparc} s390 s390x
@@ -91,7 +91,7 @@ Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 # Remember to also rebase python-docs when changing this:
 Version: 2.7
-Release: 5%{?dist}
+Release: 6%{?dist}
 License: Python
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -411,6 +411,11 @@ Patch121: python-2.7rc2-r79310.patch
 # Not yet sent upstream:
 Patch122: python-2.7-fix-parallel-make.patch
 
+# Fix traceback in 2to3 on "from itertools import *"
+# This is http://bugs.python.org/issue8892 (see also rhbz#600036)
+# Cherrypicked from r82530 upstream:
+Patch123: python-2.7-fix-2to3-itertools-import-star.patch
+
 # This is the generated patch to "configure"; see the description of
 #   %{regenerate_autotooling_patch}
 # above:
@@ -652,6 +657,9 @@ rm -r Modules/zlib || exit 1
 %patch119 -p0 -b .fix-expat-issue9054
 %patch121 -p0 -R
 %patch122 -p1 -b .fix-parallel-make
+pushd Lib
+%patch123 -p0
+popd 
 
 # This shouldn't be necesarry, but is right now (2.2a3)
 find -name "*~" |xargs rm -f
@@ -1397,6 +1405,11 @@ rm -fr %{buildroot}
 # payload file would be unpackaged)
 
 %changelog
+* Mon Jul 26 2010 David Malcolm <dmalcolm@redhat.com> - 2.7-6
+- re-enable systemtap
+- cherrypick upstream patch to 2to3 for "from itertools import *"
+traceback (patch 123)
+
 * Thu Jul 22 2010 David Malcolm <dmalcolm@redhat.com> - 2.7-5
 - disable systemtap for now (dtrace is failing on startup due to the bug
 mentioned in 2.7-4)
