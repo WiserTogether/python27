@@ -91,7 +91,7 @@ Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 # Remember to also rebase python-docs when changing this:
 Version: 2.7
-Release: 6%{?dist}
+Release: 7%{?dist}
 License: Python
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -1405,6 +1405,9 @@ rm -fr %{buildroot}
 # payload file would be unpackaged)
 
 %changelog
+* Mon Jul 26 2010 David Malcolm <dmalcolm@redhat.com> - 2.7-7
+- fixup missing -lcrypt to "crypt" module in config patch (patch 0)
+
 * Mon Jul 26 2010 David Malcolm <dmalcolm@redhat.com> - 2.7-6
 - re-enable systemtap
 - cherrypick upstream patch to 2to3 for "from itertools import *"
