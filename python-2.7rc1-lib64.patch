@@ -1,6 +1,6 @@
-diff -up Python-2.7rc1/Lib/distutils/command/install.py.lib64 Python-2.7rc1/Lib/distutils/command/install.py
---- Python-2.7rc1/Lib/distutils/command/install.py.lib64	2010-05-05 15:09:31.000000000 -0400
-+++ Python-2.7rc1/Lib/distutils/command/install.py	2010-06-05 23:53:24.802224367 -0400
+diff -up Python-2.7/Lib/distutils/command/install.py.lib64 Python-2.7/Lib/distutils/command/install.py
+--- Python-2.7/Lib/distutils/command/install.py.lib64	2010-05-05 15:09:31.000000000 -0400
++++ Python-2.7/Lib/distutils/command/install.py	2010-08-16 15:49:49.998271662 -0400
 @@ -42,14 +42,14 @@ else:
  INSTALL_SCHEMES = {
      'unix_prefix': {
@@ -18,9 +18,9 @@ diff -up Python-2.7rc1/Lib/distutils/command/install.py.lib64 Python-2.7rc1/Lib/
          'headers': '$base/include/python/$dist_name',
          'scripts': '$base/bin',
          'data'   : '$base',
-diff -up Python-2.7rc1/Lib/distutils/sysconfig.py.lib64 Python-2.7rc1/Lib/distutils/sysconfig.py
---- Python-2.7rc1/Lib/distutils/sysconfig.py.lib64	2010-05-05 15:09:31.000000000 -0400
-+++ Python-2.7rc1/Lib/distutils/sysconfig.py	2010-06-05 23:53:24.803224186 -0400
+diff -up Python-2.7/Lib/distutils/sysconfig.py.lib64 Python-2.7/Lib/distutils/sysconfig.py
+--- Python-2.7/Lib/distutils/sysconfig.py.lib64	2010-05-05 15:09:31.000000000 -0400
++++ Python-2.7/Lib/distutils/sysconfig.py	2010-08-16 15:49:49.998271662 -0400
 @@ -114,8 +114,12 @@ def get_python_lib(plat_specific=0, stan
          prefix = plat_specific and EXEC_PREFIX or PREFIX
  
@@ -35,9 +35,9 @@ diff -up Python-2.7rc1/Lib/distutils/sysconfig.py.lib64 Python-2.7rc1/Lib/distut
          if standard_lib:
              return libpython
          else:
-diff -up Python-2.7rc1/Lib/site.py.lib64 Python-2.7rc1/Lib/site.py
---- Python-2.7rc1/Lib/site.py.lib64	2010-06-03 17:21:03.000000000 -0400
-+++ Python-2.7rc1/Lib/site.py	2010-06-06 04:56:41.504986054 -0400
+diff -up Python-2.7/Lib/site.py.lib64 Python-2.7/Lib/site.py
+--- Python-2.7/Lib/site.py.lib64	2010-06-03 17:21:03.000000000 -0400
++++ Python-2.7/Lib/site.py	2010-08-16 15:49:49.998271662 -0400
 @@ -286,12 +286,16 @@ def getsitepackages():
          if sys.platform in ('os2emx', 'riscos'):
              sitepackages.append(os.path.join(prefix, "Lib", "site-packages"))
@@ -55,9 +55,37 @@ diff -up Python-2.7rc1/Lib/site.py.lib64 Python-2.7rc1/Lib/site.py
              sitepackages.append(os.path.join(prefix, "lib", "site-packages"))
          if sys.platform == "darwin":
              # for framework builds *only* we add the standard Apple
-diff -up Python-2.7rc1/Makefile.pre.in.lib64 Python-2.7rc1/Makefile.pre.in
---- Python-2.7rc1/Makefile.pre.in.lib64	2010-06-05 23:53:24.000000000 -0400
-+++ Python-2.7rc1/Makefile.pre.in	2010-06-06 04:57:25.280017307 -0400
+diff -up Python-2.7/Lib/test/test_site.py.lib64 Python-2.7/Lib/test/test_site.py
+--- Python-2.7/Lib/test/test_site.py.lib64	2010-08-16 15:49:56.149022511 -0400
++++ Python-2.7/Lib/test/test_site.py	2010-08-16 15:49:58.268901184 -0400
+@@ -169,16 +169,19 @@ class HelperFunctionsTests(unittest.Test
+             wanted = os.path.join('xoxo', 'Lib', 'site-packages')
+             self.assertEquals(dirs[0], wanted)
+         elif os.sep == '/':
+-            self.assertTrue(len(dirs), 2)
+-            wanted = os.path.join('xoxo', 'lib', 'python' + sys.version[:3],
++            self.assertEquals(len(dirs), 3)
++            wanted = os.path.join('xoxo', 'lib64', 'python' + sys.version[:3],
+                                   'site-packages')
+             self.assertEquals(dirs[0], wanted)
+-            wanted = os.path.join('xoxo', 'lib', 'site-python')
++            wanted = os.path.join('xoxo', 'lib', 'python' + sys.version[:3],
++                                  'site-packages')
+             self.assertEquals(dirs[1], wanted)
++            wanted = os.path.join('xoxo', 'lib', 'site-python')
++            self.assertEquals(dirs[2], wanted)
+         else:
+-            self.assertTrue(len(dirs), 2)
++            self.assertEquals(len(dirs), 2)
+             self.assertEquals(dirs[0], 'xoxo')
+-            wanted = os.path.join('xoxo', 'lib', 'site-packages')
++            wanted = os.path.join('xoxo', 'lib64', 'site-packages')
+             self.assertEquals(dirs[1], wanted)
+ 
+         # let's try the specific Apple location
+diff -up Python-2.7/Makefile.pre.in.lib64 Python-2.7/Makefile.pre.in
+--- Python-2.7/Makefile.pre.in.lib64	2010-08-16 15:49:49.992272080 -0400
++++ Python-2.7/Makefile.pre.in	2010-08-16 15:49:49.999271826 -0400
 @@ -94,7 +94,7 @@ LIBDIR=		@libdir@
  MANDIR=		@mandir@
  INCLUDEDIR=	@includedir@
@@ -67,9 +95,9 @@ diff -up Python-2.7rc1/Makefile.pre.in.lib64 Python-2.7rc1/Makefile.pre.in
  
  # Detailed destination directories
  BINLIBDEST=	$(LIBDIR)/python$(VERSION)
-diff -up Python-2.7rc1/Modules/getpath.c.lib64 Python-2.7rc1/Modules/getpath.c
---- Python-2.7rc1/Modules/getpath.c.lib64	2010-05-09 10:46:46.000000000 -0400
-+++ Python-2.7rc1/Modules/getpath.c	2010-06-06 04:58:53.840226352 -0400
+diff -up Python-2.7/Modules/getpath.c.lib64 Python-2.7/Modules/getpath.c
+--- Python-2.7/Modules/getpath.c.lib64	2010-05-09 10:46:46.000000000 -0400
++++ Python-2.7/Modules/getpath.c	2010-08-16 15:49:49.999271826 -0400
 @@ -117,8 +117,8 @@
  #endif
  
@@ -108,9 +136,9 @@ diff -up Python-2.7rc1/Modules/getpath.c.lib64 Python-2.7rc1/Modules/getpath.c
      }
      /* If we found EXEC_PREFIX do *not* reduce it!  (Yet.) */
  
-diff -up Python-2.7rc1/Modules/Setup.dist.lib64 Python-2.7rc1/Modules/Setup.dist
---- Python-2.7rc1/Modules/Setup.dist.lib64	2010-06-05 23:53:24.792224061 -0400
-+++ Python-2.7rc1/Modules/Setup.dist	2010-06-05 23:53:24.845009526 -0400
+diff -up Python-2.7/Modules/Setup.dist.lib64 Python-2.7/Modules/Setup.dist
+--- Python-2.7/Modules/Setup.dist.lib64	2010-08-16 15:49:49.988272889 -0400
++++ Python-2.7/Modules/Setup.dist	2010-08-16 15:49:49.999271826 -0400
 @@ -413,7 +413,7 @@ gdbm gdbmmodule.c -lgdbm
  # and the subdirectory of PORT where you built it.
  DBLIBVER=4.7
@@ -129,9 +157,9 @@ diff -up Python-2.7rc1/Modules/Setup.dist.lib64 Python-2.7rc1/Modules/Setup.dist
  
  # Interface to the Expat XML parser
  #
-diff -up Python-2.7rc1/setup.py.lib64 Python-2.7rc1/setup.py
---- Python-2.7rc1/setup.py.lib64	2010-06-04 05:49:20.000000000 -0400
-+++ Python-2.7rc1/setup.py	2010-06-06 05:00:36.653100371 -0400
+diff -up Python-2.7/setup.py.lib64 Python-2.7/setup.py
+--- Python-2.7/setup.py.lib64	2010-06-27 08:36:16.000000000 -0400
++++ Python-2.7/setup.py	2010-08-16 15:49:50.000271774 -0400
 @@ -347,7 +347,7 @@ class PyBuildExt(build_ext):
  
      def detect_modules(self):

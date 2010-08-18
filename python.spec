@@ -35,6 +35,9 @@
 
 %global with_debug_build 1
 
+# Disabled for now:
+%global with_huntrleaks 0
+
 %global with_gdb_hooks 1
 
 %global with_systemtap 1
@@ -91,7 +94,7 @@ Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 # Remember to also rebase python-docs when changing this:
 Version: 2.7
-Release: 7%{?dist}
+Release: 8%{?dist}
 License: Python
 Group: Development/Languages
 Provides: python-abi = %{pybasever}
@@ -416,6 +419,17 @@ Patch122: python-2.7-fix-parallel-make.patch
 # Cherrypicked from r82530 upstream:
 Patch123: python-2.7-fix-2to3-itertools-import-star.patch
 
+# test_commmands fails on SELinux systems due to a change in the output
+# of "ls" (http://bugs.python.org/issue7108)
+Patch124: fix-test_commands-expected-ls-output-issue7108.patch
+
+# COUNT_ALLOCS is useful for debugging, but the upstream behaviour of always
+# emitting debug info to stdout on exit is too verbose and makes it harder to
+# use the debug build.  Add a "PYTHONDUMPCOUNTS" environment variable which
+# must be set to enable the output on exit
+# Not yet sent upstream:
+Patch125: less-verbose-COUNT_ALLOCS.patch
+
 # This is the generated patch to "configure"; see the description of
 #   %{regenerate_autotooling_patch}
 # above:
@@ -659,7 +673,9 @@ rm -r Modules/zlib || exit 1
 %patch122 -p1 -b .fix-parallel-make
 pushd Lib
 %patch123 -p0
-popd 
+popd
+%patch124 -p1
+%patch125 -p1 -b .less-verbose-COUNT_ALLOCS
 
 # This shouldn't be necesarry, but is right now (2.2a3)
 find -name "*~" |xargs rm -f
@@ -1062,6 +1078,207 @@ sed \
 %endif # with_debug_build
 %endif # with_systemtap
 
+%check
+topdir=$(pwd)
+CheckPython() {
+  ConfName=$1
+  BinaryName=$2
+  ConfDir=$(pwd)/build/$ConfName
+
+  echo STARTING: CHECKING OF PYTHON FOR CONFIGURATION: $ConfName
+
+  # Notes about disabled tests:
+  #
+  # test_argparse:
+  #   fails when in a full build, but works when run standalone; seems to be
+  #   http://bugs.python.org/issue9553 (needs COLUMNS=80 in the environment)
+  #
+  # test_distutils:
+  #   fails with
+  #      /usr/bin/ld: cannot find -lpython2.7
+  #   in: test_build_ext (distutils.tests.test_build_ext.BuildExtTestCase)
+  #       test_get_outputs (distutils.tests.test_build_ext.BuildExtTestCase)
+  #
+  # test_dl: 
+  #   fails with:
+  #     <type 'exceptions.SystemError'>: module dl requires sizeof(int) ==
+  #     sizeof(long) == sizeof(char*)
+  #   on 64-bit builds, and the module is deprecated in favour of ctypes
+  #
+  # test_gdb:
+  #   very dependent on GCC version
+  #
+  # test_http*
+  #   I've seen occasional hangs in some http tests when running the test suite
+  #   inside Koji on Python 3.  For that reason I exclude them
+  #
+  # test_socket.py:
+  #   Can fail on Koji build with:
+  #     gaierror: [Errno -3] Temporary failure in name resolution
+  #
+  # test_urllib2
+  #   Can fail on Koji build with:
+  #     gaierror: [Errno -3] Temporary failure in name resolution
+  #
+  #
+  ###########################################################################
+  # TO BE INVESTIGATED:
+  ###########################################################################
+  # 
+  # test_file:
+  #   Fails in Koji with:
+  #  ======================================================================
+  #  FAIL: testStdin (test.test_file.COtherFileTests)
+  #  ----------------------------------------------------------------------
+  #  Traceback (most recent call last):
+  #    File "/builddir/build/BUILD/Python-2.7/Lib/test/test_file.py", line 160, in testStdin
+  #      self.assertRaises((IOError, ValueError), sys.stdin.seek, -1)
+  #  AssertionError: (<type 'exceptions.IOError'>, <type 'exceptions.ValueError'>) not raised
+  #  ======================================================================
+  #  FAIL: testStdin (test.test_file.PyOtherFileTests)
+  #  ----------------------------------------------------------------------
+  #  Traceback (most recent call last):
+  #    File "/builddir/build/BUILD/Python-2.7/Lib/test/test_file.py", line 160, in testStdin
+  #      self.assertRaises((IOError, ValueError), sys.stdin.seek, -1)
+  #  AssertionError: (<type 'exceptions.IOError'>, <type 'exceptions.ValueError'>) not raised
+  #  ----------------------------------------------------------------------
+  #
+  # test_file2k:
+  #   Fails in Koji on with:
+  #  ======================================================================
+  #  FAIL: testStdin (test.test_file2k.OtherFileTests)
+  #  ----------------------------------------------------------------------
+  #  Traceback (most recent call last):
+  #    File "/builddir/build/BUILD/Python-2.7/Lib/test/test_file2k.py", line 211, in testStdin
+  #      self.assertRaises(IOError, sys.stdin.seek, -1)
+  #  AssertionError: IOError not raised
+  #  ----------------------------------------------------------------------
+  #
+  # test_subprocess:
+  #    Fails in Koji with:
+  #  ======================================================================
+  #  ERROR: test_leaking_fds_on_error (test.test_subprocess.ProcessTestCase)
+  #  ----------------------------------------------------------------------
+  #  Traceback (most recent call last):
+  #    File "/builddir/build/BUILD/Python-2.7/Lib/test/test_subprocess.py", line 534, in test_leaking_fds_on_error
+  #      raise c.exception
+  #  OSError: [Errno 13] Permission denied
+  #  ======================================================================
+  #  ERROR: test_leaking_fds_on_error (test.test_subprocess.ProcessTestCaseNoPoll)
+  #  ----------------------------------------------------------------------
+  #  Traceback (most recent call last):
+  #    File "/builddir/build/BUILD/Python-2.7/Lib/test/test_subprocess.py", line 534, in test_leaking_fds_on_error
+  #      raise c.exception
+  #  OSError: [Errno 13] Permission denied
+  #  ----------------------------------------------------------------------
+  #
+  EXCLUDED_TESTS="test_argparse \
+      test_distutils \
+      test_dl \
+      test_gdb \
+      test_http_cookies \
+      test_httplib \
+      test_socket \
+      test_urllib2 \
+      test_file \
+      test_file2k \
+      test_subprocess \
+  %{nil}"
+  
+  # Debug build shows some additional failures (to be investigated):
+  #
+  # test_gc:
+  #  ======================================================================
+  #  FAIL: test_newinstance (__main__.GCTests)
+  #  ----------------------------------------------------------------------
+  #  Traceback (most recent call last):
+  #    File "Lib/test/test_gc.py", line 105, in test_newinstance
+  #      self.assertNotEqual(gc.collect(), 0)
+  #  AssertionError: 0 == 0
+  #  
+  #  ----------------------------------------------------------------------
+  #
+  # test_sys:
+  #  ======================================================================
+  #  FAIL: test_objecttypes (__main__.SizeofTest)
+  #  ----------------------------------------------------------------------
+  #  Traceback (most recent call last):
+  #    File "Lib/test/test_sys.py", line 739, in test_objecttypes
+  #      check(newstyleclass, s)
+  #    File "Lib/test/test_sys.py", line 510, in check_sizeof
+  #      self.assertEqual(result, size, msg)
+  #  AssertionError: wrong size for <type 'type'>: got 960, expected 920
+  #  
+  #  ----------------------------------------------------------------------
+  #  which is this code:
+  #          # type
+  #          # (PyTypeObject + PyNumberMethods +  PyMappingMethods +
+  #          #  PySequenceMethods + PyBufferProcs)
+  #          s = size(vh + 'P2P15Pl4PP9PP11PI') + size('41P 10P 3P 6P')
+  #          class newstyleclass(object):
+  #              pass
+  #          check(newstyleclass, s)
+  #  
+  # test_weakref:
+  #  ======================================================================
+  #  FAIL: test_callback_in_cycle_resurrection (__main__.ReferencesTestCase)
+  #  ----------------------------------------------------------------------
+  #  Traceback (most recent call last):
+  #    File "Lib/test/test_weakref.py", line 591, in test_callback_in_cycle_resurrection
+  #      self.assertEqual(alist, ["C went away"])
+  #  AssertionError: Lists differ: [] != ['C went away']
+  #  
+  #  Second list contains 1 additional elements.
+  #  First extra element 0:
+  #  C went away
+  #  
+  #  - []
+  #  + ['C went away']
+  #  
+  #  ----------------------------------------------------------------------
+  #
+  if [ "$ConfName" = "debug"  ] ; then
+    EXCLUDED_TESTS="$EXCLUDED_TESTS \
+      test_gc \
+      test_sys \
+      test_weakref \
+    %{nil}"
+  fi
+  
+  # Note that we're running the tests using the version of the code in the
+  # builddir, not in the buildroot.
+
+  pushd $ConfDir
+
+  EXTRATESTOPTS="--verbose3"
+
+%if 0%{?with_huntrleaks}
+  # Try to detect reference leaks on debug builds.  By default this means
+  # running every test 10 times (6 to stabilize, then 4 to watch):
+  if [ "$ConfName" = "debug"  ] ; then
+    EXTRATESTOPTS="$EXTRATESTOPTS --huntrleaks : "
+  fi
+%endif
+
+  # Actually invoke regrtest.py:
+  EXTRATESTOPTS="$EXTRATESTOPTS -x $EXCLUDED_TESTS" make test
+
+  popd
+
+  echo FINISHED: CHECKING OF PYTHON FOR CONFIGURATION: $ConfName
+
+}
+
+# Check each of the configurations:
+%if 0%{?with_debug_build}
+CheckPython \
+  debug \
+  python%{pybasever}-debug
+%endif # with_debug_build
+CheckPython \
+  optimized \
+  python%{pybasever}
+
 %clean
 rm -fr %{buildroot}
 
@@ -1405,6 +1622,13 @@ rm -fr %{buildroot}
 # payload file would be unpackaged)
 
 %changelog
+* Wed Aug 18 2010 David Malcolm <dmalcolm@redhat.com> - 2.7-8
+- add %%check section
+- update lib64 patch (patch 102) to fix expected output in test_site.py on
+64-bit systems
+- patch test_commands.py to work with SELinux (patch 124)
+- patch the debug build's usage of COUNT_ALLOCS to be less verbose (patch 125)
+
 * Mon Jul 26 2010 David Malcolm <dmalcolm@redhat.com> - 2.7-7
 - fixup missing -lcrypt to "crypt" module in config patch (patch 0)
 
