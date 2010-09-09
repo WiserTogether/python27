@@ -94,9 +94,10 @@ Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 # Remember to also rebase python-docs when changing this:
 Version: 2.7
-Release: 8%{?dist}
+Release: 9%{?dist}
 License: Python
 Group: Development/Languages
+Requires: %{python}-libs%{?_isa} = %{version}-%{release}
 Provides: python-abi = %{pybasever}
 Provides: python(abi) = %{pybasever}
 Source: http://www.python.org/ftp/python/%{version}/Python-%{version}.tar.bz2
@@ -481,24 +482,26 @@ Mac and MFC).
 
 Programmers can write new built-in modules for Python in C or C++.
 Python can be used as an extension language for applications that need
-a programmable interface. This package contains most of the standard
-Python modules, as well as modules for interfacing to the Tix widget
-set for Tk and RPM.
+a programmable interface.
 
 Note that documentation for Python is provided in the python-docs
 package.
 
+This package provides the "python" executable; most of the actual
+implementation is within the "python-libs" package.
+
 %package libs
-Summary: The libraries for python runtime
+Summary: Runtime libraries for Python
 Group: Applications/System
-Requires: %{name} = %{version}-%{release}
+
 # Needed for ctypes, to load libraries, worked around for Live CDs size
 # Requires: binutils
 
 %description libs
-The python interpreter can be embedded into applications wanting to 
-use python as an embedded scripting language.  The python-libs package 
-provides the libraries needed for this.
+This package contains runtime libraries for use by Python:
+- the libpython dynamic library, for use by applications that embed Python as
+a scripting language, and by the main "python" executable
+- the Python standard library
 
 %package devel
 Summary: The libraries and header files needed for Python development
@@ -1297,6 +1300,9 @@ rm -fr %{buildroot}
 %{_bindir}/python%{pybasever}
 %{_mandir}/*/*
 
+%files libs
+%defattr(-,root,root,-)
+%doc LICENSE README
 %dir %{pylibdir}
 %dir %{dynload_dir}
 %{dynload_dir}/Python-%{version}-py%{pybasever}.egg-info
@@ -1417,16 +1423,13 @@ rm -fr %{buildroot}
 %endif
 
 # "Makefile" and the config-32/64.h file are needed by
-# distutils/sysconfig.py:_init_posix(), so we include them in the core
+# distutils/sysconfig.py:_init_posix(), so we include them in the libs
 # package, along with their parent directories (bug 531901):
 %dir %{pylibdir}/config
 %{pylibdir}/config/Makefile
 %dir %{_includedir}/python%{pybasever}
 %{_includedir}/python%{pybasever}/%{_pyconfig_h}
 
-%files libs
-%defattr(-,root,root,-)
-%doc LICENSE README
 %{_libdir}/%{py_INSTSONAME_optimized}
 %if 0%{?with_systemtap}
 %{tapsetdir}/%{libpython_stp_optimized}
@@ -1501,7 +1504,8 @@ rm -fr %{buildroot}
 %endif
 %{_bindir}/python%{pybasever}-debug
 
-# ...with debug builds of the built-in "extension" modules:
+# Analog of the -libs subpackage's files, with debug builds of the built-in
+# "extension" modules:
 %{dynload_dir}/_bisectmodule_d.so
 %{dynload_dir}/_bsddb_d.so
 %{dynload_dir}/_codecs_cn_d.so
@@ -1578,7 +1582,6 @@ rm -fr %{buildroot}
 # do for the regular build above (bug 531901), since they're all in one package
 # now; they're listed below, under "-devel":
 
-# Analog of the -libs subpackage's files:
 %{_libdir}/%{py_INSTSONAME_debug}
 %if 0%{?with_systemtap}
 %{tapsetdir}/%{libpython_stp_debug}
@@ -1622,6 +1625,10 @@ rm -fr %{buildroot}
 # payload file would be unpackaged)
 
 %changelog
+* Thu Sep  9 2010 David Malcolm <dmalcolm@redhat.com> - 2.7-9
+- move most of the payload of the core package to the libs subpackage, given
+that the libs aren't meaningfully usable without the standard libraries
+
 * Wed Aug 18 2010 David Malcolm <dmalcolm@redhat.com> - 2.7-8
 - add %%check section
 - update lib64 patch (patch 102) to fix expected output in test_site.py on
