@@ -94,7 +94,7 @@ Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 # Remember to also rebase python-docs when changing this:
 Version: 2.7
-Release: 9%{?dist}
+Release: 10%{?dist}
 License: Python
 Group: Development/Languages
 Requires: %{python}-libs%{?_isa} = %{version}-%{release}
@@ -267,6 +267,11 @@ Patch54: python-2.6.4-setup-db48.patch
 # then rewritten by mjw (attachment 390110 of rhbz 545179), then reformatted
 # for 2.7rc1 by dmalcolm:
 Patch55: python-2.7rc1-dtrace.patch
+
+# Backported fix from upstream for regression in ConfigParse's handling
+# of None values
+# http://bugs.python.org/issue7005#msg115417
+Patch56: python-2.7-r84443-cfgparse.patch
 
 # "lib64 patches"
 # This patch seems to be associated with bug 122304, which was
@@ -658,6 +663,8 @@ rm -r Modules/zlib || exit 1
 %if 0%{?with_systemtap}
 %patch55 -p1 -b .systemtap
 %endif
+
+%patch56 -p0 -b .cfgparse
 
 %patch110 -p1 -b .selinux
 
@@ -1625,6 +1632,9 @@ rm -fr %{buildroot}
 # payload file would be unpackaged)
 
 %changelog
+* Thu Sep 16 2010 Toshio Kuratomi <toshio@fedoraproject.org> - 2.7-10
+- backport a patch to fix a change in behaviour in configparse.
+
 * Thu Sep  9 2010 David Malcolm <dmalcolm@redhat.com> - 2.7-9
 - move most of the payload of the core package to the libs subpackage, given
 that the libs aren't meaningfully usable without the standard libraries
