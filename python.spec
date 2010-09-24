@@ -94,7 +94,7 @@ Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 # Remember to also rebase python-docs when changing this:
 Version: 2.7
-Release: 10%{?dist}
+Release: 11%{?dist}
 License: Python
 Group: Development/Languages
 Requires: %{python}-libs%{?_isa} = %{version}-%{release}
@@ -436,6 +436,10 @@ Patch124: fix-test_commands-expected-ls-output-issue7108.patch
 # Not yet sent upstream:
 Patch125: less-verbose-COUNT_ALLOCS.patch
 
+# Fix dbm module on big-endian 64-bit
+# Sent upstream as http://bugs.python.org/issue9687 (rhbz#626756)
+Patch126: fix-dbm_contains-on-64bit-bigendian.patch
+
 # This is the generated patch to "configure"; see the description of
 #   %{regenerate_autotooling_patch}
 # above:
@@ -686,6 +690,7 @@ pushd Lib
 popd
 %patch124 -p1
 %patch125 -p1 -b .less-verbose-COUNT_ALLOCS
+%patch126 -p0 -b .fix-dbm_contains-on-64bit-bigendian
 
 # This shouldn't be necesarry, but is right now (2.2a3)
 find -name "*~" |xargs rm -f
@@ -1632,6 +1637,9 @@ rm -fr %{buildroot}
 # payload file would be unpackaged)
 
 %changelog
+* Fri Sep 24 2010 David Malcolm <dmalcolm@redhat.com> - 2.7-11
+- fix dbm_contains on 64bit-bigendian (patch 126; rhbz#626756)
+
 * Thu Sep 16 2010 Toshio Kuratomi <toshio@fedoraproject.org> - 2.7-10
 - backport a patch to fix a change in behaviour in configparse.
 
