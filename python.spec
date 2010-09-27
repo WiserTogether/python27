@@ -94,7 +94,7 @@ Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 # Remember to also rebase python-docs when changing this:
 Version: 2.7
-Release: 11%{?dist}
+Release: 12%{?dist}
 License: Python
 Group: Development/Languages
 Requires: %{python}-libs%{?_isa} = %{version}-%{release}
@@ -440,6 +440,10 @@ Patch125: less-verbose-COUNT_ALLOCS.patch
 # Sent upstream as http://bugs.python.org/issue9687 (rhbz#626756)
 Patch126: fix-dbm_contains-on-64bit-bigendian.patch
 
+# Fix test_structmember on big-endian 64-bit
+# Sent upstream as http://bugs.python.org/issue9960
+Patch127: fix-test_structmember-on-64bit-bigendian.patch
+
 # This is the generated patch to "configure"; see the description of
 #   %{regenerate_autotooling_patch}
 # above:
@@ -691,6 +695,7 @@ popd
 %patch124 -p1
 %patch125 -p1 -b .less-verbose-COUNT_ALLOCS
 %patch126 -p0 -b .fix-dbm_contains-on-64bit-bigendian
+%patch127 -p0 -b .fix-test_structmember-on-64bit-bigendian
 
 # This shouldn't be necesarry, but is right now (2.2a3)
 find -name "*~" |xargs rm -f
@@ -1637,6 +1642,9 @@ rm -fr %{buildroot}
 # payload file would be unpackaged)
 
 %changelog
+* Mon Sep 27 2010 David Malcolm <dmalcolm@redhat.com> - 2.7-12
+- fix test_structmember on 64bit-bigendian (patch 127)
+
 * Fri Sep 24 2010 David Malcolm <dmalcolm@redhat.com> - 2.7-11
 - fix dbm_contains on 64bit-bigendian (patch 126; rhbz#626756)
 
