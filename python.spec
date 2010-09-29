@@ -94,7 +94,7 @@ Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 # Remember to also rebase python-docs when changing this:
 Version: 2.7
-Release: 12%{?dist}
+Release: 13%{?dist}
 License: Python
 Group: Development/Languages
 Requires: %{python}-libs%{?_isa} = %{version}-%{release}
@@ -1642,6 +1642,9 @@ rm -fr %{buildroot}
 # payload file would be unpackaged)
 
 %changelog
+* Wed Sep 29 2010 jkeating - 2.7-13
+- Rebuilt for gcc bug 634757
+
 * Mon Sep 27 2010 David Malcolm <dmalcolm@redhat.com> - 2.7-12
 - fix test_structmember on 64bit-bigendian (patch 127)
 
