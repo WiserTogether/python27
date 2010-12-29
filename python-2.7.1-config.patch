@@ -1,7 +1,7 @@
-diff -up Python-2.7rc1/Modules/Setup.dist.rhconfig Python-2.7rc1/Modules/Setup.dist
---- Python-2.7rc1/Modules/Setup.dist.rhconfig	2009-12-21 10:22:00.000000000 -0500
-+++ Python-2.7rc1/Modules/Setup.dist	2010-06-05 23:51:30.579225134 -0400
-@@ -152,7 +152,7 @@ GLHACK=-Dclear=__GLclear
+diff -up Python-2.7.1/Modules/Setup.dist.rhconfig Python-2.7.1/Modules/Setup.dist
+--- Python-2.7.1/Modules/Setup.dist.rhconfig	2010-08-21 07:40:30.000000000 -0400
++++ Python-2.7.1/Modules/Setup.dist	2010-12-23 15:47:12.111059967 -0500
+@@ -153,7 +153,7 @@ GLHACK=-Dclear=__GLclear
  # modules are to be built as shared libraries (see above for more
  # detail; also note that *static* reverses this effect):
  
@@ -10,7 +10,7 @@ diff -up Python-2.7rc1/Modules/Setup.dist.rhconfig Python-2.7rc1/Modules/Setup.d
  
  # GNU readline.  Unlike previous Python incarnations, GNU readline is
  # now incorporated in an optional module, configured in the Setup file
-@@ -162,74 +162,74 @@ GLHACK=-Dclear=__GLclear
+@@ -163,73 +163,73 @@ GLHACK=-Dclear=__GLclear
  # it, depending on your system -- see the GNU readline instructions.
  # It's okay for this to be a shared library, too.
  
@@ -26,7 +26,6 @@ diff -up Python-2.7rc1/Modules/Setup.dist.rhconfig Python-2.7rc1/Modules/Setup.d
 -#_struct _struct.c	# binary structure packing/unpacking
 -#time timemodule.c # -lm # time operations and variables
 -#operator operator.c	# operator.add() and similar goodies
--#_weakref _weakref.c	# basic weak reference support
 -#_testcapi _testcapimodule.c    # Python C API test module
 -#_random _randommodule.c	# Random number generator
 -#_collections _collectionsmodule.c # Container types
@@ -39,7 +38,6 @@ diff -up Python-2.7rc1/Modules/Setup.dist.rhconfig Python-2.7rc1/Modules/Setup.d
 +_struct _struct.c	# binary structure packing/unpacking
 +time timemodule.c # -lm # time operations and variables
 +operator operator.c	# operator.add() and similar goodies
-+_weakref _weakref.c	# basic weak reference support
 +_testcapi _testcapimodule.c    # Python C API test module
 +_random _randommodule.c	# Random number generator
 +_collections _collectionsmodule.c # Container types

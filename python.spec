@@ -93,8 +93,8 @@
 Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 # Remember to also rebase python-docs when changing this:
-Version: 2.7
-Release: 12%{?dist}
+Version: 2.7.1
+Release: 1%{?dist}
 License: Python
 Group: Development/Languages
 Requires: %{python}-libs%{?_isa} = %{version}-%{release}
@@ -188,7 +188,7 @@ Source5: pyfuntop.stp
 #     - _codecs_jp cjkcodecs/_codecs_jp.c
 #     - _codecs_kr cjkcodecs/_codecs_kr.c
 #     - _codecs_tw cjkcodecs/_codecs_tw.c
-Patch0: python-2.7rc1-config.patch
+Patch0: python-2.7.1-config.patch
 
 # Removes the "-g" option from "pydoc", for some reason; I believe
 # (dmalcolm 2010-01-29) that this was introduced in this change:
@@ -268,11 +268,6 @@ Patch54: python-2.6.4-setup-db48.patch
 # for 2.7rc1 by dmalcolm:
 Patch55: python-2.7rc1-dtrace.patch
 
-# Backported fix from upstream for regression in ConfigParse's handling
-# of None values
-# http://bugs.python.org/issue7005#msg115417
-Patch56: python-2.7-r84443-cfgparse.patch
-
 # "lib64 patches"
 # This patch seems to be associated with bug 122304, which was
 #  http://sourceforge.net/tracker/?func=detail&atid=105470&aid=931848&group_id=5470
@@ -292,26 +287,13 @@ Patch101: python-2.3.4-lib64-regex.patch
 # and add the /usr/lib64/pythonMAJOR.MINOR/site-packages to sitedirs, in front of
 # /usr/lib/pythonMAJOR.MINOR/site-packages
 # Not upstream
-Patch102: python-2.7rc1-lib64.patch
+Patch102: python-2.7.1-lib64.patch
 
 # Python 2.7 split out much of the path-handling from distutils/sysconfig.py to
 # a new sysconfig.py (in r77704).
 # We need to make equivalent changes to that new file to ensure that the stdlib
 # and platform-specific code go to /usr/lib64 not /usr/lib, on 64-bit archs:
 Patch103: python-2.7-lib64-sysconfig.patch
-
-# rhbz#488396: rework the ctypes module to use ffi_closure_alloc and
-# ffi_closure_free, rather than malloc_closure.c, since the latter tries to
-# mmap pages with PROT_READ | PROT_WRITE | PROT_EXEC, which SELinux frowns upon.
-# 
-# Patch sent upstream as http://bugs.python.org/issue5504 which also contains
-# a rebasing of the upstream copy of libffi to one containing the
-# memory-management hooks. 
-#
-# This is the same as that patch, but without the rebasing of libffi
-# (since we use the system copy of libffi), and rebased against 2.7 (which
-# has had a whitespace cleanup):
-Patch110: python-2.7rc1-ctypes-noexecmem.patch
 
 # Patch the Makefile.pre.in so that the generated Makefile doesn't try to build
 # a libpythonMAJOR.MINOR.a (bug 550692):
@@ -393,11 +375,6 @@ Patch114: python-2.7rc1-statvfs-f_flag-constants.patch
 # (rhbz:461419; patch sent upstream as http://bugs.python.org/issue7425 )
 Patch115: make-pydoc-more-robust-001.patch
 
-# Fix an incompatibility between pyexpat and the system expat-2.0.1 that led to
-# a segfault running test_pyexpat.py (rhbz:583931)
-# Sent upstream as http://bugs.python.org/issue9054
-Patch119: python-2.6.5-fix-expat-issue9054.patch
-
 # Upstream r79310 removed the "Modules" directory from sys.path when Python is
 # running from the build directory on POSIX to fix a unit test (issue #8205).
 # This seems to have broken the compileall.py done in "make install": it cannot
@@ -420,11 +397,6 @@ Patch121: python-2.7rc2-r79310.patch
 # Not yet sent upstream:
 Patch122: python-2.7-fix-parallel-make.patch
 
-# Fix traceback in 2to3 on "from itertools import *"
-# This is http://bugs.python.org/issue8892 (see also rhbz#600036)
-# Cherrypicked from r82530 upstream:
-Patch123: python-2.7-fix-2to3-itertools-import-star.patch
-
 # test_commmands fails on SELinux systems due to a change in the output
 # of "ls" (http://bugs.python.org/issue7108)
 Patch124: fix-test_commands-expected-ls-output-issue7108.patch
@@ -443,6 +415,12 @@ Patch126: fix-dbm_contains-on-64bit-bigendian.patch
 # Fix test_structmember on big-endian 64-bit
 # Sent upstream as http://bugs.python.org/issue9960
 Patch127: fix-test_structmember-on-64bit-bigendian.patch
+
+# 2.7.1 (in r84230) added a test to test_abc which fails if python is
+# configured with COUNT_ALLOCS, which is the case for our debug build
+# (the COUNT_ALLOCS instrumentation keeps "C" alive).
+# Not yet sent upstream
+Patch128: python-2.7.1-fix_test_abc_with_COUNT_ALLOCS.patch
 
 # This is the generated patch to "configure"; see the description of
 #   %{regenerate_autotooling_patch}
@@ -672,10 +650,6 @@ rm -r Modules/zlib || exit 1
 %patch55 -p1 -b .systemtap
 %endif
 
-%patch56 -p0 -b .cfgparse
-
-%patch110 -p1 -b .selinux
-
 %patch111 -p1 -b .no-static-lib
 
 %patch112 -p1 -b .debug-build
@@ -686,16 +660,13 @@ rm -r Modules/zlib || exit 1
 
 %patch115 -p0
 
-%patch119 -p0 -b .fix-expat-issue9054
 %patch121 -p0 -R
 %patch122 -p1 -b .fix-parallel-make
-pushd Lib
-%patch123 -p0
-popd
 %patch124 -p1
 %patch125 -p1 -b .less-verbose-COUNT_ALLOCS
 %patch126 -p0 -b .fix-dbm_contains-on-64bit-bigendian
 %patch127 -p0 -b .fix-test_structmember-on-64bit-bigendian
+%patch128 -p1
 
 # This shouldn't be necesarry, but is right now (2.2a3)
 find -name "*~" |xargs rm -f
@@ -1356,7 +1327,6 @@ rm -fr %{buildroot}
 %{dynload_dir}/_sqlite3.so
 %{dynload_dir}/_ssl.so
 %{dynload_dir}/_struct.so
-%{dynload_dir}/_weakref.so
 %{dynload_dir}/arraymodule.so
 %{dynload_dir}/audioop.so
 %{dynload_dir}/binascii.so
@@ -1556,7 +1526,6 @@ rm -fr %{buildroot}
 %{dynload_dir}/_sqlite3_d.so
 %{dynload_dir}/_ssl_d.so
 %{dynload_dir}/_struct_d.so
-%{dynload_dir}/_weakref_d.so
 %{dynload_dir}/arraymodule_d.so
 %{dynload_dir}/audioop_d.so
 %{dynload_dir}/binascii_d.so
@@ -1642,6 +1611,13 @@ rm -fr %{buildroot}
 # payload file would be unpackaged)
 
 %changelog
+* Thu Dec 23 2010 David Malcolm <dmalcolm@redhat.com> - 2.7.1-1
+- 2.7.1, reworking patch 0 (config), patch 102 (lib64); drop upstream
+patch 56 (cfgparse), patch 110 (ctypes/SELinux/noexecmem), patch 119 (expat
+compat), patch 123 (2to3 on "from itertools import *")
+- fix test_abc's test_cache_leak in the debug build (patch 128)
+- drop _weakref.so from manifest (_weakref became a core module in r84230)
+
 * Mon Sep 27 2010 David Malcolm <dmalcolm@redhat.com> - 2.7-12
 - fix test_structmember on 64bit-bigendian (patch 127)
 
