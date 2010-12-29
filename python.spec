@@ -1618,6 +1618,9 @@ compat), patch 123 (2to3 on "from itertools import *")
 - fix test_abc's test_cache_leak in the debug build (patch 128)
 - drop _weakref.so from manifest (_weakref became a core module in r84230)
 
+* Wed Sep 29 2010 jkeating - 2.7-13
+- Rebuilt for gcc bug 634757
+
 * Mon Sep 27 2010 David Malcolm <dmalcolm@redhat.com> - 2.7-12
 - fix test_structmember on 64bit-bigendian (patch 127)
 
