@@ -43,10 +43,10 @@
 %global with_systemtap 1
 
 # some arches dont have valgrind so we need to disable its support on them
-%ifarch %{sparc} s390 s390x
-%global with_valgrind 0
-%else
+%ifarch %{ix86} x86_64 ppc ppc64 s390x
 %global with_valgrind 1
+%else
+%global with_valgrind 0
 %endif
 
 # Some of the files below /usr/lib/pythonMAJOR.MINOR/test  (e.g. bad_coding.py)
