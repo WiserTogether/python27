@@ -94,7 +94,7 @@ Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 # Remember to also rebase python-docs when changing this:
 Version: 2.7.1
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: Python
 Group: Development/Languages
 Requires: %{python}-libs%{?_isa} = %{version}-%{release}
@@ -422,6 +422,11 @@ Patch127: fix-test_structmember-on-64bit-bigendian.patch
 # Not yet sent upstream
 Patch128: python-2.7.1-fix_test_abc_with_COUNT_ALLOCS.patch
 
+# Use the correct preprocessor definition to detect ppc:
+# See http://bugs.python.org/issue10655 and rhbz#661510
+Patch130: python-3.2b2-fix-ppc-debug-build.patch
+
+
 # This is the generated patch to "configure"; see the description of
 #   %{regenerate_autotooling_patch}
 # above:
@@ -667,6 +672,7 @@ rm -r Modules/zlib || exit 1
 %patch126 -p0 -b .fix-dbm_contains-on-64bit-bigendian
 %patch127 -p0 -b .fix-test_structmember-on-64bit-bigendian
 %patch128 -p1
+%patch130 -p1
 
 # This shouldn't be necesarry, but is right now (2.2a3)
 find -name "*~" |xargs rm -f
@@ -1611,6 +1617,9 @@ rm -fr %{buildroot}
 # payload file would be unpackaged)
 
 %changelog
+* Thu Jan  6 2011 David Malcolm <dmalcolm@redhat.com> - 2.7.1-2
+- fix the ppc build of the debug configuration (patch 130; rhbz#661510)
+
 * Thu Dec 23 2010 David Malcolm <dmalcolm@redhat.com> - 2.7.1-1
 - 2.7.1, reworking patch 0 (config), patch 102 (lib64); drop upstream
 patch 56 (cfgparse), patch 110 (ctypes/SELinux/noexecmem), patch 119 (expat
