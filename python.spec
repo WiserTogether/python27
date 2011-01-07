@@ -94,19 +94,13 @@ Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 # Remember to also rebase python-docs when changing this:
 Version: 2.7.1
-Release: 3%{?dist}
+Release: 4%{?dist}
 License: Python
 Group: Development/Languages
 Requires: %{python}-libs%{?_isa} = %{version}-%{release}
 Provides: python-abi = %{pybasever}
 Provides: python(abi) = %{pybasever}
 Source: http://www.python.org/ftp/python/%{version}/Python-%{version}.tar.bz2
-
-# python-argparse is part of python as of version 2.7
-# drop this Provides/Obsoletes in F17
-Provides:   python-argparse = %{version}-%{release}
-Obsoletes:  python-argparse < 1.1-3
-
 
 # Work around bug 562906 until it's fixed in rpm-build by providing a fixed
 # version of pythondeps.sh:
@@ -451,6 +445,11 @@ Obsoletes: python-hashlib < 20081120
 Provides: python-hashlib = 20081120
 Obsoletes: python-uuid < 1.31
 Provides: python-uuid = 1.31
+
+# python-argparse is part of python as of version 2.7
+# drop this Provides in F17
+# (having Obsoletes here caused problems with multilib; see rhbz#667984)
+Provides:   python-argparse = %{version}-%{release}
 %endif
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -1622,6 +1621,10 @@ rm -fr %{buildroot}
 # payload file would be unpackaged)
 
 %changelog
+* Fri Jan  7 2011 David Malcolm <dmalcolm@redhat.com> - 2.7.1-4
+- for now, drop "obsoletes" of python-argparse, since it interracts badly with
+multilib (rhbz#667984)
+
 * Fri Jan  7 2011 Thomas Spura <tomspur@fedoraproject.org> - 2.7.1-3
 - obsolete/provide python-argparse (new in 2.7)
 
