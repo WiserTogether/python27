@@ -94,7 +94,7 @@ Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 # Remember to also rebase python-docs when changing this:
 Version: 2.7.1
-Release: 4%{?dist}
+Release: 5%{?dist}
 License: Python
 Group: Development/Languages
 Requires: %{python}-libs%{?_isa} = %{version}-%{release}
@@ -760,7 +760,7 @@ BuildPython() {
   $ExtraConfigArgs \
   %{nil}
 
-make OPT="$CFLAGS" %{?_smp_mflags}
+make EXTRA_CFLAGS="$CFLAGS" %{?_smp_mflags}
 
 # We need to fix shebang lines across the full source tree.
 #
@@ -780,7 +780,7 @@ fi
 # Rebuild with new python
 # We need a link to a versioned python in the build directory
 ln -s $BinaryName $SymlinkName
-LD_LIBRARY_PATH="$topdir/$ConfDir" PATH=$PATH:$topdir/$ConfDir make -s OPT="$CFLAGS" %{?_smp_mflags}
+LD_LIBRARY_PATH="$topdir/$ConfDir" PATH=$PATH:$topdir/$ConfDir make -s EXTRA_CFLAGS="$CFLAGS" %{?_smp_mflags}
 
   popd
   echo FINISHED: BUILD OF PYTHON FOR CONFIGURATION: $ConfDir
@@ -1621,6 +1621,10 @@ rm -fr %{buildroot}
 # payload file would be unpackaged)
 
 %changelog
+* Fri Jan  21 2011 Toshio Kuratomi <toshio@fedoraproject.org> - 2.7.1-5
+- Switch from setting OPT to setting EXTRA_CFLAGS so we don't overwrite the
+  DNDEBUG flag
+
 * Fri Jan  7 2011 David Malcolm <dmalcolm@redhat.com> - 2.7.1-4
 - for now, drop "obsoletes" of python-argparse, since it interracts badly with
 multilib (rhbz#667984)
