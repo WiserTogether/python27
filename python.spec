@@ -94,7 +94,7 @@ Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 # Remember to also rebase python-docs when changing this:
 Version: 2.7.1
-Release: 5%{?dist}
+Release: 6%{?dist}
 License: Python
 Group: Development/Languages
 Requires: %{python}-libs%{?_isa} = %{version}-%{release}
@@ -1621,6 +1621,9 @@ rm -fr %{buildroot}
 # payload file would be unpackaged)
 
 %changelog
+* Wed Feb 09 2011 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2.7.1-6
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_15_Mass_Rebuild
+
 * Fri Jan  21 2011 Toshio Kuratomi <toshio@fedoraproject.org> - 2.7.1-5
 - Switch from setting OPT to setting EXTRA_CFLAGS so we don't overwrite the
   DNDEBUG flag
