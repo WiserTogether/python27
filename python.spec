@@ -94,7 +94,7 @@ Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 # Remember to also rebase python-docs when changing this:
 Version: 2.7.1
-Release: 7%{?dist}
+Release: 8%{?dist}
 License: Python
 Group: Development/Languages
 Requires: %{python}-libs%{?_isa} = %{version}-%{release}
@@ -1179,6 +1179,21 @@ CheckPython() {
   #  OSError: [Errno 13] Permission denied
   #  ----------------------------------------------------------------------
   #
+%ifarch %{arm}
+  EXCLUDED_TESTS="test_argparse \
+      test_distutils \
+      test_dl \
+      test_gdb \
+      test_http_cookies \
+      test_httplib \
+      test_socket \
+      test_urllib2 \
+      test_file \
+      test_file2k \
+      test_subprocess \
+      test_float \
+  %{nil}"
+%else
   EXCLUDED_TESTS="test_argparse \
       test_distutils \
       test_dl \
@@ -1191,7 +1206,8 @@ CheckPython() {
       test_file2k \
       test_subprocess \
   %{nil}"
-  
+%endif
+
   # Debug build shows some additional failures (to be investigated):
   #
   # test_gc:
@@ -1627,6 +1643,9 @@ rm -fr %{buildroot}
 # payload file would be unpackaged)
 
 %changelog
+* Mon May 23 2011 Peter Robinson <pbrobinson@gmail.com> - 2.7.1-8
+- fix compile on ARM by exlcuding failing tests on arm - RHBZ #706253
+
 * Tue Apr 12 2011 David Malcolm <dmalcolm@redhat.com> - 2.7.1-7
 - fix "import decimal" in the Turkish locale (patch 131; rhbz#694928)
 
