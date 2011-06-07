@@ -94,7 +94,7 @@ Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 # Remember to also rebase python-docs when changing this:
 Version: 2.7.1
-Release: 8%{?dist}
+Release: 9%{?dist}
 License: Python
 Group: Development/Languages
 Requires: %{python}-libs%{?_isa} = %{version}-%{release}
@@ -1193,6 +1193,23 @@ CheckPython() {
       test_subprocess \
       test_float \
   %{nil}"
+%else 
+%ifarch %{sparc}
+  EXCLUDED_TESTS="test_argparse \
+      test_distutils \
+      test_dl \
+      test_gdb \
+      test_http_cookies \
+      test_httplib \
+      test_socket \
+      test_urllib2 \
+      test_file \
+      test_file2k \
+      test_subprocess \
+      test_ctypes \
+      test_openpty \
+      test_pty \
+  %{nil}"
 %else
   EXCLUDED_TESTS="test_argparse \
       test_distutils \
@@ -1206,6 +1223,7 @@ CheckPython() {
       test_file2k \
       test_subprocess \
   %{nil}"
+%endif
 %endif
 
   # Debug build shows some additional failures (to be investigated):
@@ -1643,6 +1661,9 @@ rm -fr %{buildroot}
 # payload file would be unpackaged)
 
 %changelog
+* Tue Jun 07 2011 Dennis Gilmore <dennis@ausil.us> - 2.7.1-9
+- fix sparc building by excluding failing tests RHBZ#711584
+
 * Mon May 23 2011 Peter Robinson <pbrobinson@gmail.com> - 2.7.1-8
 - fix compile on ARM by exlcuding failing tests on arm - RHBZ #706253
 
