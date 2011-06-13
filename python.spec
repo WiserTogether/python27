@@ -94,7 +94,7 @@ Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 # Remember to also rebase python-docs when changing this:
 Version: 2.7.2
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: Python
 Group: Development/Languages
 Requires: %{python}-libs%{?_isa} = %{version}-%{release}
@@ -1156,7 +1156,6 @@ CheckPython() {
   #  OSError: [Errno 13] Permission denied
   #  ----------------------------------------------------------------------
   #
-%ifarch %{arm}
   EXCLUDED_TESTS="test_argparse \
       test_distutils \
       test_dl \
@@ -1168,38 +1167,26 @@ CheckPython() {
       test_file \
       test_file2k \
       test_subprocess \
+  %{nil}"
+  # arch-specific exclusions follow
+%ifarch %{arm}
+  EXCLUDED_TESTS="$EXCLUDED_TESTS \
       test_float \
   %{nil}"
 %else 
 %ifarch %{sparc}
-  EXCLUDED_TESTS="test_argparse \
-      test_distutils \
-      test_dl \
-      test_gdb \
-      test_http_cookies \
-      test_httplib \
-      test_socket \
-      test_urllib2 \
-      test_file \
-      test_file2k \
-      test_subprocess \
+  EXCLUDED_TESTS="$EXCLUDED_TESTS \
       test_ctypes \
       test_openpty \
       test_pty \
   %{nil}"
 %else
-  EXCLUDED_TESTS="test_argparse \
-      test_distutils \
-      test_dl \
-      test_gdb \
-      test_http_cookies \
-      test_httplib \
-      test_socket \
-      test_urllib2 \
-      test_file \
-      test_file2k \
-      test_subprocess \
+%ifarch s390 s390x
+  EXCLUDED_TESTS="$EXCLUDED_TESTS \
+      test_openpty \
+      test_pty \
   %{nil}"
+%endif
 %endif
 %endif
 
@@ -1638,6 +1625,9 @@ rm -fr %{buildroot}
 # payload file would be unpackaged)
 
 %changelog
+* Mon Jun 13 2011 Dan Horák <dan[at]danny.cz> - 2.7.2-2
+- add s390(x) excluded tests
+
 * Mon Jun 13 2011 David Malcolm <dmalcolm@redhat.com> - 2.7.2-1
 - 2.7.2; drop upstreamed patches: patch 122 (parallel make fix), patch 124
 (test_commands and SELinux), patch 130 (ppc preprocessor macro in debug
@@ -1648,7 +1638,7 @@ intermediates patch (patch 300)
 - fix sparc building by excluding failing tests RHBZ#711584
 
 * Mon May 23 2011 Peter Robinson <pbrobinson@gmail.com> - 2.7.1-8
-- fix compile on ARM by exlcuding failing tests on arm - RHBZ #706253
+- fix compile on ARM by excluding failing tests on arm - RHBZ #706253
 
 * Tue Apr 12 2011 David Malcolm <dmalcolm@redhat.com> - 2.7.1-7
 - fix "import decimal" in the Turkish locale (patch 131; rhbz#694928)
