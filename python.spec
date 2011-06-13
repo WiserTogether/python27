@@ -93,8 +93,8 @@
 Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 # Remember to also rebase python-docs when changing this:
-Version: 2.7.1
-Release: 9%{?dist}
+Version: 2.7.2
+Release: 1%{?dist}
 License: Python
 Group: Development/Languages
 Requires: %{python}-libs%{?_isa} = %{version}-%{release}
@@ -390,16 +390,6 @@ Patch115: make-pydoc-more-robust-001.patch
 # For now, revert this patch:
 Patch121: python-2.7rc2-r79310.patch
 
-# Fix race condition in parallel make that could lead to graminit.c failing
-# to compile, or linker errors with "undefined reference to
-# `_PyParser_Grammar'":
-# Not yet sent upstream:
-Patch122: python-2.7-fix-parallel-make.patch
-
-# test_commmands fails on SELinux systems due to a change in the output
-# of "ls" (http://bugs.python.org/issue7108)
-Patch124: fix-test_commands-expected-ls-output-issue7108.patch
-
 # COUNT_ALLOCS is useful for debugging, but the upstream behaviour of always
 # emitting debug info to stdout on exit is too verbose and makes it harder to
 # use the debug build.  Add a "PYTHONDUMPCOUNTS" environment variable which
@@ -420,15 +410,6 @@ Patch127: fix-test_structmember-on-64bit-bigendian.patch
 # (the COUNT_ALLOCS instrumentation keeps "C" alive).
 # Not yet sent upstream
 Patch128: python-2.7.1-fix_test_abc_with_COUNT_ALLOCS.patch
-
-# Use the correct preprocessor definition to detect ppc:
-# See http://bugs.python.org/issue10655 and rhbz#661510
-Patch130: python-3.2b2-fix-ppc-debug-build.patch
-
-# Fix "import decimal" in the Turkish locale (rhbz#694928)
-# Based on upstream commit:
-#   http://hg.python.org/cpython/rev/b4b1f557d563/
-Patch131: python-2.7.1-fix-decimal-in-turkish-locale.patch
 
 
 # This is the generated patch to "configure"; see the description of
@@ -675,14 +656,10 @@ rm -r Modules/zlib || exit 1
 %patch115 -p0
 
 %patch121 -p0 -R
-%patch122 -p1 -b .fix-parallel-make
-%patch124 -p1
 %patch125 -p1 -b .less-verbose-COUNT_ALLOCS
 %patch126 -p0 -b .fix-dbm_contains-on-64bit-bigendian
 %patch127 -p0 -b .fix-test_structmember-on-64bit-bigendian
 %patch128 -p1
-%patch130 -p1
-%patch131 -p1
 
 # This shouldn't be necesarry, but is right now (2.2a3)
 find -name "*~" |xargs rm -f
@@ -1661,6 +1638,12 @@ rm -fr %{buildroot}
 # payload file would be unpackaged)
 
 %changelog
+* Mon Jun 13 2011 David Malcolm <dmalcolm@redhat.com> - 2.7.2-1
+- 2.7.2; drop upstreamed patches: patch 122 (parallel make fix), patch 124
+(test_commands and SELinux), patch 130 (ppc preprocessor macro in debug
+build); patch 131 (decimal in Turkish locale); regenerate the autotool
+intermediates patch (patch 300)
+
 * Tue Jun 07 2011 Dennis Gilmore <dennis@ausil.us> - 2.7.1-9
 - fix sparc building by excluding failing tests RHBZ#711584
 
