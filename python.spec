@@ -94,7 +94,7 @@ Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 # Remember to also rebase python-docs when changing this:
 Version: 2.7.2
-Release: 2%{?dist}
+Release: 3%{?dist}
 License: Python
 Group: Development/Languages
 Requires: %{python}-libs%{?_isa} = %{version}-%{release}
@@ -1138,6 +1138,34 @@ CheckPython() {
   #  AssertionError: IOError not raised
   #  ----------------------------------------------------------------------
   #
+  # test_openpty:
+  #   Fails in Koji, possibly due to a mock issue (rhbz#714627)
+  #  ======================================================================
+  #  ERROR: test (test.test_openpty.OpenptyTest)
+  #  ----------------------------------------------------------------------
+  #  Traceback (most recent call last):
+  #    File "/builddir/build/BUILD/Python-2.7.2/Lib/test/test_openpty.py", line 12, in test
+  #      master, slave = os.openpty()
+  #  OSError: [Errno 2] No such file or directory
+  #  ----------------------------------------------------------------------
+  #
+  # test_pty:
+  #   Fails in Koji, possibly due to a mock issue (rhbz#714627)
+  #  ======================================================================
+  #  ERROR: test_fork (test.test_pty.PtyTest)
+  #  ----------------------------------------------------------------------
+  #  Traceback (most recent call last):
+  #    File "/builddir/build/BUILD/Python-2.7.2/Lib/test/test_pty.py", line 114, in test_fork
+  #      pid, master_fd = pty.fork()
+  #    File "/builddir/build/BUILD/Python-2.7.2/Lib/pty.py", line 107, in fork
+  #      master_fd, slave_fd = openpty()
+  #    File "/builddir/build/BUILD/Python-2.7.2/Lib/pty.py", line 29, in openpty
+  #      master_fd, slave_name = _open_terminal()
+  #    File "/builddir/build/BUILD/Python-2.7.2/Lib/pty.py", line 70, in _open_terminal
+  #      raise os.error, 'out of pty devices'
+  #  OSError: out of pty devices
+  #  ----------------------------------------------------------------------
+  #
   # test_subprocess:
   #    Fails in Koji with:
   #  ======================================================================
@@ -1166,28 +1194,55 @@ CheckPython() {
       test_urllib2 \
       test_file \
       test_file2k \
+      test_openpty \
+      test_pty \
       test_subprocess \
   %{nil}"
-  # arch-specific exclusions follow
+
+  #
+  # Additional architecture-specific test exclusions:
+  #
+
+  # ARM-specific test exclusions (see rhbz#706253):
+  # test_float:
+  #   This is upstream bug: http://bugs.python.org/issue8265
+  #  ======================================================================
+  #  FAIL: test_from_hex (test.test_float.HexFloatTestCase)
+  #  ----------------------------------------------------------------------
+  #  Traceback (most recent call last):
+  #    File "/builddir/build/BUILD/Python-2.7/Lib/test/test_float.py", line 1204, in test_from_hex
+  #      self.identical(fromHex('0x0.ffffffffffffd6p-1022'), MIN-3*TINY)
+  #    File "/builddir/build/BUILD/Python-2.7/Lib/test/test_float.py", line 914, in identical
+  #      self.fail('%r not identical to %r' % (x, y))
+  #  AssertionError: 2.2250738585072e-308 not identical to 2.2250738585071984e-308
+  #  ----------------------------------------------------------------------
 %ifarch %{arm}
   EXCLUDED_TESTS="$EXCLUDED_TESTS \
       test_float \
   %{nil}"
-%else 
+%endif
+
+
+  # Sparc-specific test exclusions (see rhbz#711584):
+  # test_ctypes:
+  #   This is upstream bug: http://bugs.python.org/issue8314
+  #   which appears to be a libffi bug
+  #  ======================================================================
+  #  FAIL: test_ulonglong (ctypes.test.test_callbacks.Callbacks)
+  #  ----------------------------------------------------------------------
+  #  Traceback (most recent call last):
+  #    File "/builddir/build/BUILD/Python-2.7.1/Lib/ctypes/test/test_callbacks.py",
+  #  line 72, in test_ulonglong
+  #      self.check_type(c_ulonglong, 10955412242170339782)
+  #    File "/builddir/build/BUILD/Python-2.7.1/Lib/ctypes/test/test_callbacks.py",
+  #  line 31, in check_type
+  #      self.assertEqual(result, arg)
+  #  AssertionError: 10955412241121898851L != 10955412242170339782L
+  #  ----------------------------------------------------------------------
 %ifarch %{sparc}
   EXCLUDED_TESTS="$EXCLUDED_TESTS \
       test_ctypes \
-      test_openpty \
-      test_pty \
   %{nil}"
-%else
-%ifarch s390 s390x
-  EXCLUDED_TESTS="$EXCLUDED_TESTS \
-      test_openpty \
-      test_pty \
-  %{nil}"
-%endif
-%endif
 %endif
 
   # Debug build shows some additional failures (to be investigated):
@@ -1625,6 +1680,10 @@ rm -fr %{buildroot}
 # payload file would be unpackaged)
 
 %changelog
+* Wed Jun 22 2011 David Malcolm <dmalcolm@redhat.com> - 2.7.2-3
+- reorganize test exclusions (test_openpty and test_pty seem to be failing on
+every arch, not just the explicitly-listed ones)
+
 * Mon Jun 13 2011 Dan Horák <dan[at]danny.cz> - 2.7.2-2
 - add s390(x) excluded tests
 
