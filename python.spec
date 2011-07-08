@@ -1,3 +1,7 @@
+# ======================================================
+# Conditionals and other variables controlling the build
+# ======================================================
+
 %{!?__python_ver:%global __python_ver EMPTY}
 #global __python_ver 27
 %global unicode ucs4
@@ -90,16 +94,71 @@
 # the rest of the build
 %global regenerate_autotooling_patch 0
 
+
+# ==================
+# Top-level metadata
+# ==================
 Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 # Remember to also rebase python-docs when changing this:
 Version: 2.7.2
-Release: 3%{?dist}
+Release: 4%{?dist}
 License: Python
 Group: Development/Languages
 Requires: %{python}-libs%{?_isa} = %{version}-%{release}
 Provides: python-abi = %{pybasever}
 Provides: python(abi) = %{pybasever}
+
+
+# =======================
+# Build-time requirements
+# =======================
+
+# (keep this list alphabetized)
+
+BuildRequires: autoconf
+BuildRequires: bzip2
+BuildRequires: bzip2-devel
+BuildRequires: db4-devel >= 4.8
+BuildRequires: expat-devel
+BuildRequires: findutils
+BuildRequires: gcc-c++
+BuildRequires: gdbm-devel
+BuildRequires: glibc-devel
+BuildRequires: gmp-devel
+BuildRequires: libffi-devel
+BuildRequires: libGL-devel
+BuildRequires: libX11-devel
+BuildRequires: ncurses-devel
+BuildRequires: openssl-devel
+BuildRequires: pkgconfig
+BuildRequires: readline-devel
+BuildRequires: sqlite-devel
+
+%if 0%{?with_systemtap}
+BuildRequires: systemtap-sdt-devel
+# (this introduces a circular dependency, in that systemtap-sdt-devel's
+# /usr/bin/dtrace is a python script)
+%global tapsetdir      /usr/share/systemtap/tapset
+%endif # with_systemtap
+
+BuildRequires: tar
+BuildRequires: tcl-devel
+BuildRequires: tix-devel
+BuildRequires: tk-devel
+
+%if 0%{?with_valgrind}
+BuildRequires: valgrind-devel
+%endif
+
+BuildRequires: zlib-devel
+
+
+
+# =======================
+# Source code and patches
+# =======================
+
 Source: http://www.python.org/ftp/python/%{version}/Python-%{version}.tar.bz2
 
 # Work around bug 562906 until it's fixed in rpm-build by providing a fixed
@@ -417,6 +476,10 @@ Patch128: python-2.7.1-fix_test_abc_with_COUNT_ALLOCS.patch
 # above:
 Patch300: python-2.7-autotool-intermediates.patch
 
+# ======================================================
+# Additional metadata, and subpackages
+# ======================================================
+
 %if %{main_python}
 Obsoletes: Distutils
 Provides: Distutils
@@ -439,22 +502,6 @@ Provides:   python-argparse = %{version}-%{release}
 %endif
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-BuildRequires: readline-devel, openssl-devel, gmp-devel
-BuildRequires: ncurses-devel, gdbm-devel, zlib-devel, expat-devel
-BuildRequires: libGL-devel tk tix gcc-c++ libX11-devel glibc-devel
-BuildRequires: bzip2 tar findutils pkgconfig tcl-devel tk-devel
-BuildRequires: tix-devel bzip2-devel sqlite-devel
-BuildRequires: autoconf
-BuildRequires: db4-devel >= 4.8
-BuildRequires: libffi-devel
-%if 0%{?with_valgrind}
-BuildRequires: valgrind-devel
-%endif
-
-%if 0%{?with_systemtap}
-BuildRequires: systemtap-sdt-devel
-%global tapsetdir      /usr/share/systemtap/tapset
-%endif
 
 URL: http://www.python.org/
 
@@ -531,7 +578,6 @@ color editor (pynche), and a python gettext program (pygettext.py).
 %package -n %{tkinter}
 Summary: A graphical user interface for the Python scripting language
 Group: Development/Languages
-BuildRequires:  tcl, tk
 Requires: %{name} = %{version}-%{release}
 %if %{main_python}
 Obsoletes: tkinter2
@@ -592,6 +638,11 @@ It shares installation directories with the standard Python runtime, so that
 suffix ("foo_d.so" rather than "foo.so") so that each Python implementation can
 load its own extensions.
 %endif # with_debug_build
+
+
+# ======================================================
+# The prep phase of the build:
+# ======================================================
 
 %prep
 %setup -q -n Python-%{version}
@@ -669,6 +720,11 @@ find -name "*~" |xargs rm -f
 # We don't apply the patch if we're working towards regenerating it
 %patch300 -p0 -b .autotool-intermediates
 %endif
+
+
+# ======================================================
+# Configuring and building the code:
+# ======================================================
 
 %build
 topdir=$(pwd)
@@ -788,6 +844,11 @@ BuildPython optimized \
   python%{pybasever} \
   "" \
   true
+
+
+# ======================================================
+# Installing the built code:
+# ======================================================
 
 %install
 topdir=$(pwd)
@@ -1061,6 +1122,11 @@ sed \
    > %{buildroot}%{tapsetdir}/%{libpython_stp_debug}
 %endif # with_debug_build
 %endif # with_systemtap
+
+
+# ======================================================
+# Running the upstream test suite
+# ======================================================
 
 %check
 topdir=$(pwd)
@@ -1339,12 +1405,26 @@ CheckPython \
   optimized \
   python%{pybasever}
 
+# ======================================================
+# Cleaning up
+# ======================================================
+
 %clean
 rm -fr %{buildroot}
+
+
+# ======================================================
+# Scriptlets
+# ======================================================
 
 %post libs -p /sbin/ldconfig
 
 %postun libs -p /sbin/ldconfig
+
+
+# ======================================================
+# Manifests of the various subpackages
+# ======================================================
 
 %files
 %defattr(-, root, root, -)
@@ -1679,7 +1759,15 @@ rm -fr %{buildroot}
 # (if it doesn't, then the rpmbuild ought to fail since the debug-gdb.py 
 # payload file would be unpackaged)
 
+
+# ======================================================
+# Finally, the changelog:
+# ======================================================
+
 %changelog
+* Fri Jul  8 2011 David Malcolm <dmalcolm@redhat.com> - 2.7.2-4
+- cleanup of BuildRequires; add comment headings to specfile sections
+
 * Wed Jun 22 2011 David Malcolm <dmalcolm@redhat.com> - 2.7.2-3
 - reorganize test exclusions (test_openpty and test_pty seem to be failing on
 every arch, not just the explicitly-listed ones)
