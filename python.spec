@@ -102,7 +102,7 @@ Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 # Remember to also rebase python-docs when changing this:
 Version: 2.7.2
-Release: 4%{?dist}
+Release: 5%{?dist}
 License: Python
 Group: Development/Languages
 Requires: %{python}-libs%{?_isa} = %{version}-%{release}
@@ -179,6 +179,11 @@ Source4: systemtap-example.stp
 # Another example systemtap script that uses the tapset
 # Written by dmalcolm; not yet sent upstream
 Source5: pyfuntop.stp
+
+# Supply various useful macros for building python 2 modules:
+#  __python2, python2_sitelib, python2_sitearch, python2_version
+Source6: macros.python2
+
 
 # Modules/Setup.dist is ultimately used by the "makesetup" script to construct
 # the Makefile and config.c
@@ -1073,6 +1078,10 @@ sed -i -e "s/'pyconfig.h'/'%{_pyconfig_h}'/" \
   %{buildroot}%{pylibdir}/distutils/sysconfig.py \
   %{buildroot}%{pylibdir}/sysconfig.py
 
+# Install macros for rpm:
+mkdir -p %{buildroot}/%{_sysconfdir}/rpm
+install -m 644 %{SOURCE6} %{buildroot}/%{_sysconfdir}/rpm
+
 # Ensure that the curses module was linked against libncursesw.so, rather than
 # libncurses.so (bug 539917)
 ldd %{buildroot}/%{dynload_dir}/_curses*.so \
@@ -1587,6 +1596,7 @@ rm -fr %{buildroot}
 %endif
 %{_bindir}/python%{pybasever}-config
 %{_libdir}/libpython%{pybasever}.so
+%config(noreplace) %{_sysconfdir}/rpm/macros.python2
 
 %files tools
 %defattr(-,root,root,755)
@@ -1765,6 +1775,9 @@ rm -fr %{buildroot}
 # ======================================================
 
 %changelog
+* Thu Aug 18 2011 David Malcolm <dmalcolm@redhat.com> - 2.7.2-5
+- add rpm macros file (rhbz#731800)
+
 * Fri Jul  8 2011 David Malcolm <dmalcolm@redhat.com> - 2.7.2-4
 - cleanup of BuildRequires; add comment headings to specfile sections
 
