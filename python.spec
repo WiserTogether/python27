@@ -1431,9 +1431,6 @@ rm -fr %{buildroot}
 %postun libs -p /sbin/ldconfig
 
 
-# ======================================================
-# Manifests of the various subpackages
-# ======================================================
 
 %files
 %defattr(-, root, root, -)
