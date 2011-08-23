@@ -102,7 +102,7 @@ Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 # Remember to also rebase python-docs when changing this:
 Version: 2.7.2
-Release: 6%{?dist}
+Release: 7%{?dist}
 License: Python
 Group: Development/Languages
 Requires: %{python}-libs%{?_isa} = %{version}-%{release}
@@ -475,6 +475,10 @@ Patch127: fix-test_structmember-on-64bit-bigendian.patch
 # Not yet sent upstream
 Patch128: python-2.7.1-fix_test_abc_with_COUNT_ALLOCS.patch
 
+# Fix the --with-tsc option on ppc64, and rework it on 32-bit ppc to avoid
+# aliasing violations (rhbz#698726)
+# Not yet sent upstream
+Patch129: python-2.7.2-tsc-on-ppc.patch
 
 # This is the generated patch to "configure"; see the description of
 #   %{regenerate_autotooling_patch}
@@ -716,6 +720,7 @@ rm -r Modules/zlib || exit 1
 %patch126 -p0 -b .fix-dbm_contains-on-64bit-bigendian
 %patch127 -p0 -b .fix-test_structmember-on-64bit-bigendian
 %patch128 -p1
+%patch129 -p1 -b .tsc-on-ppc
 
 # This shouldn't be necesarry, but is right now (2.2a3)
 find -name "*~" |xargs rm -f
@@ -836,7 +841,7 @@ LD_LIBRARY_PATH="$topdir/$ConfDir" PATH=$PATH:$topdir/$ConfDir make -s EXTRA_CFL
 BuildPython debug \
   python-debug \
   python%{pybasever}-debug \
-%ifarch %{ix86} x86_64 ppc
+%ifarch %{ix86} x86_64 ppc ppc64
   "--with-pydebug --with-tsc --with-count-allocs --with-call-profile" \
 %else
   "--with-pydebug --with-count-allocs --with-call-profile" \
@@ -1772,6 +1777,10 @@ rm -fr %{buildroot}
 # ======================================================
 
 %changelog
+* Tue Aug 23 2011 David Malcolm <dmalcolm@redhat.com> - 2.7.2-7
+- re-enable and fix the --with-tsc option on ppc64, and rework it on 32-bit
+ppc to avoid aliasing violations (patch 129; rhbz#698726)
+
 * Tue Aug 23 2011 David Malcolm <dmalcolm@redhat.com> - 2.7.2-6
 - don't use --with-tsc on ppc64 debug builds (rhbz#698726)
 
