@@ -102,7 +102,7 @@ Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 # Remember to also rebase python-docs when changing this:
 Version: 2.7.2
-Release: 5%{?dist}
+Release: 6%{?dist}
 License: Python
 Group: Development/Languages
 Requires: %{python}-libs%{?_isa} = %{version}-%{release}
@@ -836,7 +836,7 @@ LD_LIBRARY_PATH="$topdir/$ConfDir" PATH=$PATH:$topdir/$ConfDir make -s EXTRA_CFL
 BuildPython debug \
   python-debug \
   python%{pybasever}-debug \
-%ifarch %{ix86} x86_64 ppc ppc64
+%ifarch %{ix86} x86_64 ppc
   "--with-pydebug --with-tsc --with-count-allocs --with-call-profile" \
 %else
   "--with-pydebug --with-count-allocs --with-call-profile" \
@@ -1772,6 +1772,9 @@ rm -fr %{buildroot}
 # ======================================================
 
 %changelog
+* Tue Aug 23 2011 David Malcolm <dmalcolm@redhat.com> - 2.7.2-6
+- don't use --with-tsc on ppc64 debug builds (rhbz#698726)
+
 * Thu Aug 18 2011 David Malcolm <dmalcolm@redhat.com> - 2.7.2-5
 - add rpm macros file (rhbz#731800)
 
