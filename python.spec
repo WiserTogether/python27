@@ -102,7 +102,7 @@ Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 # Remember to also rebase python-docs when changing this:
 Version: 2.7.2
-Release: 7%{?dist}
+Release: 8%{?dist}
 License: Python
 Group: Development/Languages
 Requires: %{python}-libs%{?_isa} = %{version}-%{release}
@@ -420,7 +420,9 @@ Patch111: python-2.7rc1-no-static-lib.patch
 #   * Similarly, we add DEBUG_SUFFIX within python-config and
 #  python$(VERSION)-config, so that the two configuration get different paths
 #  for these.
-
+#
+#  See also patch 130 below
+#
 Patch112: python-2.7rc1-debug-build.patch
 
 
@@ -479,6 +481,22 @@ Patch128: python-2.7.1-fix_test_abc_with_COUNT_ALLOCS.patch
 # aliasing violations (rhbz#698726)
 # Not yet sent upstream
 Patch129: python-2.7.2-tsc-on-ppc.patch
+
+# Add "--extension-suffix" option to python-config and python-debug-config
+# (rhbz#732808)
+#
+# This is adapted from 3.2's PEP-3149 support.
+#
+# Fedora's debug build has some non-standard features (see also patch 112
+# above), though largely shared with Debian/Ubuntu and Windows
+#
+# In particular, SO in the Makefile is currently always just ".so" for our
+# python 2 optimized builds, but for python 2 debug it should be '_d.so', to
+# distinguish the debug vs optimized ABI, following the pattern in the above
+# patch.
+#
+# Not yet sent upstream
+Patch130: python-2.7.2-add-extension-suffix-to-python-config.patch
 
 # This is the generated patch to "configure"; see the description of
 #   %{regenerate_autotooling_patch}
@@ -721,6 +739,7 @@ rm -r Modules/zlib || exit 1
 %patch127 -p0 -b .fix-test_structmember-on-64bit-bigendian
 %patch128 -p1
 %patch129 -p1 -b .tsc-on-ppc
+%patch130 -p1
 
 # This shouldn't be necesarry, but is right now (2.2a3)
 find -name "*~" |xargs rm -f
@@ -1777,6 +1796,9 @@ rm -fr %{buildroot}
 # ======================================================
 
 %changelog
+* Tue Aug 23 2011 David Malcolm <dmalcolm@redhat.com> - 2.7.2-8
+- add --extension-suffix option to python-config (patch 130; rhbz#732808)
+
 * Tue Aug 23 2011 David Malcolm <dmalcolm@redhat.com> - 2.7.2-7
 - re-enable and fix the --with-tsc option on ppc64, and rework it on 32-bit
 ppc to avoid aliasing violations (patch 129; rhbz#698726)
