@@ -102,7 +102,7 @@ Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 # Remember to also rebase python-docs when changing this:
 Version: 2.7.2
-Release: 8%{?dist}
+Release: 9%{?dist}
 License: Python
 Group: Development/Languages
 Requires: %{python}-libs%{?_isa} = %{version}-%{release}
@@ -498,6 +498,12 @@ Patch129: python-2.7.2-tsc-on-ppc.patch
 # Not yet sent upstream
 Patch130: python-2.7.2-add-extension-suffix-to-python-config.patch
 
+# The four tests in test_io built on top of check_interrupted_write_retry
+# fail when built in Koji, for ppc and ppc64; for some reason, the SIGALRM
+# handlers are never called, and the call to write runs to completion
+# (rhbz#732998)
+Patch131: python-2.7.2-disable-tests-in-test_io.patch
+
 # This is the generated patch to "configure"; see the description of
 #   %{regenerate_autotooling_patch}
 # above:
@@ -740,6 +746,10 @@ rm -r Modules/zlib || exit 1
 %patch128 -p1
 %patch129 -p1 -b .tsc-on-ppc
 %patch130 -p1
+
+%ifarch ppc ppc64
+%patch131 -p1
+%endif
 
 # This shouldn't be necesarry, but is right now (2.2a3)
 find -name "*~" |xargs rm -f
@@ -1409,7 +1419,7 @@ CheckPython() {
 
   pushd $ConfDir
 
-  EXTRATESTOPTS="--verbose3"
+  EXTRATESTOPTS="--verbose"
 
 %if 0%{?with_huntrleaks}
   # Try to detect reference leaks on debug builds.  By default this means
@@ -1796,6 +1806,10 @@ rm -fr %{buildroot}
 # ======================================================
 
 %changelog
+* Thu Sep  1 2011 David Malcolm <dmalcolm@redhat.com> - 2.7.2-9
+- run selftests with "--verbose"
+- disable parts of test_io on ppc (rhbz#732998)
+
 * Tue Aug 23 2011 David Malcolm <dmalcolm@redhat.com> - 2.7.2-8
 - add --extension-suffix option to python-config (patch 130; rhbz#732808)
 
