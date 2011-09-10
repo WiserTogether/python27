@@ -102,7 +102,7 @@ Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 # Remember to also rebase python-docs when changing this:
 Version: 2.7.2
-Release: 9%{?dist}
+Release: 10%{?dist}
 License: Python
 Group: Development/Languages
 Requires: %{python}-libs%{?_isa} = %{version}-%{release}
@@ -358,6 +358,10 @@ Patch102: python-2.7.1-lib64.patch
 # and platform-specific code go to /usr/lib64 not /usr/lib, on 64-bit archs:
 Patch103: python-2.7-lib64-sysconfig.patch
 
+# Only used when "%{_lib}" == "lib64"
+# Another lib64 fix, for distutils/tests/test_install.py; not upstream:
+Patch104: 00104-lib64-fix-for-test_install.patch
+
 # Patch the Makefile.pre.in so that the generated Makefile doesn't try to build
 # a libpythonMAJOR.MINOR.a (bug 550692):
 Patch111: python-2.7rc1-no-static-lib.patch
@@ -503,6 +507,75 @@ Patch130: python-2.7.2-add-extension-suffix-to-python-config.patch
 # handlers are never called, and the call to write runs to completion
 # (rhbz#732998)
 Patch131: python-2.7.2-disable-tests-in-test_io.patch
+
+# Add non-standard hooks to unittest for use in the "check" phase below, when
+# running selftests within the build:
+#   @unittest._skipInRpmBuild(reason)
+# for tests that hang or fail intermittently within the build environment, and:
+#   @unittest._expectedFailureInRpmBuild
+# for tests that always fail within the build environment
+#
+# The hooks only take effect if WITHIN_PYTHON_RPM_BUILD is set in the
+# environment, which we set manually in the appropriate portion of the "check"
+# phase below (and which potentially other python-* rpms could set, to reuse
+# these unittest hooks in their own "check" phases)
+Patch132: 00132-add-rpmbuild-hooks-to-unittest.patch
+
+# "dl" is deprecated, and test_dl doesn't work on 64-bit builds:
+Patch133: 00133-skip-test_dl.patch
+
+# Fix a failure in test_sys.py when configured with COUNT_ALLOCS enabled
+# Not yet sent upstream
+Patch134: 00134-fix-COUNT_ALLOCS-failure-in-test_sys.patch
+
+# Skip "test_callback_in_cycle_resurrection" in a debug build, where it fails:
+# Not yet sent upstream
+Patch135: 00135-skip-test-within-test_weakref-in-debug-build.patch
+
+# Some tests try to seek on sys.stdin, but don't work as expected when run
+# within Koji/mock; skip them within the rpm build:
+Patch136: 00136-skip-tests-of-seeking-stdin-in-rpmbuild.patch
+
+# Some tests within distutils fail when run in an rpmbuild:
+Patch137: 00137-skip-distutils-tests-that-fail-in-rpmbuild.patch
+
+# Fixup some tests within distutils to work with how debug builds are set up:
+Patch138: 00138-fix-distutils-tests-in-debug-build.patch
+
+# ARM-specific: skip known failure in test_float:
+#  http://bugs.python.org/issue8265 (rhbz#706253)
+Patch139: 00139-skip-test_float-known-failure-on-arm.patch
+
+# Sparc-specific: skip known failure in test_ctypes:
+#  http://bugs.python.org/issue8314 (rhbz#711584)
+# which appears to be a libffi bug
+Patch140: 00140-skip-test_ctypes-known-failure-on-sparc.patch
+
+# Fix test_gc's test_newinstance case when configured with COUNT_ALLOCS:
+Patch141: 00141-fix-test_gc_with_COUNT_ALLOCS.patch
+
+# Some pty tests fail when run in mock (rhbz#714627):
+Patch142: 00142-skip-failing-pty-tests-in-rpmbuild.patch
+
+# (New patches go here ^^^)
+#
+# When adding new patches to "python" and "python3" in Fedora 17 onwards,
+# please try to keep the patch numbers in-sync between the two specfiles:
+#
+#   - use the same patch number across both specfiles for conceptually-equivalent
+#     fixes, ideally with the same name
+#
+#   - when a patch is relevan to both specfiles, use the same introductory
+#     comment in both specfiles where possible (to improve "diff" output when
+#     comparing them)
+#
+#   - when a patch is only relevant for one of the two specfiles, leave a gap
+#     in the patch numbering in the other specfile, adding a comment when
+#     omitting a patch, both in the manifest section here, and in the "prep"
+#     phase below
+#
+# Hopefully this will make it easier to ensure that all relevant fixes are
+# applied to both versions.
 
 # This is the generated patch to "configure"; see the description of
 #   %{regenerate_autotooling_patch}
@@ -715,6 +788,7 @@ rm -r Modules/zlib || exit 1
 %if "%{_lib}" == "lib64"
 %patch102 -p1 -b .lib64
 %patch103 -p1 -b .lib64-sysconfig
+%patch104 -p1
 %endif
 
 %patch10 -p1 -b .binutils-no-dep
@@ -750,6 +824,22 @@ rm -r Modules/zlib || exit 1
 %ifarch ppc ppc64
 %patch131 -p1
 %endif
+
+%patch132 -p1
+%patch133 -p1
+%patch134 -p1
+%patch135 -p1
+%patch136 -p1
+%patch137 -p1
+%patch138 -p1
+%ifarch %{arm}
+%patch139 -p1
+%endif
+%ifarch %{sparc}
+%patch140 -p1
+%endif
+%patch141 -p1
+%patch142 -p1
 
 # This shouldn't be necesarry, but is right now (2.2a3)
 find -name "*~" |xargs rm -f
@@ -1180,240 +1270,6 @@ CheckPython() {
 
   echo STARTING: CHECKING OF PYTHON FOR CONFIGURATION: $ConfName
 
-  # Notes about disabled tests:
-  #
-  # test_argparse:
-  #   fails when in a full build, but works when run standalone; seems to be
-  #   http://bugs.python.org/issue9553 (needs COLUMNS=80 in the environment)
-  #
-  # test_distutils:
-  #   fails with
-  #      /usr/bin/ld: cannot find -lpython2.7
-  #   in: test_build_ext (distutils.tests.test_build_ext.BuildExtTestCase)
-  #       test_get_outputs (distutils.tests.test_build_ext.BuildExtTestCase)
-  #
-  # test_dl: 
-  #   fails with:
-  #     <type 'exceptions.SystemError'>: module dl requires sizeof(int) ==
-  #     sizeof(long) == sizeof(char*)
-  #   on 64-bit builds, and the module is deprecated in favour of ctypes
-  #
-  # test_gdb:
-  #   very dependent on GCC version
-  #
-  # test_http*
-  #   I've seen occasional hangs in some http tests when running the test suite
-  #   inside Koji on Python 3.  For that reason I exclude them
-  #
-  # test_socket.py:
-  #   Can fail on Koji build with:
-  #     gaierror: [Errno -3] Temporary failure in name resolution
-  #
-  # test_urllib2
-  #   Can fail on Koji build with:
-  #     gaierror: [Errno -3] Temporary failure in name resolution
-  #
-  #
-  ###########################################################################
-  # TO BE INVESTIGATED:
-  ###########################################################################
-  # 
-  # test_file:
-  #   Fails in Koji with:
-  #  ======================================================================
-  #  FAIL: testStdin (test.test_file.COtherFileTests)
-  #  ----------------------------------------------------------------------
-  #  Traceback (most recent call last):
-  #    File "/builddir/build/BUILD/Python-2.7/Lib/test/test_file.py", line 160, in testStdin
-  #      self.assertRaises((IOError, ValueError), sys.stdin.seek, -1)
-  #  AssertionError: (<type 'exceptions.IOError'>, <type 'exceptions.ValueError'>) not raised
-  #  ======================================================================
-  #  FAIL: testStdin (test.test_file.PyOtherFileTests)
-  #  ----------------------------------------------------------------------
-  #  Traceback (most recent call last):
-  #    File "/builddir/build/BUILD/Python-2.7/Lib/test/test_file.py", line 160, in testStdin
-  #      self.assertRaises((IOError, ValueError), sys.stdin.seek, -1)
-  #  AssertionError: (<type 'exceptions.IOError'>, <type 'exceptions.ValueError'>) not raised
-  #  ----------------------------------------------------------------------
-  #
-  # test_file2k:
-  #   Fails in Koji on with:
-  #  ======================================================================
-  #  FAIL: testStdin (test.test_file2k.OtherFileTests)
-  #  ----------------------------------------------------------------------
-  #  Traceback (most recent call last):
-  #    File "/builddir/build/BUILD/Python-2.7/Lib/test/test_file2k.py", line 211, in testStdin
-  #      self.assertRaises(IOError, sys.stdin.seek, -1)
-  #  AssertionError: IOError not raised
-  #  ----------------------------------------------------------------------
-  #
-  # test_openpty:
-  #   Fails in Koji, possibly due to a mock issue (rhbz#714627)
-  #  ======================================================================
-  #  ERROR: test (test.test_openpty.OpenptyTest)
-  #  ----------------------------------------------------------------------
-  #  Traceback (most recent call last):
-  #    File "/builddir/build/BUILD/Python-2.7.2/Lib/test/test_openpty.py", line 12, in test
-  #      master, slave = os.openpty()
-  #  OSError: [Errno 2] No such file or directory
-  #  ----------------------------------------------------------------------
-  #
-  # test_pty:
-  #   Fails in Koji, possibly due to a mock issue (rhbz#714627)
-  #  ======================================================================
-  #  ERROR: test_fork (test.test_pty.PtyTest)
-  #  ----------------------------------------------------------------------
-  #  Traceback (most recent call last):
-  #    File "/builddir/build/BUILD/Python-2.7.2/Lib/test/test_pty.py", line 114, in test_fork
-  #      pid, master_fd = pty.fork()
-  #    File "/builddir/build/BUILD/Python-2.7.2/Lib/pty.py", line 107, in fork
-  #      master_fd, slave_fd = openpty()
-  #    File "/builddir/build/BUILD/Python-2.7.2/Lib/pty.py", line 29, in openpty
-  #      master_fd, slave_name = _open_terminal()
-  #    File "/builddir/build/BUILD/Python-2.7.2/Lib/pty.py", line 70, in _open_terminal
-  #      raise os.error, 'out of pty devices'
-  #  OSError: out of pty devices
-  #  ----------------------------------------------------------------------
-  #
-  # test_subprocess:
-  #    Fails in Koji with:
-  #  ======================================================================
-  #  ERROR: test_leaking_fds_on_error (test.test_subprocess.ProcessTestCase)
-  #  ----------------------------------------------------------------------
-  #  Traceback (most recent call last):
-  #    File "/builddir/build/BUILD/Python-2.7/Lib/test/test_subprocess.py", line 534, in test_leaking_fds_on_error
-  #      raise c.exception
-  #  OSError: [Errno 13] Permission denied
-  #  ======================================================================
-  #  ERROR: test_leaking_fds_on_error (test.test_subprocess.ProcessTestCaseNoPoll)
-  #  ----------------------------------------------------------------------
-  #  Traceback (most recent call last):
-  #    File "/builddir/build/BUILD/Python-2.7/Lib/test/test_subprocess.py", line 534, in test_leaking_fds_on_error
-  #      raise c.exception
-  #  OSError: [Errno 13] Permission denied
-  #  ----------------------------------------------------------------------
-  #
-  EXCLUDED_TESTS="test_argparse \
-      test_distutils \
-      test_dl \
-      test_gdb \
-      test_http_cookies \
-      test_httplib \
-      test_socket \
-      test_urllib2 \
-      test_file \
-      test_file2k \
-      test_openpty \
-      test_pty \
-      test_subprocess \
-  %{nil}"
-
-  #
-  # Additional architecture-specific test exclusions:
-  #
-
-  # ARM-specific test exclusions (see rhbz#706253):
-  # test_float:
-  #   This is upstream bug: http://bugs.python.org/issue8265
-  #  ======================================================================
-  #  FAIL: test_from_hex (test.test_float.HexFloatTestCase)
-  #  ----------------------------------------------------------------------
-  #  Traceback (most recent call last):
-  #    File "/builddir/build/BUILD/Python-2.7/Lib/test/test_float.py", line 1204, in test_from_hex
-  #      self.identical(fromHex('0x0.ffffffffffffd6p-1022'), MIN-3*TINY)
-  #    File "/builddir/build/BUILD/Python-2.7/Lib/test/test_float.py", line 914, in identical
-  #      self.fail('%r not identical to %r' % (x, y))
-  #  AssertionError: 2.2250738585072e-308 not identical to 2.2250738585071984e-308
-  #  ----------------------------------------------------------------------
-%ifarch %{arm}
-  EXCLUDED_TESTS="$EXCLUDED_TESTS \
-      test_float \
-  %{nil}"
-%endif
-
-
-  # Sparc-specific test exclusions (see rhbz#711584):
-  # test_ctypes:
-  #   This is upstream bug: http://bugs.python.org/issue8314
-  #   which appears to be a libffi bug
-  #  ======================================================================
-  #  FAIL: test_ulonglong (ctypes.test.test_callbacks.Callbacks)
-  #  ----------------------------------------------------------------------
-  #  Traceback (most recent call last):
-  #    File "/builddir/build/BUILD/Python-2.7.1/Lib/ctypes/test/test_callbacks.py",
-  #  line 72, in test_ulonglong
-  #      self.check_type(c_ulonglong, 10955412242170339782)
-  #    File "/builddir/build/BUILD/Python-2.7.1/Lib/ctypes/test/test_callbacks.py",
-  #  line 31, in check_type
-  #      self.assertEqual(result, arg)
-  #  AssertionError: 10955412241121898851L != 10955412242170339782L
-  #  ----------------------------------------------------------------------
-%ifarch %{sparc}
-  EXCLUDED_TESTS="$EXCLUDED_TESTS \
-      test_ctypes \
-  %{nil}"
-%endif
-
-  # Debug build shows some additional failures (to be investigated):
-  #
-  # test_gc:
-  #  ======================================================================
-  #  FAIL: test_newinstance (__main__.GCTests)
-  #  ----------------------------------------------------------------------
-  #  Traceback (most recent call last):
-  #    File "Lib/test/test_gc.py", line 105, in test_newinstance
-  #      self.assertNotEqual(gc.collect(), 0)
-  #  AssertionError: 0 == 0
-  #  
-  #  ----------------------------------------------------------------------
-  #
-  # test_sys:
-  #  ======================================================================
-  #  FAIL: test_objecttypes (__main__.SizeofTest)
-  #  ----------------------------------------------------------------------
-  #  Traceback (most recent call last):
-  #    File "Lib/test/test_sys.py", line 739, in test_objecttypes
-  #      check(newstyleclass, s)
-  #    File "Lib/test/test_sys.py", line 510, in check_sizeof
-  #      self.assertEqual(result, size, msg)
-  #  AssertionError: wrong size for <type 'type'>: got 960, expected 920
-  #  
-  #  ----------------------------------------------------------------------
-  #  which is this code:
-  #          # type
-  #          # (PyTypeObject + PyNumberMethods +  PyMappingMethods +
-  #          #  PySequenceMethods + PyBufferProcs)
-  #          s = size(vh + 'P2P15Pl4PP9PP11PI') + size('41P 10P 3P 6P')
-  #          class newstyleclass(object):
-  #              pass
-  #          check(newstyleclass, s)
-  #  
-  # test_weakref:
-  #  ======================================================================
-  #  FAIL: test_callback_in_cycle_resurrection (__main__.ReferencesTestCase)
-  #  ----------------------------------------------------------------------
-  #  Traceback (most recent call last):
-  #    File "Lib/test/test_weakref.py", line 591, in test_callback_in_cycle_resurrection
-  #      self.assertEqual(alist, ["C went away"])
-  #  AssertionError: Lists differ: [] != ['C went away']
-  #  
-  #  Second list contains 1 additional elements.
-  #  First extra element 0:
-  #  C went away
-  #  
-  #  - []
-  #  + ['C went away']
-  #  
-  #  ----------------------------------------------------------------------
-  #
-  if [ "$ConfName" = "debug"  ] ; then
-    EXCLUDED_TESTS="$EXCLUDED_TESTS \
-      test_gc \
-      test_sys \
-      test_weakref \
-    %{nil}"
-  fi
-  
   # Note that we're running the tests using the version of the code in the
   # builddir, not in the buildroot.
 
@@ -1429,8 +1285,11 @@ CheckPython() {
   fi
 %endif
 
-  # Actually invoke regrtest.py:
-  EXTRATESTOPTS="$EXTRATESTOPTS -x $EXCLUDED_TESTS" make test
+  # Actually invoke regrtest.py, setting "WITHIN_PYTHON_RPM_BUILD" so that the
+  # our non-standard decorators take effect on the relevant tests:
+  #   @unittest._skipInRpmBuild(reason)
+  #   @unittest._expectedFailureInRpmBuild
+  WITHIN_PYTHON_RPM_BUILD= EXTRATESTOPTS="$EXTRATESTOPTS" make test
 
   popd
 
@@ -1806,6 +1665,11 @@ rm -fr %{buildroot}
 # ======================================================
 
 %changelog
+* Sat Sep 10 2011 David Malcolm <dmalcolm@redhat.com> - 2.7.2-10
+- rewrite of "check", introducing downstream-only hooks for skipping specific
+cases in an rpmbuild (patch 132), and fixing/skipping failing tests in a more
+fine-grained manner than before (patches 104, 133-142)
+
 * Thu Sep  1 2011 David Malcolm <dmalcolm@redhat.com> - 2.7.2-9
 - run selftests with "--verbose"
 - disable parts of test_io on ppc (rhbz#732998)
