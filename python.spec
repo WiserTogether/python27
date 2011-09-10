@@ -580,7 +580,7 @@ Patch142: 00142-skip-failing-pty-tests-in-rpmbuild.patch
 # This is the generated patch to "configure"; see the description of
 #   %{regenerate_autotooling_patch}
 # above:
-Patch300: python-2.7-autotool-intermediates.patch
+Patch300: autotool-intermediates.patch
 
 # ======================================================
 # Additional metadata, and subpackages
@@ -1285,7 +1285,7 @@ CheckPython() {
   fi
 %endif
 
-  # Actually invoke regrtest.py, setting "WITHIN_PYTHON_RPM_BUILD" so that the
+  # Run the upstream test suite, setting "WITHIN_PYTHON_RPM_BUILD" so that the
   # our non-standard decorators take effect on the relevant tests:
   #   @unittest._skipInRpmBuild(reason)
   #   @unittest._expectedFailureInRpmBuild
@@ -1644,7 +1644,6 @@ rm -fr %{buildroot}
 %{dynload_dir}/_testcapimodule_d.so
 
 %endif # with_debug_build
-
 
 # We put the debug-gdb.py file inside /usr/lib/debug to avoid noise from
 # ldconfig (rhbz:562980).
