@@ -102,7 +102,7 @@ Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 # Remember to also rebase python-docs when changing this:
 Version: 2.7.2
-Release: 10%{?dist}
+Release: 11%{?dist}
 License: Python
 Group: Development/Languages
 Requires: %{python}-libs%{?_isa} = %{version}-%{release}
@@ -329,7 +329,7 @@ Patch54: python-2.6.4-setup-db48.patch
 # fixed up by mjw and wcohen for 2.6.2, then fixed up by dmalcolm for 2.6.4
 # then rewritten by mjw (attachment 390110 of rhbz 545179), then reformatted
 # for 2.7rc1 by dmalcolm:
-Patch55: python-2.7rc1-dtrace.patch
+Patch55: 00055-systemtap.patch
 
 # "lib64 patches"
 # This patch seems to be associated with bug 122304, which was
@@ -364,7 +364,7 @@ Patch104: 00104-lib64-fix-for-test_install.patch
 
 # Patch the Makefile.pre.in so that the generated Makefile doesn't try to build
 # a libpythonMAJOR.MINOR.a (bug 550692):
-Patch111: python-2.7rc1-no-static-lib.patch
+Patch111: 00111-no-static-lib.patch
 
 # Patch to support building both optimized vs debug stacks DSO ABIs, sharing
 # the same .py and .pyc files, using "_d.so" to signify a debug build of an
@@ -434,11 +434,11 @@ Patch112: python-2.7rc1-debug-build.patch
 # described at http://svn.python.org/projects/python/trunk/Misc/SpecialBuilds.txt
 # so that if they are enabled, they will be in that build's pyconfig.h, so that
 # extension modules will reliably use them
-Patch113: python-2.6.5-more-configuration-flags.patch
+Patch113: 00113-more-configuration-flags.patch
 
 # Add flags for statvfs.f_flag to the constant list in posixmodule (i.e. "os")
 # (rhbz:553020); partially upstream as http://bugs.python.org/issue7647
-Patch114: python-2.7rc1-statvfs-f_flag-constants.patch
+Patch114: 00114-statvfs-f_flag-constants.patch
 
 # Make "pydoc -k" more robust in the face of broken modules
 # (rhbz:461419; patch sent upstream as http://bugs.python.org/issue7425 )
@@ -465,7 +465,7 @@ Patch121: python-2.7rc2-r79310.patch
 # use the debug build.  Add a "PYTHONDUMPCOUNTS" environment variable which
 # must be set to enable the output on exit
 # Not yet sent upstream:
-Patch125: less-verbose-COUNT_ALLOCS.patch
+Patch125: 00125-less-verbose-COUNT_ALLOCS.patch
 
 # Fix dbm module on big-endian 64-bit
 # Sent upstream as http://bugs.python.org/issue9687 (rhbz#626756)
@@ -480,11 +480,6 @@ Patch127: fix-test_structmember-on-64bit-bigendian.patch
 # (the COUNT_ALLOCS instrumentation keeps "C" alive).
 # Not yet sent upstream
 Patch128: python-2.7.1-fix_test_abc_with_COUNT_ALLOCS.patch
-
-# Fix the --with-tsc option on ppc64, and rework it on 32-bit ppc to avoid
-# aliasing violations (rhbz#698726)
-# Sent upstream as http://bugs.python.org/issue12872
-Patch129: python-2.7.2-tsc-on-ppc.patch
 
 # Add "--extension-suffix" option to python-config and python-debug-config
 # (rhbz#732808)
@@ -506,7 +501,7 @@ Patch130: python-2.7.2-add-extension-suffix-to-python-config.patch
 # fail when built in Koji, for ppc and ppc64; for some reason, the SIGALRM
 # handlers are never called, and the call to write runs to completion
 # (rhbz#732998)
-Patch131: python-2.7.2-disable-tests-in-test_io.patch
+Patch131: 00131-disable-tests-in-test_io.patch
 
 # Add non-standard hooks to unittest for use in the "check" phase below, when
 # running selftests within the build:
@@ -556,6 +551,11 @@ Patch141: 00141-fix-test_gc_with_COUNT_ALLOCS.patch
 
 # Some pty tests fail when run in mock (rhbz#714627):
 Patch142: 00142-skip-failing-pty-tests-in-rpmbuild.patch
+
+# Fix the --with-tsc option on ppc64, and rework it on 32-bit ppc to avoid
+# aliasing violations (rhbz#698726)
+# Sent upstream as http://bugs.python.org/issue12872
+Patch143: 00143-tsc-on-ppc.patch
 
 # (New patches go here ^^^)
 #
@@ -818,7 +818,7 @@ rm -r Modules/zlib || exit 1
 %patch126 -p0 -b .fix-dbm_contains-on-64bit-bigendian
 %patch127 -p0 -b .fix-test_structmember-on-64bit-bigendian
 %patch128 -p1
-%patch129 -p1 -b .tsc-on-ppc
+
 %patch130 -p1
 
 %ifarch ppc ppc64
@@ -840,6 +840,7 @@ rm -r Modules/zlib || exit 1
 %endif
 %patch141 -p1
 %patch142 -p1
+%patch143 -p1 -b .tsc-on-ppc
 
 # This shouldn't be necesarry, but is right now (2.2a3)
 find -name "*~" |xargs rm -f
@@ -1664,6 +1665,10 @@ rm -fr %{buildroot}
 # ======================================================
 
 %changelog
+* Mon Sep 12 2011 David Malcolm <dmalcolm@redhat.com> - 2.7.2-11
+- rename and renumber patches for consistency with python3.spec (55, 111, 113,
+114, 125, 131, 129 to 143)
+
 * Sat Sep 10 2011 David Malcolm <dmalcolm@redhat.com> - 2.7.2-10
 - rewrite of "check", introducing downstream-only hooks for skipping specific
 cases in an rpmbuild (patch 132), and fixing/skipping failing tests in a more
