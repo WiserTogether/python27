@@ -53,6 +53,8 @@
 %global with_valgrind 0
 %endif
 
+%global with_gdbm 0
+
 # Some of the files below /usr/lib/pythonMAJOR.MINOR/test  (e.g. bad_coding.py)
 # are deliberately invalid, leading to SyntaxError exceptions if they get
 # byte-compiled.
@@ -102,7 +104,7 @@ Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 # Remember to also rebase python-docs when changing this:
 Version: 2.7.2
-Release: 11%{?dist}
+Release: 12%{?dist}
 License: Python
 Group: Development/Languages
 Requires: %{python}-libs%{?_isa} = %{version}-%{release}
@@ -123,7 +125,9 @@ BuildRequires: db4-devel >= 4.8
 BuildRequires: expat-devel
 BuildRequires: findutils
 BuildRequires: gcc-c++
+%if %{with_gdbm}
 BuildRequires: gdbm-devel
+%endif
 BuildRequires: glibc-devel
 BuildRequires: gmp-devel
 BuildRequires: libffi-devel
@@ -557,6 +561,9 @@ Patch142: 00142-skip-failing-pty-tests-in-rpmbuild.patch
 # Sent upstream as http://bugs.python.org/issue12872
 Patch143: 00143-tsc-on-ppc.patch
 
+# (Optionally) disable the gdbm module:
+Patch144: 00144-no-gdbm.patch
+
 # (New patches go here ^^^)
 #
 # When adding new patches to "python" and "python3" in Fedora 17 onwards,
@@ -841,6 +848,9 @@ rm -r Modules/zlib || exit 1
 %patch141 -p1
 %patch142 -p1
 %patch143 -p1 -b .tsc-on-ppc
+%if !%{with_gdbm}
+%patch144 -p1
+%endif
 
 # This shouldn't be necesarry, but is right now (2.2a3)
 find -name "*~" |xargs rm -f
@@ -1389,7 +1399,9 @@ rm -fr %{buildroot}
 %{dynload_dir}/dlmodule.so
 %{dynload_dir}/fcntlmodule.so
 %{dynload_dir}/future_builtins.so
+%if %{with_gdbm}
 %{dynload_dir}/gdbmmodule.so
+%endif
 %{dynload_dir}/grpmodule.so
 %{dynload_dir}/imageop.so
 %{dynload_dir}/itertoolsmodule.so
@@ -1589,7 +1601,9 @@ rm -fr %{buildroot}
 %{dynload_dir}/dlmodule_d.so
 %{dynload_dir}/fcntlmodule_d.so
 %{dynload_dir}/future_builtins_d.so
+%if %{with_gdbm}
 %{dynload_dir}/gdbmmodule_d.so
+%endif
 %{dynload_dir}/grpmodule_d.so
 %{dynload_dir}/imageop_d.so
 %{dynload_dir}/itertoolsmodule_d.so
@@ -1665,6 +1679,9 @@ rm -fr %{buildroot}
 # ======================================================
 
 %changelog
+* Tue Sep 13 2011 David Malcolm <dmalcolm@redhat.com> - 2.7.2-12
+- disable gdbm module to prepare for gdbm soname bump
+
 * Mon Sep 12 2011 David Malcolm <dmalcolm@redhat.com> - 2.7.2-11
 - rename and renumber patches for consistency with python3.spec (55, 111, 113,
 114, 125, 131, 129 to 143)
