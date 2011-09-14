@@ -55,6 +55,9 @@
 
 %global with_gdbm 0
 
+# Turn this to 0 to turn off the "check" phase:
+%global run_selftest_suite 1
+
 # Some of the files below /usr/lib/pythonMAJOR.MINOR/test  (e.g. bad_coding.py)
 # are deliberately invalid, leading to SyntaxError exceptions if they get
 # byte-compiled.
@@ -73,6 +76,7 @@
 #   patch 4 (CFLAGS)
 #   patch 52 (valgrind)
 #   patch 55 (systemtap)
+#   patch 145 (linux2)
 # 
 # For patch 55 (systemtap), we need to get a new header for configure to use
 #
@@ -104,7 +108,7 @@ Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 # Remember to also rebase python-docs when changing this:
 Version: 2.7.2
-Release: 12%{?dist}
+Release: 13%{?dist}
 License: Python
 Group: Development/Languages
 Requires: %{python}-libs%{?_isa} = %{version}-%{release}
@@ -564,6 +568,13 @@ Patch143: 00143-tsc-on-ppc.patch
 # (Optionally) disable the gdbm module:
 Patch144: 00144-no-gdbm.patch
 
+# Force MACHDEP and thus sys.platform to be "linux2" even on systems with
+# linux 3, given that the distinction is meaningless (especially in Koji, where
+# "uname" reflects the kernel running _outside_ the mock-provided chroot).
+#
+# Backport of part of fix for http://bugs.python.org/issue12326
+Patch145: 00145-force-sys-platform-to-be-linux2.patch
+
 # (New patches go here ^^^)
 #
 # When adding new patches to "python" and "python3" in Fedora 17 onwards,
@@ -851,6 +862,7 @@ rm -r Modules/zlib || exit 1
 %if !%{with_gdbm}
 %patch144 -p1
 %endif
+%patch145 -p1 -b .linux2
 
 # This shouldn't be necesarry, but is right now (2.2a3)
 find -name "*~" |xargs rm -f
@@ -1308,6 +1320,8 @@ CheckPython() {
 
 }
 
+%if 0%{run_selftest_suite}
+
 # Check each of the configurations:
 %if 0%{?with_debug_build}
 CheckPython \
@@ -1317,6 +1331,9 @@ CheckPython \
 CheckPython \
   optimized \
   python%{pybasever}
+
+%endif # run_selftest_suite
+
 
 # ======================================================
 # Cleaning up
@@ -1679,6 +1696,9 @@ rm -fr %{buildroot}
 # ======================================================
 
 %changelog
+* Wed Sep 14 2011 David Malcolm <dmalcolm@redhat.com> - 2.7.2-13
+- force sys.platform to be "linux2" (patch 145)
+
 * Tue Sep 13 2011 David Malcolm <dmalcolm@redhat.com> - 2.7.2-12
 - disable gdbm module to prepare for gdbm soname bump
 
