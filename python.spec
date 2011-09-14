@@ -108,7 +108,7 @@ Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 # Remember to also rebase python-docs when changing this:
 Version: 2.7.2
-Release: 13%{?dist}
+Release: 14%{?dist}
 License: Python
 Group: Development/Languages
 Requires: %{python}-libs%{?_isa} = %{version}-%{release}
@@ -575,6 +575,23 @@ Patch144: 00144-no-gdbm.patch
 # Backport of part of fix for http://bugs.python.org/issue12326
 Patch145: 00145-force-sys-platform-to-be-linux2.patch
 
+# Support OpenSSL FIPS mode (e.g. when OPENSSL_FORCE_FIPS_MODE=1 is set)
+# - handle failures from OpenSSL (e.g. on attempts to use MD5 in a
+#   FIPS-enforcing environment)
+# - add a new "usedforsecurity" keyword argument to the various digest
+#   algorithms in hashlib so that you can whitelist a callsite with
+#   "usedforsecurity=False"
+# (sent upstream for python 3 as http://bugs.python.org/issue9216; this is a
+# backport to python 2.7; see RHEL6 patch 119)
+# - enforce usage of the _hashlib implementation: don't fall back to the _md5
+#   and _sha* modules (leading to clearer error messages if fips selftests
+#   fail)
+# - don't build the _md5 and _sha* modules; rely on the _hashlib implementation
+#   of hashlib (for example, md5.py will use _hashlib's implementation of MD5,
+#   if permitted by the FIPS setting)
+# (rhbz#563986)
+Patch146: 00146-hashlib-fips.patch
+
 # (New patches go here ^^^)
 #
 # When adding new patches to "python" and "python3" in Fedora 17 onwards,
@@ -790,6 +807,16 @@ done
 #   Remove embedded copy of zlib:
 rm -r Modules/zlib || exit 1
 
+# Don't build upstream Python's implementation of these crypto algorithms;
+# instead rely on _hashlib and OpenSSL.
+#
+# For example, in our builds md5.py uses always uses hashlib.md5 (rather than
+# falling back to _md5 when hashlib.md5 is not available); hashlib.md5 is
+# implemented within _hashlib via OpenSSL (and thus respects FIPS mode)
+for f in md5module.c md5.c shamodule.c sha256module.c sha512module.c; do
+    rm Modules/$f
+done
+
 #
 # Apply patches:
 #
@@ -863,6 +890,7 @@ rm -r Modules/zlib || exit 1
 %patch144 -p1
 %endif
 %patch145 -p1 -b .linux2
+%patch146 -p1
 
 # This shouldn't be necesarry, but is right now (2.2a3)
 find -name "*~" |xargs rm -f
@@ -1392,13 +1420,9 @@ rm -fr %{buildroot}
 %{dynload_dir}/_json.so
 %{dynload_dir}/_localemodule.so
 %{dynload_dir}/_lsprof.so
-%{dynload_dir}/_md5module.so
 %{dynload_dir}/_multibytecodecmodule.so
 %{dynload_dir}/_multiprocessing.so
 %{dynload_dir}/_randommodule.so
-%{dynload_dir}/_sha256module.so
-%{dynload_dir}/_sha512module.so
-%{dynload_dir}/_shamodule.so
 %{dynload_dir}/_socketmodule.so
 %{dynload_dir}/_sqlite3.so
 %{dynload_dir}/_ssl.so
@@ -1594,13 +1618,9 @@ rm -fr %{buildroot}
 %{dynload_dir}/_json_d.so
 %{dynload_dir}/_localemodule_d.so
 %{dynload_dir}/_lsprof_d.so
-%{dynload_dir}/_md5module_d.so
 %{dynload_dir}/_multibytecodecmodule_d.so
 %{dynload_dir}/_multiprocessing_d.so
 %{dynload_dir}/_randommodule_d.so
-%{dynload_dir}/_sha256module_d.so
-%{dynload_dir}/_sha512module_d.so
-%{dynload_dir}/_shamodule_d.so
 %{dynload_dir}/_socketmodule_d.so
 %{dynload_dir}/_sqlite3_d.so
 %{dynload_dir}/_ssl_d.so
@@ -1696,6 +1716,11 @@ rm -fr %{buildroot}
 # ======================================================
 
 %changelog
+* Wed Sep 14 2011 David Malcolm <dmalcolm@redhat.com> - 2.7.2-14
+- support OpenSSL FIPS mode in _hashlib and hashlib; don't build the _md5 and
+_sha* modules, relying on _hashlib in hashlib, and thus within md5 etc
+(rhbz#563986; patch 146)
+
 * Wed Sep 14 2011 David Malcolm <dmalcolm@redhat.com> - 2.7.2-13
 - force sys.platform to be "linux2" (patch 145)
 
