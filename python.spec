@@ -108,7 +108,7 @@ Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 # Remember to also rebase python-docs when changing this:
 Version: 2.7.2
-Release: 14%{?dist}
+Release: 15%{?dist}
 License: Python
 Group: Development/Languages
 Requires: %{python}-libs%{?_isa} = %{version}-%{release}
@@ -592,6 +592,11 @@ Patch145: 00145-force-sys-platform-to-be-linux2.patch
 # (rhbz#563986)
 Patch146: 00146-hashlib-fips.patch
 
+# Add a sys._debugmallocstats() function
+# Based on patch 202 from RHEL 5's python.spec, with updates from rhbz#737198
+#  Not yet sent upstream
+Patch147: 00147-add-debug-malloc-stats.patch
+
 # (New patches go here ^^^)
 #
 # When adding new patches to "python" and "python3" in Fedora 17 onwards,
@@ -891,6 +896,7 @@ done
 %endif
 %patch145 -p1 -b .linux2
 %patch146 -p1
+%patch147 -p1
 
 # This shouldn't be necesarry, but is right now (2.2a3)
 find -name "*~" |xargs rm -f
@@ -1716,6 +1722,9 @@ rm -fr %{buildroot}
 # ======================================================
 
 %changelog
+* Fri Sep 16 2011 David Malcolm <dmalcolm@redhat.com> - 2.7.2-15
+- add a sys._debugmallocstats() function (patch 147)
+
 * Wed Sep 14 2011 David Malcolm <dmalcolm@redhat.com> - 2.7.2-14
 - support OpenSSL FIPS mode in _hashlib and hashlib; don't build the _md5 and
 _sha* modules, relying on _hashlib in hashlib, and thus within md5 etc
