@@ -1,7 +1,6 @@
-diff -up Python-2.7.2/Include/classobject.h.add-debug-malloc-stats Python-2.7.2/Include/classobject.h
 diff -up Python-2.7.2/Include/dictobject.h.add-debug-malloc-stats Python-2.7.2/Include/dictobject.h
---- Python-2.7.2/Include/dictobject.h.add-debug-malloc-stats	2011-09-16 17:35:22.304872006 -0400
-+++ Python-2.7.2/Include/dictobject.h	2011-09-16 17:39:53.486869422 -0400
+--- Python-2.7.2/Include/dictobject.h.add-debug-malloc-stats	2011-06-11 11:46:23.000000000 -0400
++++ Python-2.7.2/Include/dictobject.h	2011-09-16 19:03:25.105821625 -0400
 @@ -150,6 +150,8 @@ PyAPI_FUNC(PyObject *) PyDict_GetItemStr
  PyAPI_FUNC(int) PyDict_SetItemString(PyObject *dp, const char *key, PyObject *item);
  PyAPI_FUNC(int) PyDict_DelItemString(PyObject *dp, const char *key);
@@ -13,7 +12,7 @@ diff -up Python-2.7.2/Include/dictobject.h.add-debug-malloc-stats Python-2.7.2/I
  #endif
 diff -up Python-2.7.2/Include/floatobject.h.add-debug-malloc-stats Python-2.7.2/Include/floatobject.h
 --- Python-2.7.2/Include/floatobject.h.add-debug-malloc-stats	2011-06-11 11:46:23.000000000 -0400
-+++ Python-2.7.2/Include/floatobject.h	2011-09-16 17:13:54.589884287 -0400
++++ Python-2.7.2/Include/floatobject.h	2011-09-16 19:03:25.106821625 -0400
 @@ -132,6 +132,7 @@ PyAPI_FUNC(PyObject *) _PyFloat_FormatAd
     failure.  Used in builtin_round in bltinmodule.c. */
  PyAPI_FUNC(PyObject *) _Py_double_round(double x, int ndigits);
@@ -23,8 +22,8 @@ diff -up Python-2.7.2/Include/floatobject.h.add-debug-malloc-stats Python-2.7.2/
  
  #ifdef __cplusplus
 diff -up Python-2.7.2/Include/frameobject.h.add-debug-malloc-stats Python-2.7.2/Include/frameobject.h
---- Python-2.7.2/Include/frameobject.h.add-debug-malloc-stats	2011-09-16 17:35:44.023871801 -0400
-+++ Python-2.7.2/Include/frameobject.h	2011-09-16 17:40:10.230869260 -0400
+--- Python-2.7.2/Include/frameobject.h.add-debug-malloc-stats	2011-06-11 11:46:23.000000000 -0400
++++ Python-2.7.2/Include/frameobject.h	2011-09-16 19:03:25.107821625 -0400
 @@ -80,6 +80,8 @@ PyAPI_FUNC(void) PyFrame_FastToLocals(Py
  
  PyAPI_FUNC(int) PyFrame_ClearFreeList(void);
@@ -36,7 +35,7 @@ diff -up Python-2.7.2/Include/frameobject.h.add-debug-malloc-stats Python-2.7.2/
  
 diff -up Python-2.7.2/Include/intobject.h.add-debug-malloc-stats Python-2.7.2/Include/intobject.h
 --- Python-2.7.2/Include/intobject.h.add-debug-malloc-stats	2011-06-11 11:46:23.000000000 -0400
-+++ Python-2.7.2/Include/intobject.h	2011-09-16 17:13:54.589884287 -0400
++++ Python-2.7.2/Include/intobject.h	2011-09-16 19:03:25.107821625 -0400
 @@ -74,6 +74,8 @@ PyAPI_FUNC(PyObject *) _PyInt_FormatAdva
  					     char *format_spec,
  					     Py_ssize_t format_spec_len);
@@ -47,8 +46,8 @@ diff -up Python-2.7.2/Include/intobject.h.add-debug-malloc-stats Python-2.7.2/In
  }
  #endif
 diff -up Python-2.7.2/Include/listobject.h.add-debug-malloc-stats Python-2.7.2/Include/listobject.h
---- Python-2.7.2/Include/listobject.h.add-debug-malloc-stats	2011-09-16 17:35:56.608871678 -0400
-+++ Python-2.7.2/Include/listobject.h	2011-09-16 17:40:25.526869113 -0400
+--- Python-2.7.2/Include/listobject.h.add-debug-malloc-stats	2011-06-11 11:46:23.000000000 -0400
++++ Python-2.7.2/Include/listobject.h	2011-09-16 19:03:25.107821625 -0400
 @@ -62,6 +62,8 @@ PyAPI_FUNC(PyObject *) _PyList_Extend(Py
  #define PyList_SET_ITEM(op, i, v) (((PyListObject *)(op))->ob_item[i] = (v))
  #define PyList_GET_SIZE(op)    Py_SIZE(op)
@@ -59,8 +58,8 @@ diff -up Python-2.7.2/Include/listobject.h.add-debug-malloc-stats Python-2.7.2/I
  }
  #endif
 diff -up Python-2.7.2/Include/methodobject.h.add-debug-malloc-stats Python-2.7.2/Include/methodobject.h
---- Python-2.7.2/Include/methodobject.h.add-debug-malloc-stats	2011-09-16 17:36:06.264871587 -0400
-+++ Python-2.7.2/Include/methodobject.h	2011-09-16 17:40:50.949868868 -0400
+--- Python-2.7.2/Include/methodobject.h.add-debug-malloc-stats	2011-06-11 11:46:23.000000000 -0400
++++ Python-2.7.2/Include/methodobject.h	2011-09-16 19:03:25.108821625 -0400
 @@ -87,6 +87,10 @@ typedef struct {
  
  PyAPI_FUNC(int) PyCFunction_ClearFreeList(void);
@@ -74,7 +73,7 @@ diff -up Python-2.7.2/Include/methodobject.h.add-debug-malloc-stats Python-2.7.2
  #endif
 diff -up Python-2.7.2/Include/object.h.add-debug-malloc-stats Python-2.7.2/Include/object.h
 --- Python-2.7.2/Include/object.h.add-debug-malloc-stats	2011-06-11 11:46:23.000000000 -0400
-+++ Python-2.7.2/Include/object.h	2011-09-16 17:13:54.590884287 -0400
++++ Python-2.7.2/Include/object.h	2011-09-16 19:03:25.108821625 -0400
 @@ -980,6 +980,13 @@ PyAPI_DATA(PyObject *) _PyTrash_delete_l
      else \
          _PyTrash_deposit_object((PyObject*)op);
@@ -91,7 +90,7 @@ diff -up Python-2.7.2/Include/object.h.add-debug-malloc-stats Python-2.7.2/Inclu
  #endif
 diff -up Python-2.7.2/Include/objimpl.h.add-debug-malloc-stats Python-2.7.2/Include/objimpl.h
 --- Python-2.7.2/Include/objimpl.h.add-debug-malloc-stats	2011-06-11 11:46:23.000000000 -0400
-+++ Python-2.7.2/Include/objimpl.h	2011-09-16 17:13:54.590884287 -0400
++++ Python-2.7.2/Include/objimpl.h	2011-09-16 19:03:25.108821625 -0400
 @@ -101,13 +101,13 @@ PyAPI_FUNC(void) PyObject_Free(void *);
  
  /* Macros */
@@ -107,10 +106,9 @@ diff -up Python-2.7.2/Include/objimpl.h.add-debug-malloc-stats Python-2.7.2/Incl
  PyAPI_FUNC(void *) _PyObject_DebugMallocApi(char api, size_t nbytes);
  PyAPI_FUNC(void *) _PyObject_DebugReallocApi(char api, void *p, size_t nbytes);
  PyAPI_FUNC(void) _PyObject_DebugFreeApi(char api, void *p);
-diff -up Python-2.7.2/Include/setobject.h.add-debug-malloc-stats Python-2.7.2/Include/setobject.h
 diff -up Python-2.7.2/Include/stringobject.h.add-debug-malloc-stats Python-2.7.2/Include/stringobject.h
 --- Python-2.7.2/Include/stringobject.h.add-debug-malloc-stats	2011-06-11 11:46:23.000000000 -0400
-+++ Python-2.7.2/Include/stringobject.h	2011-09-16 17:13:54.591884287 -0400
++++ Python-2.7.2/Include/stringobject.h	2011-09-16 19:03:25.109821625 -0400
 @@ -204,6 +204,8 @@ PyAPI_FUNC(PyObject *) _PyBytes_FormatAd
  					       char *format_spec,
  					       Py_ssize_t format_spec_len);
@@ -120,10 +118,9 @@ diff -up Python-2.7.2/Include/stringobject.h.add-debug-malloc-stats Python-2.7.2
  #ifdef __cplusplus
  }
  #endif
-diff -up Python-2.7.2/Include/tupleobject.h.add-debug-malloc-stats Python-2.7.2/Include/tupleobject.h
 diff -up Python-2.7.2/Include/unicodeobject.h.add-debug-malloc-stats Python-2.7.2/Include/unicodeobject.h
 --- Python-2.7.2/Include/unicodeobject.h.add-debug-malloc-stats	2011-06-11 11:46:23.000000000 -0400
-+++ Python-2.7.2/Include/unicodeobject.h	2011-09-16 17:13:54.591884287 -0400
++++ Python-2.7.2/Include/unicodeobject.h	2011-09-16 19:03:25.109821625 -0400
 @@ -1406,6 +1406,8 @@ PyAPI_FUNC(int) _PyUnicode_IsAlpha(
      Py_UNICODE ch       /* Unicode character */
      );
@@ -134,8 +131,8 @@ diff -up Python-2.7.2/Include/unicodeobject.h.add-debug-malloc-stats Python-2.7.
  }
  #endif
 diff -up Python-2.7.2/Lib/test/test_sys.py.add-debug-malloc-stats Python-2.7.2/Lib/test/test_sys.py
---- Python-2.7.2/Lib/test/test_sys.py.add-debug-malloc-stats	2011-09-16 18:15:38.495848962 -0400
-+++ Python-2.7.2/Lib/test/test_sys.py	2011-09-16 18:32:37.048839249 -0400
+--- Python-2.7.2/Lib/test/test_sys.py.add-debug-malloc-stats	2011-09-16 19:03:25.048821626 -0400
++++ Python-2.7.2/Lib/test/test_sys.py	2011-09-16 19:03:25.110821625 -0400
 @@ -473,6 +473,32 @@ class SysModuleTest(unittest.TestCase):
          p.wait()
          self.assertIn(executable, ["''", repr(sys.executable)])
@@ -170,8 +167,8 @@ diff -up Python-2.7.2/Lib/test/test_sys.py.add-debug-malloc-stats Python-2.7.2/L
  
      TPFLAGS_HAVE_GC = 1<<14
 diff -up Python-2.7.2/Objects/classobject.c.add-debug-malloc-stats Python-2.7.2/Objects/classobject.c
---- Python-2.7.2/Objects/classobject.c.add-debug-malloc-stats	2011-09-16 17:32:27.712873672 -0400
-+++ Python-2.7.2/Objects/classobject.c	2011-09-16 18:01:44.375856916 -0400
+--- Python-2.7.2/Objects/classobject.c.add-debug-malloc-stats	2011-06-11 11:46:27.000000000 -0400
++++ Python-2.7.2/Objects/classobject.c	2011-09-16 19:03:25.110821625 -0400
 @@ -2670,3 +2670,12 @@ PyMethod_Fini(void)
  {
      (void)PyMethod_ClearFreeList();
@@ -186,8 +183,8 @@ diff -up Python-2.7.2/Objects/classobject.c.add-debug-malloc-stats Python-2.7.2/
 +                           numfree, sizeof(PyMethodObject));
 +}
 diff -up Python-2.7.2/Objects/dictobject.c.add-debug-malloc-stats Python-2.7.2/Objects/dictobject.c
---- Python-2.7.2/Objects/dictobject.c.add-debug-malloc-stats	2011-09-16 17:32:55.336873422 -0400
-+++ Python-2.7.2/Objects/dictobject.c	2011-09-16 18:02:13.967856635 -0400
+--- Python-2.7.2/Objects/dictobject.c.add-debug-malloc-stats	2011-06-11 11:46:27.000000000 -0400
++++ Python-2.7.2/Objects/dictobject.c	2011-09-16 19:03:25.111821625 -0400
 @@ -225,6 +225,15 @@ show_track(void)
  static PyDictObject *free_list[PyDict_MAXFREELIST];
  static int numfree = 0;
@@ -206,7 +203,7 @@ diff -up Python-2.7.2/Objects/dictobject.c.add-debug-malloc-stats Python-2.7.2/O
  {
 diff -up Python-2.7.2/Objects/floatobject.c.add-debug-malloc-stats Python-2.7.2/Objects/floatobject.c
 --- Python-2.7.2/Objects/floatobject.c.add-debug-malloc-stats	2011-06-11 11:46:27.000000000 -0400
-+++ Python-2.7.2/Objects/floatobject.c	2011-09-16 17:43:43.695867228 -0400
++++ Python-2.7.2/Objects/floatobject.c	2011-09-16 19:03:25.111821625 -0400
 @@ -35,6 +35,22 @@ typedef struct _floatblock PyFloatBlock;
  static PyFloatBlock *block_list = NULL;
  static PyFloatObject *free_list = NULL;
@@ -231,8 +228,8 @@ diff -up Python-2.7.2/Objects/floatobject.c.add-debug-malloc-stats Python-2.7.2/
  fill_free_list(void)
  {
 diff -up Python-2.7.2/Objects/frameobject.c.add-debug-malloc-stats Python-2.7.2/Objects/frameobject.c
---- Python-2.7.2/Objects/frameobject.c.add-debug-malloc-stats	2011-09-16 17:33:08.129873287 -0400
-+++ Python-2.7.2/Objects/frameobject.c	2011-09-16 18:07:58.743853347 -0400
+--- Python-2.7.2/Objects/frameobject.c.add-debug-malloc-stats	2011-06-11 11:46:27.000000000 -0400
++++ Python-2.7.2/Objects/frameobject.c	2011-09-16 19:03:25.112821625 -0400
 @@ -980,3 +980,13 @@ PyFrame_Fini(void)
      Py_XDECREF(builtin_object);
      builtin_object = NULL;
@@ -249,7 +246,7 @@ diff -up Python-2.7.2/Objects/frameobject.c.add-debug-malloc-stats Python-2.7.2/
 +
 diff -up Python-2.7.2/Objects/intobject.c.add-debug-malloc-stats Python-2.7.2/Objects/intobject.c
 --- Python-2.7.2/Objects/intobject.c.add-debug-malloc-stats	2011-06-11 11:46:27.000000000 -0400
-+++ Python-2.7.2/Objects/intobject.c	2011-09-16 17:44:27.776866803 -0400
++++ Python-2.7.2/Objects/intobject.c	2011-09-16 19:03:25.112821625 -0400
 @@ -44,6 +44,23 @@ typedef struct _intblock PyIntBlock;
  static PyIntBlock *block_list = NULL;
  static PyIntObject *free_list = NULL;
@@ -275,8 +272,8 @@ diff -up Python-2.7.2/Objects/intobject.c.add-debug-malloc-stats Python-2.7.2/Ob
  fill_free_list(void)
  {
 diff -up Python-2.7.2/Objects/listobject.c.add-debug-malloc-stats Python-2.7.2/Objects/listobject.c
---- Python-2.7.2/Objects/listobject.c.add-debug-malloc-stats	2011-09-16 17:33:18.008873189 -0400
-+++ Python-2.7.2/Objects/listobject.c	2011-09-16 18:08:54.167852819 -0400
+--- Python-2.7.2/Objects/listobject.c.add-debug-malloc-stats	2011-06-11 11:46:27.000000000 -0400
++++ Python-2.7.2/Objects/listobject.c	2011-09-16 19:03:25.113821625 -0400
 @@ -109,6 +109,15 @@ PyList_Fini(void)
      }
  }
@@ -294,8 +291,8 @@ diff -up Python-2.7.2/Objects/listobject.c.add-debug-malloc-stats Python-2.7.2/O
  PyList_New(Py_ssize_t size)
  {
 diff -up Python-2.7.2/Objects/methodobject.c.add-debug-malloc-stats Python-2.7.2/Objects/methodobject.c
---- Python-2.7.2/Objects/methodobject.c.add-debug-malloc-stats	2011-09-16 17:33:29.656873081 -0400
-+++ Python-2.7.2/Objects/methodobject.c	2011-09-16 18:08:10.607853235 -0400
+--- Python-2.7.2/Objects/methodobject.c.add-debug-malloc-stats	2011-06-11 11:46:27.000000000 -0400
++++ Python-2.7.2/Objects/methodobject.c	2011-09-16 19:03:25.113821625 -0400
 @@ -412,6 +412,15 @@ PyCFunction_Fini(void)
      (void)PyCFunction_ClearFreeList();
  }
@@ -314,7 +311,7 @@ diff -up Python-2.7.2/Objects/methodobject.c.add-debug-malloc-stats Python-2.7.2
     existing C extensions can call.
 diff -up Python-2.7.2/Objects/object.c.add-debug-malloc-stats Python-2.7.2/Objects/object.c
 --- Python-2.7.2/Objects/object.c.add-debug-malloc-stats	2011-06-11 11:46:27.000000000 -0400
-+++ Python-2.7.2/Objects/object.c	2011-09-16 17:56:21.031860008 -0400
++++ Python-2.7.2/Objects/object.c	2011-09-16 19:04:46.463820849 -0400
 @@ -2334,6 +2334,23 @@ PyMem_Free(void *p)
      PyMem_FREE(p);
  }
@@ -322,18 +319,18 @@ diff -up Python-2.7.2/Objects/object.c.add-debug-malloc-stats Python-2.7.2/Objec
 +void
 +_PyObject_DebugTypeStats(FILE *out)
 +{
-+	_PyString_DebugMallocStats(out);
-+        _PyCFunction_DebugMallocStats(out);
-+	_PyDict_DebugMallocStats(out);
-+	_PyFloat_DebugMallocStats(out);
-+	_PyFrame_DebugMallocStats(out);
-+	_PyInt_DebugMallocStats(out);
-+	_PyList_DebugMallocStats(out);
-+	_PyMethod_DebugMallocStats(out);
-+	_PySet_DebugMallocStats(out);
-+	_PyTuple_DebugMallocStats(out);
++    _PyString_DebugMallocStats(out);
++    _PyCFunction_DebugMallocStats(out);
++    _PyDict_DebugMallocStats(out);
++    _PyFloat_DebugMallocStats(out);
++    _PyFrame_DebugMallocStats(out);
++    _PyInt_DebugMallocStats(out);
++    _PyList_DebugMallocStats(out);
++    _PyMethod_DebugMallocStats(out);
++    _PySet_DebugMallocStats(out);
++    _PyTuple_DebugMallocStats(out);
 +#if Py_USING_UNICODE
-+	_PyUnicode_DebugMallocStats(out);
++    _PyUnicode_DebugMallocStats(out);
 +#endif
 +}
  
@@ -341,7 +338,7 @@ diff -up Python-2.7.2/Objects/object.c.add-debug-malloc-stats Python-2.7.2/Objec
     etc.  Container objects that may recursively contain themselves,
 diff -up Python-2.7.2/Objects/obmalloc.c.add-debug-malloc-stats Python-2.7.2/Objects/obmalloc.c
 --- Python-2.7.2/Objects/obmalloc.c.add-debug-malloc-stats	2011-06-11 11:46:27.000000000 -0400
-+++ Python-2.7.2/Objects/obmalloc.c	2011-09-16 18:29:17.935841149 -0400
++++ Python-2.7.2/Objects/obmalloc.c	2011-09-16 19:03:25.114821625 -0400
 @@ -508,12 +508,10 @@ static struct arena_object* usable_arena
  /* Number of arenas allocated that haven't been free()'d. */
  static size_t narenas_currently_allocated = 0;
@@ -522,8 +519,8 @@ diff -up Python-2.7.2/Objects/obmalloc.c.add-debug-malloc-stats Python-2.7.2/Obj
  /* Make this function last so gcc won't inline it since the definition is
   * after the reference.
 diff -up Python-2.7.2/Objects/setobject.c.add-debug-malloc-stats Python-2.7.2/Objects/setobject.c
---- Python-2.7.2/Objects/setobject.c.add-debug-malloc-stats	2011-09-16 17:33:42.223872963 -0400
-+++ Python-2.7.2/Objects/setobject.c	2011-09-16 18:09:12.870852640 -0400
+--- Python-2.7.2/Objects/setobject.c.add-debug-malloc-stats	2011-06-11 11:46:27.000000000 -0400
++++ Python-2.7.2/Objects/setobject.c	2011-09-16 19:03:25.115821625 -0400
 @@ -1088,6 +1088,16 @@ PySet_Fini(void)
      Py_CLEAR(emptyfrozenset);
  }
@@ -543,7 +540,7 @@ diff -up Python-2.7.2/Objects/setobject.c.add-debug-malloc-stats Python-2.7.2/Ob
  {
 diff -up Python-2.7.2/Objects/stringobject.c.add-debug-malloc-stats Python-2.7.2/Objects/stringobject.c
 --- Python-2.7.2/Objects/stringobject.c.add-debug-malloc-stats	2011-06-11 11:46:27.000000000 -0400
-+++ Python-2.7.2/Objects/stringobject.c	2011-09-16 17:46:41.015865533 -0400
++++ Python-2.7.2/Objects/stringobject.c	2011-09-16 19:03:25.116821625 -0400
 @@ -4822,3 +4822,43 @@ void _Py_ReleaseInternedStrings(void)
      Py_DECREF(interned);
      interned = NULL;
@@ -589,8 +586,8 @@ diff -up Python-2.7.2/Objects/stringobject.c.add-debug-malloc-stats Python-2.7.2
 +            "mortal/immortal\n", mortal_size, immortal_size);
 +}
 diff -up Python-2.7.2/Objects/tupleobject.c.add-debug-malloc-stats Python-2.7.2/Objects/tupleobject.c
---- Python-2.7.2/Objects/tupleobject.c.add-debug-malloc-stats	2011-09-16 17:33:54.008872848 -0400
-+++ Python-2.7.2/Objects/tupleobject.c	2011-09-16 18:07:05.575853855 -0400
+--- Python-2.7.2/Objects/tupleobject.c.add-debug-malloc-stats	2011-06-11 11:46:27.000000000 -0400
++++ Python-2.7.2/Objects/tupleobject.c	2011-09-16 19:03:25.116821625 -0400
 @@ -44,6 +44,22 @@ show_track(void)
  }
  #endif
@@ -616,7 +613,7 @@ diff -up Python-2.7.2/Objects/tupleobject.c.add-debug-malloc-stats Python-2.7.2/
  PyTuple_New(register Py_ssize_t size)
 diff -up Python-2.7.2/Objects/unicodeobject.c.add-debug-malloc-stats Python-2.7.2/Objects/unicodeobject.c
 --- Python-2.7.2/Objects/unicodeobject.c.add-debug-malloc-stats	2011-06-11 11:46:27.000000000 -0400
-+++ Python-2.7.2/Objects/unicodeobject.c	2011-09-16 17:27:15.119876653 -0400
++++ Python-2.7.2/Objects/unicodeobject.c	2011-09-16 19:03:25.118821625 -0400
 @@ -8883,6 +8883,12 @@ _PyUnicode_Fini(void)
      (void)PyUnicode_ClearFreeList();
  }
@@ -630,9 +627,21 @@ diff -up Python-2.7.2/Objects/unicodeobject.c.add-debug-malloc-stats Python-2.7.
  #ifdef __cplusplus
  }
  #endif
+diff -up Python-2.7.2/Python/pythonrun.c.add-debug-malloc-stats Python-2.7.2/Python/pythonrun.c
+--- Python-2.7.2/Python/pythonrun.c.add-debug-malloc-stats	2011-09-16 19:03:25.025821626 -0400
++++ Python-2.7.2/Python/pythonrun.c	2011-09-16 19:03:25.118821625 -0400
+@@ -549,7 +549,7 @@ Py_Finalize(void)
+ #endif /* Py_TRACE_REFS */
+ #ifdef PYMALLOC_DEBUG
+     if (Py_GETENV("PYTHONMALLOCSTATS"))
+-        _PyObject_DebugMallocStats();
++        _PyObject_DebugMallocStats(stderr);
+ #endif
+ 
+     call_ll_exitfuncs();
 diff -up Python-2.7.2/Python/sysmodule.c.add-debug-malloc-stats Python-2.7.2/Python/sysmodule.c
---- Python-2.7.2/Python/sysmodule.c.add-debug-malloc-stats	2011-09-16 17:13:54.475884288 -0400
-+++ Python-2.7.2/Python/sysmodule.c	2011-09-16 17:47:22.648865136 -0400
+--- Python-2.7.2/Python/sysmodule.c.add-debug-malloc-stats	2011-09-16 19:03:25.007821626 -0400
++++ Python-2.7.2/Python/sysmodule.c	2011-09-16 19:03:25.119821625 -0400
 @@ -872,6 +872,57 @@ a 11-tuple where the entries in the tupl
  extern "C" {
  #endif
