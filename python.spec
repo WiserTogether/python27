@@ -53,7 +53,7 @@
 %global with_valgrind 0
 %endif
 
-%global with_gdbm 0
+%global with_gdbm 1
 
 # Turn this to 0 to turn off the "check" phase:
 %global run_selftest_suite 1
@@ -108,7 +108,7 @@ Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 # Remember to also rebase python-docs when changing this:
 Version: 2.7.2
-Release: 15%{?dist}
+Release: 16%{?dist}
 License: Python
 Group: Development/Languages
 Requires: %{python}-libs%{?_isa} = %{version}-%{release}
@@ -597,6 +597,10 @@ Patch146: 00146-hashlib-fips.patch
 #  Not yet sent upstream
 Patch147: 00147-add-debug-malloc-stats.patch
 
+# Cherrypick fix for dbm version detection to cope with gdbm-1.9's magic values
+# Taken from upstream http://bugs.python.org/issue13007 (rhbz#742242)
+Patch148: 00148-gdbm-1.9-magic-values.patch
+
 # (New patches go here ^^^)
 #
 # When adding new patches to "python" and "python3" in Fedora 17 onwards,
@@ -605,7 +609,7 @@ Patch147: 00147-add-debug-malloc-stats.patch
 #   - use the same patch number across both specfiles for conceptually-equivalent
 #     fixes, ideally with the same name
 #
-#   - when a patch is relevan to both specfiles, use the same introductory
+#   - when a patch is relevant to both specfiles, use the same introductory
 #     comment in both specfiles where possible (to improve "diff" output when
 #     comparing them)
 #
@@ -897,6 +901,7 @@ done
 %patch145 -p1 -b .linux2
 %patch146 -p1
 %patch147 -p1
+%patch148 -p1
 
 # This shouldn't be necesarry, but is right now (2.2a3)
 find -name "*~" |xargs rm -f
@@ -982,6 +987,7 @@ BuildPython() {
   --with-tapset-install-dir=%{tapsetdir} \
 %endif
   --with-system-expat \
+  --with-dbmliborder=gdbm:ndbm:bdb \
   $ExtraConfigArgs \
   %{nil}
 
@@ -1722,6 +1728,9 @@ rm -fr %{buildroot}
 # ======================================================
 
 %changelog
+* Fri Sep 30 2011 David Malcolm <dmalcolm@redhat.com> - 2.7.2-16
+- re-enable gdbm (patch 148; rhbz#742242)
+
 * Fri Sep 16 2011 David Malcolm <dmalcolm@redhat.com> - 2.7.2-15
 - add a sys._debugmallocstats() function (patch 147)
 
