@@ -601,6 +601,10 @@ Patch147: 00147-add-debug-malloc-stats.patch
 # Taken from upstream http://bugs.python.org/issue13007 (rhbz#742242)
 Patch148: 00148-gdbm-1.9-magic-values.patch
 
+# python3.spec's
+#   Patch149: 00149-backport-issue11254-pycache-bytecompilation-fix.patch
+# is not relevant for Python 2
+
 # (New patches go here ^^^)
 #
 # When adding new patches to "python" and "python3" in Fedora 17 onwards,
@@ -902,6 +906,8 @@ done
 %patch146 -p1
 %patch147 -p1
 %patch148 -p1
+# 00149: not for python 2
+
 
 # This shouldn't be necesarry, but is right now (2.2a3)
 find -name "*~" |xargs rm -f
