@@ -108,7 +108,7 @@ Summary: An interpreted, interactive, object-oriented programming language
 Name: %{python}
 # Remember to also rebase python-docs when changing this:
 Version: 2.7.2
-Release: 16%{?dist}
+Release: 17%{?dist}
 License: Python
 Group: Development/Languages
 Requires: %{python}-libs%{?_isa} = %{version}-%{release}
@@ -1734,6 +1734,9 @@ rm -fr %{buildroot}
 # ======================================================
 
 %changelog
+* Wed Oct 26 2011 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2.7.2-17
+- Rebuilt for glibc bug#747377
+
 * Fri Sep 30 2011 David Malcolm <dmalcolm@redhat.com> - 2.7.2-16
 - re-enable gdbm (patch 148; rhbz#742242)
 
