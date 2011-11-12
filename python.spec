@@ -3,7 +3,7 @@
 # ======================================================
 
 %{!?__python_ver:%global __python_ver EMPTY}
-#global __python_ver 27
+%global __python_ver 27
 %global unicode ucs4
 
 %global _default_patch_fuzz 2
@@ -56,7 +56,7 @@
 %global with_gdbm 1
 
 # Turn this to 0 to turn off the "check" phase:
-%global run_selftest_suite 1
+%global run_selftest_suite 0
 
 # Some of the files below /usr/lib/pythonMAJOR.MINOR/test  (e.g. bad_coding.py)
 # are deliberately invalid, leading to SyntaxError exceptions if they get
@@ -125,7 +125,7 @@ Provides: python(abi) = %{pybasever}
 BuildRequires: autoconf
 BuildRequires: bzip2
 BuildRequires: bzip2-devel
-BuildRequires: db4-devel >= 4.8
+BuildRequires: db4-devel
 BuildRequires: expat-devel
 BuildRequires: findutils
 BuildRequires: gcc-c++
@@ -330,7 +330,7 @@ Patch16: python-2.6-rpath.patch
 Patch17: python-2.6.4-distutils-rpath.patch
 
 # Patch setup.py so that it links against db-4.8:
-Patch54: python-2.6.4-setup-db48.patch
+Patch54: python-2.6.4-setup-db43.patch
 
 # Systemtap support: add statically-defined probe points
 # Patch based on upstream bug: http://bugs.python.org/issue4111
@@ -810,7 +810,7 @@ cp -a %{SOURCE5} .
 # Ensure that we're using the system copy of various libraries, rather than
 # copies shipped by upstream in the tarball:
 #   Remove embedded copy of expat:
-rm -r Modules/expat || exit 1
+# rm -r Modules/expat || exit 1
 
 #   Remove embedded copy of libffi:
 for SUBDIR in darwin libffi libffi_arm_wince libffi_msvc libffi_osx ; do
@@ -856,7 +856,7 @@ done
 %patch16 -p1 -b .rpath
 %patch17 -p1 -b .distutils-rpath
 
-%patch54 -p1 -b .setup-db48
+%patch54 -p1 -b .setup-db43
 %if 0%{?with_systemtap}
 %patch55 -p1 -b .systemtap
 %endif
@@ -961,6 +961,27 @@ gendiff . .autotool-intermediates > %{PATCH300}
 exit 1
 %endif
 
+# backport fedora %configure macro to add support for _configure
+%global configure \
+CFLAGS="${CFLAGS:-%optflags}" ; export CFLAGS ; \
+CXXFLAGS="${CXXFLAGS:-%optflags}" ; export CXXFLAGS ; \
+FFLAGS="${FFLAGS:-%optflags}" ; export FFLAGS ; \
+%{_configure} --host=%{_host} --build=%{_build} \\\
+	--program-prefix=%{?_program_prefix} \\\
+	--prefix=%{_prefix} \\\
+	--exec-prefix=%{_exec_prefix} \\\
+	--bindir=%{_bindir} \\\
+	--sbindir=%{_sbindir} \\\
+	--sysconfdir=%{_sysconfdir} \\\
+	--datadir=%{_datadir} \\\
+	--includedir=%{_includedir} \\\
+	--libdir=%{_libdir} \\\
+	--libexecdir=%{_libexecdir} \\\
+	--localstatedir=%{_localstatedir} \\\
+	--sharedstatedir=%{_sharedstatedir} \\\
+	--mandir=%{_mandir} \\\
+	--infodir=%{_infodir}
+
 # Define a function, for how to perform a "build" of python for a given
 # configuration:
 BuildPython() {
@@ -980,6 +1001,7 @@ BuildPython() {
   # Use the freshly created "configure" script, but in the directory two above:
   %global _configure $topdir/configure
 
+
 %configure \
   --enable-ipv6 \
   --enable-unicode=%{unicode} \
@@ -992,7 +1014,6 @@ BuildPython() {
   --with-dtrace \
   --with-tapset-install-dir=%{tapsetdir} \
 %endif
-  --with-system-expat \
   --with-dbmliborder=gdbm:ndbm:bdb \
   $ExtraConfigArgs \
   %{nil}
@@ -1161,7 +1182,7 @@ mv %{buildroot}%{_bindir}/python %{buildroot}%{_bindir}/%{python}
 %if 0%{?with_debug_build}
 mv %{buildroot}%{_bindir}/python-debug %{buildroot}%{_bindir}/%{python}-debug
 %endif # with_debug_build
-mv %{buildroot}/%{_mandir}/man1/python.1 %{buildroot}/%{_mandir}/man1/python%{pybasever}.1
+#mv %{buildroot}/%{_mandir}/man1/python.1 %{buildroot}/%{_mandir}/man1/python%{pybasever}.1
 %endif
 
 # tools
