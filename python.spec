@@ -56,7 +56,7 @@
 %global with_gdbm 1
 
 # Turn this to 0 to turn off the "check" phase:
-%global run_selftest_suite 0
+%global run_selftest_suite 1
 
 # Some of the files below /usr/lib/pythonMAJOR.MINOR/test  (e.g. bad_coding.py)
 # are deliberately invalid, leading to SyntaxError exceptions if they get
@@ -1237,6 +1237,17 @@ mv pygettext.py pygettext%{__python_ver}.py
 mv msgfmt.py msgfmt%{__python_ver}.py
 mv smtpd.py smtpd%{__python_ver}.py
 mv pydoc pydoc%{__python_ver}
+popd
+%endif
+
+# don't try to take over python-config, python-debug-config if we are not
+# the main paython
+%if !%{main_python}
+pushd %{buildroot}%{_bindir}
+rm python-config || /bin/true
+%if 0%{?with_debug_build}
+rm python-debug-config || /bin/true
+%endif
 popd
 %endif
 
